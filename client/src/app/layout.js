@@ -1,16 +1,22 @@
 import "./globals.css";
 import AppLayout from "@/components/AppLayout";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export const metadata = {
-  title: "BinksConnect",
-  description: "Personal music ecosystem"
+  title: "BinksConnect"
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children
+}) {
   return (
     <html lang="en">
       <body>
-        <AppLayout>{children}</AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            {children}
+          </AppLayout>
+        </ProtectedRoute>
       </body>
     </html>
   );
