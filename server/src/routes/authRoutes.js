@@ -29,7 +29,9 @@ router.post("/login", async (req, res) => {
             return res.json({
                 success: true,
                 username,
-                serverUrl
+                serverUrl,
+                salt,
+                token
             });
         }
 
