@@ -7,7 +7,7 @@ export default function BottomPlayer() {
         usePlayerStore();
 
     return (
-        <div className="fixed bottom-0 left-64 right-0 h-20 bg-zinc-800 border-t border-zinc-700 flex items-center px-6">
+        <div className="fixed bottom-0 md:left-20 lg:left-64 left-0 right-0 h-20 bg-[#181818] border-t border-zinc-700 flex items-center px-4 md:px-6 z-40">
             <div>
                 <p className="font-semibold">
                     {currentSong

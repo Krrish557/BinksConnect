@@ -9,7 +9,7 @@ export default function Sidebar() {
     );
 
     return (
-        <aside className="w-64 bg-zinc-900 min-h-screen p-6">
+        <aside className="hidden md:block fixed top-0 left-0 h-screen lg:w-64 md:w-20 bg-[#181818] p-6 z-50">
             <h1 className="text-2xl font-bold mb-8">
                 BinksConnect
             </h1>
