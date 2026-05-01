@@ -25,8 +25,6 @@ export default function Sidebar() {
                 <br />
                 <Link href="/playlists">Playlists</Link>
                 <br />
-                <Link href="/lyrics">Lyrics</Link>
-                <br />
                 <Link href="/settings">Settings</Link>
                 <br />
 

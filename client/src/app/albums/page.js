@@ -4,11 +4,14 @@ import { useEffect, useRef } from "react";
 import useAuthStore from "@/store/authStore";
 import useLibraryStore from "@/store/libraryStore";
 import { fetchAlbums } from "@/services/navidromeService";
+import { useRouter } from "next/navigation";
+import { normalizeAlbums } from "@/utils/normalizeAlbums";
 
 export default function AlbumsPage() {
     const user = useAuthStore((state) => state.user);
 
     const loadMoreRef = useRef(null);
+    const router = useRouter();
 
     const {
         albums,
@@ -20,36 +23,38 @@ export default function AlbumsPage() {
         nextPage
     } = useLibraryStore();
 
+    // ✅ FETCH + NORMALIZE (FIXED)
     useEffect(() => {
         async function loadAlbums() {
             if (!user) return;
 
             setLoading(true);
 
-            const data = await fetchAlbums(
-                user,
-                offset
-            );
+            try {
+                const rawData = await fetchAlbums(user, offset);
 
-            if (offset === 0) {
-                setAlbums(data);
-            } else {
-                appendAlbums(data);
+                const normalizedData = normalizeAlbums(rawData);
+
+                if (offset === 0) {
+                    setAlbums(normalizedData);
+                } else {
+                    appendAlbums(normalizedData);
+                }
+            } catch (error) {
+                console.error("Failed to fetch albums:", error);
+            } finally {
+                setLoading(false);
             }
-
-            setLoading(false);
         }
 
         loadAlbums();
     }, [user, offset]);
 
+    // ✅ INFINITE SCROLL OBSERVER
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
-                if (
-                    entries[0].isIntersecting &&
-                    !loading
-                ) {
+                if (entries[0].isIntersecting && !loading) {
                     nextPage();
                 }
             },
@@ -74,15 +79,14 @@ export default function AlbumsPage() {
 
     return (
         <main>
-            <h1 className="text-3xl mb-6">
-                Albums
-            </h1>
+            <h1 className="text-3xl mb-6">Albums</h1>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {albums.map((album) => (
                     <div
-                        key={album.id}
+                        key={`${album.name}-${album.artist}`} // ✅ FIXED KEY
                         className="bg-[#181818] hover:bg-[#282828] transition rounded-xl p-4 cursor-pointer"
+                        onClick={() => router.push(`/albums/${album.id}`)}
                     >
                         <img
                             src={`${user.serverUrl}/rest/getCoverArt.view?id=${album.id}&u=${encodeURIComponent(

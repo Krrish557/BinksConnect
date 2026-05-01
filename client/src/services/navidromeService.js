@@ -22,3 +22,25 @@ export async function fetchAlbums(
             ?.albumList2?.album || []
     );
 }
+export async function fetchAlbumTracks(
+    user,
+    albumId
+) {
+    const url =
+        `${user.serverUrl}/rest/getAlbum.view` +
+        `?id=${albumId}` +
+        `&u=${encodeURIComponent(user.username)}` +
+        `&s=${user.salt}` +
+        `&t=${user.token}` +
+        `&v=1.16.1` +
+        `&c=binksconnect` +
+        `&f=json`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    return (
+        data["subsonic-response"]?.album ||
+        null
+    );
+}
