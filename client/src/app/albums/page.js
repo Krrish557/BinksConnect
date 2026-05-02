@@ -9,9 +9,10 @@ import { normalizeAlbums } from "@/utils/normalizeAlbums";
 
 export default function AlbumsPage() {
     const user = useAuthStore((state) => state.user);
+    const router = useRouter();
 
     const loadMoreRef = useRef(null);
-    const router = useRouter();
+    const isFetchingRef = useRef(false); // ✅ CRITICAL FIX
 
     const {
         albums,
@@ -23,16 +24,18 @@ export default function AlbumsPage() {
         nextPage
     } = useLibraryStore();
 
-    // ✅ FETCH + NORMALIZE (FIXED)
+    // ================= FETCH =================
     useEffect(() => {
         async function loadAlbums() {
             if (!user) return;
+
+            if (isFetchingRef.current) return; // ✅ prevent duplicate calls
+            isFetchingRef.current = true;
 
             setLoading(true);
 
             try {
                 const rawData = await fetchAlbums(user, offset);
-
                 const normalizedData = normalizeAlbums(rawData);
 
                 if (offset === 0) {
@@ -44,47 +47,49 @@ export default function AlbumsPage() {
                 console.error("Failed to fetch albums:", error);
             } finally {
                 setLoading(false);
+                isFetchingRef.current = false; // ✅ release lock
             }
         }
 
         loadAlbums();
     }, [user, offset]);
 
-    // ✅ INFINITE SCROLL OBSERVER
+    // ================= OBSERVER =================
     useEffect(() => {
+        if (!loadMoreRef.current) return;
+
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && !loading) {
+                const entry = entries[0];
+
+                if (
+                    entry.isIntersecting &&
+                    !loading &&
+                    !isFetchingRef.current
+                ) {
                     nextPage();
                 }
             },
             {
-                threshold: 1
+                threshold: 0.5 // ✅ less aggressive
             }
         );
 
-        const currentRef = loadMoreRef.current;
-
-        if (currentRef) {
-            observer.observe(currentRef);
-        }
+        observer.observe(loadMoreRef.current);
 
         return () => {
-            if (currentRef) {
-                observer.unobserve(currentRef);
-            }
             observer.disconnect();
         };
     }, [loading, nextPage]);
 
     return (
-        <main>
+        <main className="p-6">
             <h1 className="text-3xl mb-6">Albums</h1>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {albums.map((album) => (
                     <div
-                        key={`${album.name}-${album.artist}`} // ✅ FIXED KEY
+                        key={album.id} // ✅ FIXED KEY (important)
                         className="bg-[#181818] hover:bg-[#282828] transition rounded-xl p-4 cursor-pointer"
                         onClick={() => router.push(`/albums/${album.id}`)}
                     >
@@ -109,7 +114,7 @@ export default function AlbumsPage() {
 
             <div
                 ref={loadMoreRef}
-                className="h-16 flex justify-center items-center"
+                className="h-20 flex justify-center items-center"
             >
                 {loading && (
                     <p className="text-[#B3B3B3]">

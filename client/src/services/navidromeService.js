@@ -1,7 +1,4 @@
-export async function fetchAlbums(
-    user,
-    offset = 0
-) {
+export async function fetchAlbums(user, offset = 0) {
     const url =
         `${user.serverUrl}/rest/getAlbumList2.view` +
         `?u=${encodeURIComponent(user.username)}` +
@@ -18,14 +15,11 @@ export async function fetchAlbums(
     const data = await response.json();
 
     return (
-        data["subsonic-response"]
-            ?.albumList2?.album || []
+        data["subsonic-response"]?.albumList2?.album || []
     );
 }
-export async function fetchAlbumTracks(
-    user,
-    albumId
-) {
+
+export async function fetchAlbumTracks(user, albumId) {
     const url =
         `${user.serverUrl}/rest/getAlbum.view` +
         `?id=${albumId}` +
@@ -40,7 +34,29 @@ export async function fetchAlbumTracks(
     const data = await response.json();
 
     return (
-        data["subsonic-response"]?.album ||
-        null
+        data["subsonic-response"]?.album || null
+    );
+}
+
+// ================= NEW FUNCTION =================
+
+export async function fetchSongs(user, offset = 0) {
+    const url =
+        `${user.serverUrl}/rest/search3.view` +
+        `?u=${encodeURIComponent(user.username)}` +
+        `&s=${user.salt}` +
+        `&t=${user.token}` +
+        `&v=1.16.1` +
+        `&c=binksconnect` +
+        `&f=json` +
+        `&query=` +                 // 🔑 empty query = fetch all
+        `&songCount=50` +
+        `&songOffset=${offset}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    return (
+        data["subsonic-response"]?.searchResult3?.song || []
     );
 }

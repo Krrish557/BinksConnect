@@ -3,18 +3,41 @@
 import Sidebar from "./Sidebar";
 import BottomPlayer from "./BottomPlayer";
 import MobileNav from "./MobileNav";
+import FullPlayer from "./FullPlayer";
+import { usePlayerStore } from "@/store/playerStore";
 
 export default function AppLayout({ children }) {
+    const isPlayerOpen = usePlayerStore((s) => s.isPlayerOpen);
+
     return (
-        <div className="min-h-screen bg-[#121212] text-white">
-            <Sidebar />
+        <div className="h-screen w-screen bg-black text-white flex flex-col">
 
-            <main className="ml-0 md:ml-20 lg:ml-64 p-4 md:p-6 pb-36">
-                {children}
-            </main>
+            {/* MAIN AREA */}
+            <div className="flex flex-1 overflow-hidden">
 
-            <BottomPlayer />
+                {/* DESKTOP SIDEBAR */}
+                <div className="hidden md:flex w-64 border-r border-gray-800">
+                    <Sidebar />
+                </div>
+
+                {/* CONTENT */}
+                <div className="flex-1 overflow-y-auto pb-40 md:pb-24">
+                    {children}
+                </div>
+
+            </div>
+
+            {/* PLAYER (FIXED ABOVE NAVBAR) */}
+            <div className="fixed bottom-16 left-0 right-0 md:bottom-0 z-50 bg-[#181818] border-t border-gray-800">
+                <BottomPlayer />
+            </div>
+
+            {/* MOBILE NAV */}
             <MobileNav />
+
+            {/* 🔥 FULL PLAYER (MUST BE HERE) */}
+            {isPlayerOpen && <FullPlayer />}
+
         </div>
     );
 }

@@ -1,35 +1,33 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LibraryPage() {
+    const router = useRouter();
+
+    const items = [
+        { title: "All Songs", path: "/library/songs", icon: "🎵" },
+        { title: "Albums", path: "/albums", icon: "💿" },
+        { title: "Artists", path: "/artists", icon: "🎤" },
+        { title: "Favourite Songs", path: "/library/favourites", icon: "❤️" },
+        { title: "Favourite Artists", path: "/library/fav-artists", icon: "⭐" },
+    ];
+
     return (
-        <main>
-            <h1 className="text-3xl font-bold mb-6">
-                Your Library
-            </h1>
+        <main className="p-6">
+            <h1 className="text-3xl mb-6">Your Library</h1>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <Link
-                    href="/albums"
-                    className="bg-[#181818] hover:bg-[#282828] rounded-xl p-6"
-                >
-                    Albums
-                </Link>
-
-                <Link
-                    href="/artists"
-                    className="bg-[#181818] hover:bg-[#282828] rounded-xl p-6"
-                >
-                    Artists
-                </Link>
-
-                <Link
-                    href="/playlists"
-                    className="bg-[#181818] hover:bg-[#282828] rounded-xl p-6"
-                >
-                    Playlists
-                </Link>
+            <div className="grid grid-cols-2 gap-4">
+                {items.map((item) => (
+                    <div
+                        key={item.title}
+                        onClick={() => router.push(item.path)}
+                        className="bg-[#181818] hover:bg-[#282828] transition rounded-xl p-6 cursor-pointer"
+                    >
+                        <div className="text-2xl mb-2">{item.icon}</div>
+                        <p className="font-semibold">{item.title}</p>
+                    </div>
+                ))}
             </div>
         </main>
     );
