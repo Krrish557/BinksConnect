@@ -2,6 +2,7 @@
 
 import NowPlayingBar from "@/components/ui/NowPlayingBar";
 import { usePlayerStore } from "@/store/playerStore";
+import { apiClient } from "@/services/apiClient";
 
 export default function QueueItem({ track, isActive, index, onClick }) {
     const isPlaying = usePlayerStore((s) => s.isPlaying);
@@ -15,7 +16,7 @@ export default function QueueItem({ track, isActive, index, onClick }) {
         >
             {/* COVER */}
             <img
-                src={track.cover}
+                src={apiClient.resolveUrl(track.cover)}
                 alt={track.title}
                 className="w-10 h-10 rounded-md object-cover shrink-0"
             />

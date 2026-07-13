@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePlayerStore } from "@/store/playerStore";
 import QueueItem from "./QueueItem";
 import { formatTime } from "@/utils/format";
+import { apiClient } from "@/services/apiClient";
 
 export default function FullPlayer() {
     const {
@@ -94,7 +95,7 @@ export default function FullPlayer() {
                 {/* COVER */}
                 <div className="flex justify-center my-4">
                     <img
-                        src={currentTrack.cover}
+                        src={apiClient.resolveUrl(currentTrack.cover)}
                         alt={currentTrack.title}
                         className={`rounded-2xl object-cover shadow-2xl transition-all duration-300 ${
                             isPlaying

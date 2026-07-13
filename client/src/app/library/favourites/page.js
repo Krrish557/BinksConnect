@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import useAuthStore from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
-import { musicEngine } from "@/core/engine";
+import { trackService } from "@/services/trackService";
 import SongRow from "@/components/SongRow";
 import LoadingState from "@/components/ui/LoadingState";
 import EmptyState from "@/components/ui/EmptyState";
@@ -20,7 +20,7 @@ export default function FavouriteSongsPage() {
             if (!user) return;
             setLoading(true);
             try {
-                const data = await musicEngine.getStarredItems();
+                const data = await trackService.getStarred();
                 setSongs(data.songs);
             } catch (err) {
                 console.error(err);

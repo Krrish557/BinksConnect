@@ -3,8 +3,7 @@
 import { useEffect, useRef } from "react";
 import useAuthStore from "@/store/authStore";
 import useLibraryStore from "@/store/libraryStore";
-import { musicEngine } from "@/core/engine";
-import { normalizeAlbums } from "@/utils/normalizeAlbums";
+import { albumService } from "@/services/albumService";
 import AlbumCard from "@/components/AlbumCard";
 import LoadingState from "@/components/ui/LoadingState";
 
@@ -31,7 +30,7 @@ export default function AlbumsPage() {
             isFetchingRef.current = true;
             setLoading(true);
             try {
-                const normalized = await musicEngine.getAlbums(offset);
+                const normalized = await albumService.getAlbums(offset);
                 offset === 0 ? setAlbums(normalized) : appendAlbums(normalized);
             } catch (err) {
                 console.error(err);
@@ -71,7 +70,6 @@ export default function AlbumsPage() {
                     <AlbumCard
                         key={album.id}
                         album={album}
-                        coverUrl={album.coverUrl}
                     />
                 ))}
             </div>

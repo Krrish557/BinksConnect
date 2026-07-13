@@ -2,6 +2,7 @@
 
 import { usePlayerStore } from "@/store/playerStore";
 import { formatTime } from "@/utils/format";
+import { apiClient } from "@/services/apiClient";
 
 export default function BottomPlayer() {
     const {
@@ -34,14 +35,12 @@ export default function BottomPlayer() {
 
     return (
         <div className="h-full px-4 flex items-center gap-4">
-
-            {/* TRACK INFO — clicks open full player */}
             <div
                 onClick={openPlayer}
                 className="flex items-center gap-3 w-1/4 min-w-0 cursor-pointer group"
             >
                 <img
-                    src={currentTrack.cover}
+                    src={apiClient.resolveUrl(currentTrack.cover)}
                     alt={currentTrack.title}
                     className="w-12 h-12 rounded-md object-cover shrink-0 shadow"
                 />
@@ -55,12 +54,10 @@ export default function BottomPlayer() {
                 </div>
             </div>
 
-            {/* CENTER — controls + seek */}
             <div
                 className="flex flex-col items-center flex-1 gap-1"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* CONTROL BUTTONS */}
                 <div className="flex items-center gap-4">
                     <button
                         onClick={toggleShuffle}
@@ -104,7 +101,6 @@ export default function BottomPlayer() {
                     </button>
                 </div>
 
-                {/* SEEK BAR */}
                 <div className="flex items-center gap-2 w-full max-w-md">
                     <span className="text-xs text-[#B3B3B3] w-8 text-right shrink-0">
                         {formatTime(currentTime)}
@@ -135,7 +131,6 @@ export default function BottomPlayer() {
                 </div>
             </div>
 
-            {/* RIGHT — volume */}
             <div
                 className="hidden md:flex items-center gap-2 w-1/4 justify-end"
                 onClick={(e) => e.stopPropagation()}

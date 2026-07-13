@@ -322,3 +322,97 @@ Present BinksConnect as:
 > authentication, metadata indexing, intelligent caching, background
 > workers, and pluggable storage providers. Telegram is implemented as
 > one storage backend rather than being the core application.
+
+------------------------------------------------------------------------
+
+# Internal Domain Model (NEW - Critical)
+
+## Philosophy
+
+The client, stores, services, and UI must never depend on
+provider-specific identifiers. Every entity uses a permanent internal
+BinksConnect ID.
+
+Example flow:
+
+Client → track_00001234 → Provider Manager → Telegram → Channel ID +
+Message ID
+
+Internal IDs: - track_00000001 - album_00000001 - artist_00000001 -
+playlist_00000001
+
+These IDs never change even if the storage provider changes.
+
+------------------------------------------------------------------------
+
+# Canonical Domain Models
+
+Every provider must normalize its data into common models.
+
+Navidrome Track → Normalizer → BinksTrack
+
+Telegram Track → Normalizer → BinksTrack
+
+The frontend only understands BinksTrack.
+
+Suggested fields:
+
+-   id
+-   provider
+-   providerTrackId
+-   title
+-   artist
+-   album
+-   duration
+-   bitrate
+-   artworkId
+-   streamable
+
+------------------------------------------------------------------------
+
+# Provider Mapping Layer
+
+SQLite should separate business entities from provider mappings.
+
+Tracks: - track_id - title - artist_id - album_id - duration -
+provider_id
+
+ProviderMappings: - track_id - provider - provider_track_id -
+telegram_channel_id - telegram_message_id - telegram_file_id -
+telegram_file_unique_id
+
+Changing providers only updates ProviderMappings.
+
+------------------------------------------------------------------------
+
+# Provider Registry
+
+ProviderManager should resolve providers through a registry/factory
+rather than constructing providers directly.
+
+ProviderManager → ProviderRegistry → TelegramProvider →
+NavidromeProvider → Future Providers
+
+------------------------------------------------------------------------
+
+# Updated Upload Flow
+
+1.  Read metadata.
+2.  Generate internal Track ID.
+3.  Calculate checksum.
+4.  Optional encryption.
+5.  Select Telegram storage channel.
+6.  Upload.
+7.  Receive Telegram IDs.
+8.  Store provider mapping.
+9.  Return internal Track ID.
+
+------------------------------------------------------------------------
+
+# Updated Playback Flow
+
+Client → GET /api/stream/track_00001234 → JWT → ProviderMappings lookup
+→ Resolve provider → RAM cache → SSD cache → Telegram download (cache
+miss) → Stream to client
+
+No Telegram identifiers leave the backend.

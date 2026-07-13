@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
-import { musicEngine } from "@/core/engine";
+import { searchService } from "@/services/searchService";
 import SongRow from "@/components/SongRow";
 import AlbumCard from "@/components/AlbumCard";
 import ArtistCard from "@/components/ArtistCard";
@@ -17,18 +17,16 @@ export default function SearchPage() {
     const { setQueue } = usePlayerStore();
 
     const [query, setQuery] = useState("");
-    const [results, setResults] = useState(null); // null = no search yet
+    const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const debounceRef = useRef(null);
     const inputRef = useRef(null);
 
-    // Auto-focus input on mount
     useEffect(() => {
         inputRef.current?.focus();
     }, []);
 
-    // Debounced search
     useEffect(() => {
         if (!query.trim()) {
             setResults(null);
@@ -40,7 +38,7 @@ export default function SearchPage() {
             if (!user) return;
             setLoading(true);
             try {
-                const data = await musicEngine.search(query.trim());
+                const data = await searchService.search(query.trim());
                 setResults(data);
             } catch (err) {
                 console.error("Search error:", err);
@@ -64,7 +62,6 @@ export default function SearchPage() {
         <main className="px-6 pt-8 pb-10">
             <h1 className="text-3xl font-bold text-white mb-6">Search</h1>
 
-            {/* SEARCH INPUT */}
             <div className="relative mb-8">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#B3B3B3] text-lg">
                     🔍
@@ -87,10 +84,8 @@ export default function SearchPage() {
                 )}
             </div>
 
-            {/* LOADING */}
             {loading && <LoadingState message="Searching..." />}
 
-            {/* NO QUERY */}
             {!query && !loading && (
                 <EmptyState
                     icon="🎵"
@@ -99,7 +94,6 @@ export default function SearchPage() {
                 />
             )}
 
-            {/* NO RESULTS */}
             {!loading && query && results && !hasResults && (
                 <EmptyState
                     icon="😕"
@@ -108,11 +102,8 @@ export default function SearchPage() {
                 />
             )}
 
-            {/* RESULTS */}
             {!loading && results && hasResults && (
                 <div className="space-y-10">
-
-                    {/* SONGS */}
                     {results.songs.length > 0 && (
                         <section>
                             <h2 className="text-xl font-bold text-white mb-3">
@@ -132,7 +123,6 @@ export default function SearchPage() {
                         </section>
                     )}
 
-                    {/* ALBUMS */}
                     {results.albums.length > 0 && (
                         <section>
                             <h2 className="text-xl font-bold text-white mb-3">
@@ -143,7 +133,6 @@ export default function SearchPage() {
                                     <AlbumCard
                                         key={album.id}
                                         album={album}
-                                        coverUrl={album.coverUrl}
                                         onClick={() =>
                                             router.push(`/albums/${album.id}`)
                                         }
@@ -153,7 +142,6 @@ export default function SearchPage() {
                         </section>
                     )}
 
-                    {/* ARTISTS */}
                     {results.artists.length > 0 && (
                         <section>
                             <h2 className="text-xl font-bold text-white mb-3">

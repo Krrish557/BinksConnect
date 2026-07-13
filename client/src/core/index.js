@@ -1,4 +1,3 @@
-export { musicEngine } from './engine';
 export {
     createTrack,
     createAlbum,

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import useAuthStore from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
-import { musicEngine } from "@/core/engine";
+import { albumService } from "@/services/albumService";
+import { apiClient } from "@/services/apiClient";
 import SongRow from "@/components/SongRow";
 import LoadingState from "@/components/ui/LoadingState";
 import { formatDuration } from "@/utils/format";
@@ -23,7 +24,7 @@ export default function AlbumDetailPage() {
             if (!user || !id) return;
             setLoading(true);
             try {
-                const data = await musicEngine.getAlbumTracks(id);
+                const data = await albumService.getAlbum(id);
                 if (!data) return;
                 setAlbum(data.album);
                 setSongs(data.songs);
@@ -40,11 +41,9 @@ export default function AlbumDetailPage() {
     if (!album) return null;
 
     const totalDuration = songs.reduce((acc, s) => acc + (s.duration || 0), 0);
-    const coverUrl = album.coverUrl;
 
     return (
         <main className="pb-10">
-            {/* HERO */}
             <div
                 className="relative px-6 pt-10 pb-6"
                 style={{
@@ -53,7 +52,7 @@ export default function AlbumDetailPage() {
             >
                 <div className="flex flex-col md:flex-row gap-6 items-end">
                     <img
-                        src={coverUrl}
+                        src={apiClient.resolveUrl(album.coverUrl)}
                         alt={album.name}
                         className="w-48 h-48 rounded-xl object-cover shadow-2xl shrink-0"
                     />
@@ -73,7 +72,6 @@ export default function AlbumDetailPage() {
                 </div>
             </div>
 
-            {/* ACTION ROW */}
             <div className="flex items-center gap-4 px-6 py-5">
                 <button
                     onClick={() => setQueue(songs, 0)}
@@ -92,9 +90,7 @@ export default function AlbumDetailPage() {
                 </button>
             </div>
 
-            {/* SONG LIST */}
             <div className="px-3">
-                {/* HEADER ROW */}
                 <div className="flex items-center gap-3 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[#B3B3B3] border-b border-white/5 mb-2">
                     <div className="w-8 text-center">#</div>
                     <div className="w-10 shrink-0" />

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import useAuthStore from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
-import { musicEngine } from "@/core/engine";
+import { trackService } from "@/services/trackService";
 import SongRow from "@/components/SongRow";
 import LoadingState from "@/components/ui/LoadingState";
 import EmptyState from "@/components/ui/EmptyState";
@@ -27,7 +27,7 @@ export default function SongsPage() {
             setLoading(true);
 
             try {
-                const data = await musicEngine.getSongs(offset);
+                const data = await trackService.getTracks(offset);
 
                 if (data.length < 50) setHasMore(false);
                 setSongs((prev) => [...prev, ...data]);

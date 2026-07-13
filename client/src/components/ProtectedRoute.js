@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { providerManager } from "@/core/providerManager";
+import { apiClient } from "@/services/apiClient";
 
 export default function ProtectedRoute({ children }) {
     const router = useRouter();
@@ -10,8 +10,8 @@ export default function ProtectedRoute({ children }) {
     const [checked, setChecked] = useState(false);
 
     useEffect(() => {
-        const hasSession = providerManager.isConfigured();
-        if (!hasSession && pathname !== "/onboarding" && pathname !== "/login") {
+        const token = apiClient.loadToken();
+        if (!token && pathname !== "/onboarding" && pathname !== "/login") {
             router.replace("/onboarding");
         }
         setChecked(true);
@@ -19,8 +19,8 @@ export default function ProtectedRoute({ children }) {
 
     if (!checked) return null;
 
-    const hasSession = providerManager.isConfigured();
-    if (!hasSession && pathname !== "/onboarding" && pathname !== "/login") return null;
+    const token = apiClient.getToken();
+    if (!token && pathname !== "/onboarding" && pathname !== "/login") return null;
 
     return children;
 }

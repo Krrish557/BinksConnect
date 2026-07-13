@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import useAuthStore from "@/store/authStore";
-import { musicEngine } from "@/core/engine";
+import { artistService } from "@/services/artistService";
 import ArtistCard from "@/components/ArtistCard";
 import LoadingState from "@/components/ui/LoadingState";
 import EmptyState from "@/components/ui/EmptyState";
@@ -18,7 +18,7 @@ export default function ArtistsPage() {
             if (!user) return;
             setLoading(true);
             try {
-                const data = await musicEngine.getArtists();
+                const data = await artistService.getArtists();
                 setArtists(data);
             } catch (err) {
                 console.error(err);

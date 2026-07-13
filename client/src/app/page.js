@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import useAuthStore from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
-import { musicEngine } from "@/core/engine";
+import { albumService } from "@/services/albumService";
+import { trackService } from "@/services/trackService";
+import { apiClient } from "@/services/apiClient";
 import HorizontalScroller from "@/components/HorizontalScroller";
 import AlbumCard from "@/components/AlbumCard";
 import ArtistCard from "@/components/ArtistCard";
@@ -13,7 +14,6 @@ import LoadingState from "@/components/ui/LoadingState";
 
 export default function HomePage() {
     const user = useAuthStore((s) => s.user);
-    const router = useRouter();
     const { setQueue, recentlyPlayed } = usePlayerStore();
 
     const [recentAlbums, setRecentAlbums] = useState([]);
@@ -36,11 +36,11 @@ export default function HomePage() {
             try {
                 const [recent, newest, frequent, starred, random] =
                     await Promise.all([
-                        musicEngine.getRecentAlbums(12),
-                        musicEngine.getNewestAlbums(12),
-                        musicEngine.getFrequentAlbums(12),
-                        musicEngine.getStarredItems(),
-                        musicEngine.getRandomSongs(10),
+                        albumService.getRecent(12),
+                        albumService.getNewest(12),
+                        albumService.getFrequent(12),
+                        trackService.getStarred(),
+                        trackService.getRandom(10),
                     ]);
 
                 setRecentAlbums(recent);
@@ -65,10 +65,8 @@ export default function HomePage() {
 
     return (
         <main className="px-6 pt-8 pb-10">
-            {/* GREETING */}
             <h1 className="text-3xl font-bold text-white mb-8">{greeting}</h1>
 
-            {/* QUICK ACCESS GRID — recently played tracks */}
             {recentlyPlayed.length > 0 && (
                 <section className="mb-10">
                     <h2 className="text-xl font-bold text-white mb-4">
@@ -84,7 +82,7 @@ export default function HomePage() {
                                 className="flex items-center gap-3 bg-[#282828] hover:bg-[#383838] rounded-lg overflow-hidden transition-colors group"
                             >
                                 <img
-                                    src={track.cover}
+                                    src={apiClient.resolveUrl(track.cover)}
                                     alt={track.title}
                                     className="w-16 h-16 object-cover shrink-0"
                                 />
@@ -97,20 +95,17 @@ export default function HomePage() {
                 </section>
             )}
 
-            {/* RECENTLY PLAYED ALBUMS */}
             {recentAlbums.length > 0 && (
                 <HorizontalScroller title="Recently Played" seeAllHref="/albums">
                     {recentAlbums.map((album) => (
                         <AlbumCard
                             key={album.id}
                             album={album}
-                            coverUrl={album.coverUrl}
                         />
                     ))}
                 </HorizontalScroller>
             )}
 
-            {/* DISCOVER — random songs */}
             {randomSongs.length > 0 && (
                 <section className="mb-10">
                     <h2 className="text-xl font-bold text-white mb-4">
@@ -130,33 +125,28 @@ export default function HomePage() {
                 </section>
             )}
 
-            {/* NEWEST ALBUMS */}
             {newestAlbums.length > 0 && (
                 <HorizontalScroller title="New Releases" seeAllHref="/albums">
                     {newestAlbums.map((album) => (
                         <AlbumCard
                             key={album.id}
                             album={album}
-                            coverUrl={album.coverUrl}
                         />
                     ))}
                 </HorizontalScroller>
             )}
 
-            {/* FAVOURITE ALBUMS */}
             {starredAlbums.length > 0 && (
                 <HorizontalScroller title="Favourite Albums" seeAllHref="/albums">
                     {starredAlbums.map((album) => (
                         <AlbumCard
                             key={album.id}
                             album={album}
-                            coverUrl={album.coverUrl}
                         />
                     ))}
                 </HorizontalScroller>
             )}
 
-            {/* FAVOURITE ARTISTS */}
             {starredArtists.length > 0 && (
                 <HorizontalScroller title="Favourite Artists" seeAllHref="/artists">
                     {starredArtists.map((artist) => (
@@ -168,14 +158,12 @@ export default function HomePage() {
                 </HorizontalScroller>
             )}
 
-            {/* MOST PLAYED */}
             {frequentAlbums.length > 0 && (
                 <HorizontalScroller title="Most Played" seeAllHref="/albums">
                     {frequentAlbums.map((album) => (
                         <AlbumCard
                             key={album.id}
                             album={album}
-                            coverUrl={album.coverUrl}
                         />
                     ))}
                 </HorizontalScroller>

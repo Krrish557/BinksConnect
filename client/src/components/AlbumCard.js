@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { apiClient } from "@/services/apiClient";
 
-export default function AlbumCard({ album, coverUrl, onClick }) {
+export default function AlbumCard({ album, onClick }) {
     const router = useRouter();
 
     const handleClick = onClick || (() => router.push(`/albums/${album.id}`));
+    const coverUrl = apiClient.resolveUrl(album.coverUrl);
 
     return (
         <div

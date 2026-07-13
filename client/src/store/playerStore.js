@@ -1,9 +1,9 @@
 import { create } from "zustand";
+import { apiClient } from "@/services/apiClient";
 
 let audio = null;
 
 export const usePlayerStore = create((set, get) => ({
-    // ================= STATE =================
     currentTrack: null,
     queue: [],
     currentIndex: -1,
@@ -15,9 +15,8 @@ export const usePlayerStore = create((set, get) => ({
     volume: 1,
     isShuffle: false,
     isRepeat: false,
-    recentlyPlayed: [], // array of track objects (max 20)
+    recentlyPlayed: [],
 
-    // ================= AUDIO =================
     initAudio: () => {
         if (audio) return;
 
@@ -42,7 +41,6 @@ export const usePlayerStore = create((set, get) => ({
         };
     },
 
-    // ================= QUEUE =================
     setQueue: (tracks, startIndex = 0) => {
         set({
             queue: tracks,
@@ -61,7 +59,7 @@ export const usePlayerStore = create((set, get) => ({
         get().initAudio();
 
         audio.pause();
-        audio.src = currentTrack.url;
+        audio.src = apiClient.getStreamUrl(currentTrack.id);
         audio.volume = volume;
         audio.load();
 
@@ -72,14 +70,13 @@ export const usePlayerStore = create((set, get) => ({
         });
     },
 
-    // ================= CONTROLS =================
     play: async () => {
         if (!audio) return;
         try {
             await audio.play();
             set({ isPlaying: true });
         } catch (e) {
-            // AbortError is harmless — a new load() interrupted this play()
+            // AbortError is harmless
         }
     },
 
@@ -118,7 +115,6 @@ export const usePlayerStore = create((set, get) => ({
     previous: () => {
         const { currentIndex, queue, currentTime } = get();
 
-        // If past 3s, restart current track
         if (currentTime > 3) {
             get().seek(0);
             return;
@@ -151,7 +147,6 @@ export const usePlayerStore = create((set, get) => ({
     toggleShuffle: () => set((s) => ({ isShuffle: !s.isShuffle })),
     toggleRepeat: () => set((s) => ({ isRepeat: !s.isRepeat })),
 
-    // ================= RECENTLY PLAYED =================
     _addToRecentlyPlayed: (track) => {
         if (!track) return;
         set((state) => {
@@ -164,7 +159,6 @@ export const usePlayerStore = create((set, get) => ({
         });
     },
 
-    // ================= PLAYER UI =================
     openPlayer: () => set({ isPlayerOpen: true }),
     closePlayer: () => set({ isPlayerOpen: false }),
 }));

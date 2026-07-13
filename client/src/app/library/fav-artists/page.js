@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import useAuthStore from "@/store/authStore";
-import { musicEngine } from "@/core/engine";
+import { trackService } from "@/services/trackService";
 import ArtistCard from "@/components/ArtistCard";
 import LoadingState from "@/components/ui/LoadingState";
 import EmptyState from "@/components/ui/EmptyState";
@@ -18,7 +18,7 @@ export default function FavouriteArtistsPage() {
             if (!user) return;
             setLoading(true);
             try {
-                const data = await musicEngine.getStarredItems();
+                const data = await trackService.getStarred();
                 setArtists(data.artists);
             } catch (err) {
                 console.error(err);

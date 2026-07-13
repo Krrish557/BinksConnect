@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import useAuthStore from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
-import { musicEngine } from "@/core/engine";
+import { artistService } from "@/services/artistService";
+import { albumService } from "@/services/albumService";
+import { apiClient } from "@/services/apiClient";
 import AlbumCard from "@/components/AlbumCard";
 import SongRow from "@/components/SongRow";
 import LoadingState from "@/components/ui/LoadingState";
@@ -24,12 +26,11 @@ export default function ArtistPage() {
             if (!user || !id) return;
             setLoading(true);
             try {
-                const data = await musicEngine.getArtist(id);
+                const data = await artistService.getArtist(id);
                 setArtist(data);
 
-                // Load first album's songs as "top tracks"
                 if (data?.album?.length > 0) {
-                    const firstAlbum = await musicEngine.getAlbumTracks(
+                    const firstAlbum = await albumService.getAlbum(
                         data.album[0].id
                     );
                     if (firstAlbum?.songs) {
@@ -50,7 +51,6 @@ export default function ArtistPage() {
 
     return (
         <main className="pb-10">
-            {/* HEADER */}
             <div
                 className="px-6 pt-10 pb-6"
                 style={{
@@ -75,7 +75,6 @@ export default function ArtistPage() {
                 </div>
             </div>
 
-            {/* ACTION */}
             {topSongs.length > 0 && (
                 <div className="px-6 py-4">
                     <button
@@ -87,7 +86,6 @@ export default function ArtistPage() {
                 </div>
             )}
 
-            {/* TOP SONGS */}
             {topSongs.length > 0 && (
                 <section className="px-3 mb-8">
                     <h2 className="text-xl font-bold text-white px-3 mb-3">
@@ -107,7 +105,6 @@ export default function ArtistPage() {
                 </section>
             )}
 
-            {/* ALBUMS */}
             {artist.album?.length > 0 && (
                 <div className="px-6">
                     <HorizontalScroller title="Albums">
@@ -115,7 +112,6 @@ export default function ArtistPage() {
                             <AlbumCard
                                 key={album.id}
                                 album={album}
-                                coverUrl={musicEngine.getArtworkUrl(album.id)}
                             />
                         ))}
                     </HorizontalScroller>

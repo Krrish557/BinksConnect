@@ -5,6 +5,7 @@ import NowPlayingBar from "@/components/ui/NowPlayingBar";
 import { formatTime } from "@/utils/format";
 import usePlaylistStore from "@/store/playlistStore";
 import { useState, useRef } from "react";
+import { apiClient } from "@/services/apiClient";
 
 export default function SongRow({
     song,
@@ -40,7 +41,6 @@ export default function SongRow({
             className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors relative
                 ${isActive ? "bg-[#1a3a27]" : "hover:bg-[#282828]"}`}
         >
-            {/* INDEX / NOW PLAYING INDICATOR */}
             <div className="w-8 flex justify-center shrink-0">
                 {isActive ? (
                     <NowPlayingBar isPlaying={isPlaying} />
@@ -56,14 +56,12 @@ export default function SongRow({
                 )}
             </div>
 
-            {/* COVER */}
             <img
-                src={song.cover}
+                src={apiClient.resolveUrl(song.cover)}
                 alt={song.title}
                 className="w-10 h-10 rounded-md object-cover bg-[#282828] shrink-0"
             />
 
-            {/* TITLE + ARTIST */}
             <div className="flex flex-col flex-1 overflow-hidden min-w-0">
                 <p
                     className={`font-medium truncate text-sm ${
@@ -75,14 +73,12 @@ export default function SongRow({
                 <p className="text-xs text-[#B3B3B3] truncate">{song.artist}</p>
             </div>
 
-            {/* ALBUM (optional) */}
             {showAlbum && (
                 <p className="hidden md:block text-xs text-[#B3B3B3] truncate w-40 shrink-0">
                     {song.album}
                 </p>
             )}
 
-            {/* DURATION + CONTEXT MENU */}
             <div className="flex items-center gap-3 shrink-0 ml-2">
                 <span className="text-xs text-[#B3B3B3]">
                     {formatTime(song.duration)}

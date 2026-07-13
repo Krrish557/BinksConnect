@@ -1,40 +1,45 @@
 import { create } from "zustand";
-import { providerManager } from "@/core/providerManager";
-import "@/providers";
+import { authService } from "@/services/authService";
+import { apiClient } from "@/services/apiClient";
 
-const initialSession = providerManager.load();
-const initialUser = initialSession
-    ? { ...initialSession.config, provider: initialSession.providerId }
-    : null;
+const token = authService.loadSession();
 
-if (initialSession) {
-    providerManager.initializeFromSession();
-}
+const useAuthStore = create((set) => ({
+    user: token ? { provider: "navidrome" } : null,
+    isAuthenticated: !!token,
 
-const useAuthStore = create((set) => {
-    if (typeof window !== "undefined") {
-        providerManager.onChange((session) => {
-            set({
-                user: session
-                    ? { ...session.config, provider: session.providerId }
-                    : null,
-                isAuthenticated: !!session?.authenticated,
-            });
+    login: async (serverUrl, username, password) => {
+        const data = await authService.login(serverUrl, username, password);
+        set({
+            user: { provider: data.providerId || "navidrome" },
+            isAuthenticated: true,
         });
-    }
+        return data;
+    },
 
-    return {
-        user: initialUser,
-        isAuthenticated: !!initialUser,
+    logout: async () => {
+        await authService.logout();
+        set({ user: null, isAuthenticated: false });
+    },
 
-        login: async (providerId, config) => {
-            await providerManager.completeOnboarding(providerId, config);
-        },
-
-        logout: () => {
-            providerManager.logout();
-        },
-    };
-});
+    checkAuth: async () => {
+        try {
+            const token = apiClient.getToken();
+            if (!token) {
+                set({ user: null, isAuthenticated: false });
+                return false;
+            }
+            const data = await authService.me();
+            set({
+                user: { provider: data.providerId, username: data.username },
+                isAuthenticated: true,
+            });
+            return true;
+        } catch {
+            set({ user: null, isAuthenticated: false });
+            return false;
+        }
+    },
+}));
 
 export default useAuthStore;
