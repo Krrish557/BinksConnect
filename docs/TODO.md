@@ -19,7 +19,7 @@
 - [ ] Client: Register Telegram provider in provider registry
 
 ## Lyrics
-- [ ] Set up lyrics provider (Genius API or alternative)
+- [ ] Set up lyrics provider (Genius API or alternative)\n
 - [ ] Build lyrics fetch endpoint on server
 - [ ] Implement lyrics side panel in full player
 - [ ] Create lyrics page with synced/highlighted lyrics view

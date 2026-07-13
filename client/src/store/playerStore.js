@@ -35,7 +35,7 @@ export const usePlayerStore = create((set, get) => ({
             const { isRepeat } = get();
             if (isRepeat) {
                 audio.currentTime = 0;
-                audio.play();
+                audio.play().catch(() => {});
             } else {
                 get().next();
             }
@@ -60,6 +60,7 @@ export const usePlayerStore = create((set, get) => ({
 
         get().initAudio();
 
+        audio.pause();
         audio.src = currentTrack.url;
         audio.volume = volume;
         audio.load();
@@ -74,8 +75,12 @@ export const usePlayerStore = create((set, get) => ({
     // ================= CONTROLS =================
     play: async () => {
         if (!audio) return;
-        await audio.play();
-        set({ isPlaying: true });
+        try {
+            await audio.play();
+            set({ isPlaying: true });
+        } catch (e) {
+            // AbortError is harmless — a new load() interrupted this play()
+        }
     },
 
     pause: () => {
