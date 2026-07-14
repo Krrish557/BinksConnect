@@ -1,22 +1,27 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
+import useAuthStore from "@/store/authStore";
 
 const NAV = [
     { name: "Home",      path: "/",          icon: "🏠" },
     { name: "Search",    path: "/search",    icon: "🔍" },
     { name: "Library",   path: "/library",   icon: "🎵" },
+    { name: "Upload",    path: "/upload",    icon: "📤", telegramOnly: true },
     { name: "Playlists", path: "/playlists", icon: "📁" },
 ];
 
 export default function MobileNav() {
     const router = useRouter();
     const pathname = usePathname();
+    const user = useAuthStore((s) => s.user);
+
+    const navItems = NAV.filter((item) => !item.telegramOnly || user?.provider === "telegram");
 
     return (
         <div className="md:hidden shrink-0 bg-[#111] border-t border-white/10">
             <div className="flex justify-around items-center h-16 px-2">
-                {NAV.map((item) => {
+                {navItems.map((item) => {
                     const isActive =
                         item.path === "/"
                             ? pathname === "/"

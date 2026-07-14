@@ -9,6 +9,7 @@ export default function SettingsPage() {
     const router = useRouter();
     const { user, logout, checkAuth } = useAuthStore();
     const [serverInfo, setServerInfo] = useState(null);
+    const [uploadStatus, setUploadStatus] = useState(null);
 
     useEffect(() => {
         async function load() {
@@ -21,6 +22,20 @@ export default function SettingsPage() {
         }
         load();
     }, []);
+
+    useEffect(() => {
+        if (user?.provider === "telegram") {
+            async function loadStatus() {
+                try {
+                    const data = await apiClient.get("/api/upload/status");
+                    setUploadStatus(data);
+                } catch {
+                    // ignore
+                }
+            }
+            loadStatus();
+        }
+    }, [user]);
 
     const handleLogout = async () => {
         await logout();
@@ -42,12 +57,14 @@ export default function SettingsPage() {
                                     {serverInfo.providerId}
                                 </span>
                             </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-[#B3B3B3] text-sm">Server</span>
-                                <span className="text-white font-medium text-sm truncate max-w-[200px]">
-                                    {serverInfo.serverUrl}
-                                </span>
-                            </div>
+                            {serverInfo.serverUrl && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[#B3B3B3] text-sm">Server</span>
+                                    <span className="text-white font-medium text-sm truncate max-w-[200px]">
+                                        {serverInfo.serverUrl}
+                                    </span>
+                                </div>
+                            )}
                             <div className="flex items-center justify-between">
                                 <span className="text-[#B3B3B3] text-sm">Username</span>
                                 <span className="text-white font-medium">
@@ -60,6 +77,43 @@ export default function SettingsPage() {
                     )}
                 </div>
             </section>
+
+            {user?.provider === "telegram" && uploadStatus && (
+                <section className="mb-8">
+                    <h2 className="text-xl font-bold text-white mb-4">Library Stats</h2>
+                    <div className="bg-[#181818] rounded-xl p-5">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-2xl font-bold text-white">{uploadStatus.trackCount || 0}</p>
+                                <p className="text-[#B3B3B3] text-sm">Tracks</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-white">{uploadStatus.albumCount || 0}</p>
+                                <p className="text-[#B3B3B3] text-sm">Albums</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-white">{uploadStatus.artistCount || 0}</p>
+                                <p className="text-[#B3B3B3] text-sm">Artists</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-white">{uploadStatus.mappingCount || 0}</p>
+                                <p className="text-[#B3B3B3] text-sm">Files on Telegram</p>
+                            </div>
+                        </div>
+                        {uploadStatus.channels?.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-white/5">
+                                <p className="text-[#B3B3B3] text-sm mb-2">Storage Channels</p>
+                                {uploadStatus.channels.map((ch) => (
+                                    <div key={ch.channel_id} className="flex items-center gap-2 text-sm">
+                                        <span className={ch.is_active ? "text-green-400" : "text-red-400"}>●</span>
+                                        <span className="text-white">{ch.title || ch.channel_id}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
+            )}
 
             <section className="mb-8">
                 <h2 className="text-xl font-bold text-white mb-4">Account</h2>
@@ -82,8 +136,8 @@ export default function SettingsPage() {
             <section>
                 <h2 className="text-xl font-bold text-white mb-4">About</h2>
                 <div className="bg-[#181818] rounded-xl p-5 text-sm text-[#B3B3B3]">
-                    <p>BinksConnect v0.1.0</p>
-                    <p className="mt-1">A personal music ecosystem</p>
+                    <p>BinksConnect v0.2.0</p>
+                    <p className="mt-1">A provider-agnostic personal music server</p>
                 </div>
             </section>
         </main>

@@ -3,10 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/store/authStore";
-import { apiClient } from "@/services/apiClient";
 
 const COMING_SOON = [
-    { id: "telegram", name: "Telegram", icon: "✈️", description: "Play music from your Telegram channel", color: "from-blue-600 to-blue-800" },
     { id: "jellyfin", name: "Jellyfin", icon: "📺", description: "Stream from your Jellyfin media server", color: "from-purple-600 to-purple-800" },
     { id: "local", name: "Local Library", icon: "💻", description: "Play music from your device storage", color: "from-amber-600 to-amber-800" },
 ];
@@ -23,6 +21,14 @@ const PROVIDERS = [
             { key: "username", label: "Username", type: "text", placeholder: "admin", required: true },
             { key: "password", label: "Password", type: "password", placeholder: "••••••••", required: true },
         ],
+    },
+    {
+        id: "telegram",
+        name: "Telegram",
+        icon: "✈️",
+        description: "Play music stored in your Telegram channels",
+        enabled: true,
+        fields: [],
     },
 ];
 
@@ -46,20 +52,36 @@ export default function OnboardingPage() {
         setSelectedProvider(provider);
         setConfig({});
         setError("");
-        setStep("configure");
+        if (provider.fields.length === 0) {
+            handleSubmitTelegram();
+        } else {
+            setStep("configure");
+        }
     };
 
     const updateField = (key) => (e) => {
         setConfig((prev) => ({ ...prev, [key]: e.target.value }));
     };
 
+    const handleSubmitTelegram = async () => {
+        setError("");
+        setLoading(true);
+        try {
+            await login(null, null, null, "telegram");
+            router.push("/");
+        } catch (err) {
+            setError(err.message || "Telegram not configured on server.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
         setLoading(true);
-
         try {
-            await login(config.serverUrl, config.username, config.password);
+            await login(config.serverUrl, config.username, config.password, selectedProvider.id);
             router.push("/");
         } catch (err) {
             setError(err.message || "Connection failed. Check your credentials.");
@@ -145,31 +167,39 @@ export default function OnboardingPage() {
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            {selectedProvider.fields.map((field) => (
-                                <div key={field.key}>
-                                    <label className="block text-sm font-medium text-[#B3B3B3] mb-1.5">
-                                        {field.label}
-                                    </label>
-                                    <input
-                                        type={field.type}
-                                        value={config[field.key] || ""}
-                                        onChange={updateField(field.key)}
-                                        placeholder={field.placeholder}
-                                        required={field.required}
-                                        className="w-full px-4 py-3 bg-[#282828] text-white rounded-lg outline-none focus:ring-2 focus:ring-[#1db954] transition text-sm"
-                                    />
-                                </div>
-                            ))}
+                        {loading && (
+                            <div className="text-center py-8">
+                                <p className="text-[#B3B3B3]">Connecting to {selectedProvider.name}...</p>
+                            </div>
+                        )}
 
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-[#1db954] hover:bg-[#1ed760] disabled:opacity-50 text-black font-bold py-3 rounded-full transition-colors mt-6"
-                            >
-                                {loading ? "Connecting..." : "Connect"}
-                            </button>
-                        </form>
+                        {!loading && (
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                {selectedProvider.fields.map((field) => (
+                                    <div key={field.key}>
+                                        <label className="block text-sm font-medium text-[#B3B3B3] mb-1.5">
+                                            {field.label}
+                                        </label>
+                                        <input
+                                            type={field.type}
+                                            value={config[field.key] || ""}
+                                            onChange={updateField(field.key)}
+                                            placeholder={field.placeholder}
+                                            required={field.required}
+                                            className="w-full px-4 py-3 bg-[#282828] text-white rounded-lg outline-none focus:ring-2 focus:ring-[#1db954] transition text-sm"
+                                        />
+                                    </div>
+                                ))}
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-[#1db954] hover:bg-[#1ed760] disabled:opacity-50 text-black font-bold py-3 rounded-full transition-colors mt-6"
+                                >
+                                    {loading ? "Connecting..." : "Connect"}
+                                </button>
+                            </form>
+                        )}
                     </div>
                 )}
             </div>

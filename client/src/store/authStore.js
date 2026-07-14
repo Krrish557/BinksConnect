@@ -8,10 +8,10 @@ const useAuthStore = create((set) => ({
     user: token ? { provider: "navidrome" } : null,
     isAuthenticated: !!token,
 
-    login: async (serverUrl, username, password) => {
-        const data = await authService.login(serverUrl, username, password);
+    login: async (serverUrl, username, password, providerId = "navidrome") => {
+        const data = await authService.login(serverUrl, username, password, providerId);
         set({
-            user: { provider: data.providerId || "navidrome" },
+            user: { provider: data.providerId || providerId },
             isAuthenticated: true,
         });
         return data;

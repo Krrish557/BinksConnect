@@ -2,11 +2,35 @@ const express = require("express");
 const { Readable } = require("stream");
 const { authMiddleware } = require("../middleware/auth");
 const providerManager = require("../providers/manager");
+const TelegramStorageProvider = require("../providers/telegram");
+const metadataService = require("../services/metadataService");
 
 const router = express.Router();
 
 router.get("/:trackId", authMiddleware, async (req, res) => {
     try {
+        if (req.session.providerId === "telegram") {
+            const provider = new TelegramStorageProvider({});
+            const result = await provider.download(req.params.trackId);
+
+            metadataService.recordPlay(req.session.userId, req.params.trackId);
+
+            res.set("Content-Type", result.contentType);
+            res.set("Accept-Ranges", "bytes");
+
+            if (result.contentLength) {
+                res.set("Content-Length", result.contentLength);
+            }
+
+            if (result.status === 206 && result.contentRange) {
+                res.set("Content-Range", result.contentRange);
+                res.status(206);
+            }
+
+            result.stream.pipe(res);
+            return;
+        }
+
         const provider = providerManager.getProvider(req.session);
         const rangeHeader = req.headers.range || null;
         const result = await provider.getStream(req.params.trackId, rangeHeader);

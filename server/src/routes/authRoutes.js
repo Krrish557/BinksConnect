@@ -99,6 +99,40 @@ router.post("/login", async (req, res) => {
             });
         }
 
+        if (providerId === "telegram") {
+            if (!process.env.TELEGRAM_BOT_TOKEN) {
+                return res.status(500).json({ error: "Telegram bot not configured on server" });
+            }
+
+            const db = getDatabase();
+            const telegramUser = "telegram_user";
+            let dbUser = db.prepare("SELECT id FROM users WHERE username = ?").get(telegramUser);
+            let userId;
+            if (dbUser) {
+                userId = dbUser.id;
+            } else {
+                const fakeHash = bcrypt.hashSync("telegram-session", 10);
+                const result = db.prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)").run(telegramUser, fakeHash);
+                userId = result.lastInsertRowid;
+            }
+
+            const sessionId = crypto.randomUUID();
+            const providerConfig = { botConfigured: true };
+
+            db.prepare("INSERT INTO sessions (id, user_id, provider_id, provider_config) VALUES (?, ?, ?, ?)").run(
+                sessionId, userId, "telegram", JSON.stringify(providerConfig)
+            );
+
+            const jwtToken = generateToken(sessionId, userId);
+
+            return res.json({
+                success: true,
+                token: jwtToken,
+                providerId: "telegram",
+                displayName: "Telegram",
+            });
+        }
+
         return res.status(400).json({ error: "Unsupported provider" });
     } catch (err) {
         console.error("Login error:", err);
@@ -107,12 +141,15 @@ router.post("/login", async (req, res) => {
 });
 
 router.get("/me", require("../middleware/auth").authMiddleware, (req, res) => {
-    return res.json({
+    const data = {
         success: true,
         providerId: req.session.providerId,
-        username: req.session.providerConfig.username,
-        serverUrl: req.session.providerConfig.serverUrl,
-    });
+        username: req.session.providerConfig.username || "telegram_user",
+    };
+    if (req.session.providerConfig.serverUrl) {
+        data.serverUrl = req.session.providerConfig.serverUrl;
+    }
+    return res.json(data);
 });
 
 router.post("/logout", require("../middleware/auth").authMiddleware, (req, res) => {

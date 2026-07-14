@@ -11,12 +11,16 @@ const NAV = [
     { label: "Albums",    path: "/albums",      icon: "💿" },
     { label: "Artists",   path: "/artists",     icon: "🎤" },
     { label: "Playlists", path: "/playlists",   icon: "📁" },
+    { label: "Upload",    path: "/upload",      icon: "📤", telegramOnly: true },
     { label: "Settings",  path: "/settings",    icon: "⚙️" },
 ];
 
 export default function Sidebar() {
     const pathname = usePathname();
     const logout = useAuthStore((s) => s.logout);
+    const user = useAuthStore((s) => s.user);
+
+    const navItems = NAV.filter((item) => !item.telegramOnly || user?.provider === "telegram");
 
     return (
         <aside className="hidden md:flex flex-col w-20 lg:w-64 shrink-0 bg-[#111] border-r border-white/5 overflow-hidden">
@@ -30,7 +34,7 @@ export default function Sidebar() {
 
             {/* NAV */}
             <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                {NAV.map((item) => {
+                {navItems.map((item) => {
                     const isActive =
                         item.path === "/"
                             ? pathname === "/"
