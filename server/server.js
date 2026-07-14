@@ -55,8 +55,10 @@ app.get("/", (req, res) => {
 });
 
 const { startPolling } = require("./src/telegram/bot");
+const { initCache } = require("./src/cache/audioCache");
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    initCache();
     startPolling();
 });

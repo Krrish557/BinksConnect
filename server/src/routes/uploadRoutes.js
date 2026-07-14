@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 const mm = require("music-metadata");
+const sharp = require("sharp");
 const { authMiddleware } = require("../middleware/auth");
 const { scanFile } = require("../telegram/scanner");
 const metadataService = require("../services/metadataService");
@@ -46,6 +47,7 @@ router.post("/", authMiddleware, upload.array("files", 20), async (req, res) => 
                 }
 
                 let metadata;
+                let picture = null;
                 try {
                     const parsed = await mm.parseFile(file.path);
                     const common = parsed.common || {};
@@ -60,6 +62,9 @@ router.post("/", authMiddleware, upload.array("files", 20), async (req, res) => 
                         duration: format.duration || 0,
                         bitrate: format.bitrate ? Math.round(format.bitrate) : null,
                     };
+                    if (common.picture && common.picture.length > 0) {
+                        picture = common.picture[0];
+                    }
                 } catch {
                     metadata = {
                         title: path.basename(file.originalname || file.filename, path.extname(file.originalname || file.filename)),
@@ -105,6 +110,23 @@ router.post("/", authMiddleware, upload.array("files", 20), async (req, res) => 
                     checksum: uploadResult.checksum,
                     uploadedBy: uploadResult.uploadedBy,
                 });
+
+                if (picture && picture.data) {
+                    try {
+                        const inputBuffer = Buffer.from(picture.data);
+                        const fullSize = await sharp(inputBuffer).jpeg({ quality: 90 }).toBuffer();
+                        const thumbnail = await sharp(inputBuffer).resize(300, 300, { fit: "cover" }).jpeg({ quality: 80 }).toBuffer();
+                        const mime = picture.format || "image/jpeg";
+                        if (albumDbId) {
+                            metadataService.storeAlbumCover(albumDbId, thumbnail, fullSize, mime);
+                        }
+                        if (artistDbId) {
+                            metadataService.storeArtistCover(artistDbId, thumbnail, fullSize, mime);
+                        }
+                    } catch (artErr) {
+                        console.log(`[Upload] Failed to extract cover art: ${artErr.message}`);
+                    }
+                }
 
                 cleanup(file.path);
                 results.push({

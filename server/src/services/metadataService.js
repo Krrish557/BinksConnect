@@ -443,6 +443,84 @@ class MetadataService {
         const row = db.prepare("SELECT COUNT(*) as count FROM albums").get();
         return row.count;
     }
+
+    storeAlbumCover(albumDbId, thumbnail, fullSize, mimeType = "image/jpeg") {
+        const db = getDatabase();
+        db.prepare(`
+            INSERT OR REPLACE INTO album_covers (album_id, thumbnail, full_size, mime_type)
+            VALUES (?, ?, ?, ?)
+        `).run(albumDbId, thumbnail, fullSize, mimeType);
+    }
+
+    storeArtistCover(artistDbId, thumbnail, fullSize, mimeType = "image/jpeg") {
+        const db = getDatabase();
+        db.prepare(`
+            INSERT OR REPLACE INTO artist_covers (artist_id, thumbnail, full_size, mime_type)
+            VALUES (?, ?, ?, ?)
+        `).run(artistDbId, thumbnail, fullSize, mimeType);
+    }
+
+    getAlbumCover(albumInternalId, size = "full") {
+        const db = getDatabase();
+        const album = db.prepare("SELECT id FROM albums WHERE internal_id = ?").get(albumInternalId);
+        if (!album) return null;
+        const col = size === "thumb" ? "thumbnail" : "full_size";
+        const row = db.prepare(`SELECT ${col} as image, mime_type FROM album_covers WHERE album_id = ?`).get(album.id);
+        return row && row.image ? { image: row.image, mimeType: row.mime_type } : null;
+    }
+
+    getArtistCover(artistInternalId, size = "full") {
+        const db = getDatabase();
+        const artist = db.prepare("SELECT id FROM artists WHERE internal_id = ?").get(artistInternalId);
+        if (!artist) return null;
+        const col = size === "thumb" ? "thumbnail" : "full_size";
+        const row = db.prepare(`SELECT ${col} as image, mime_type FROM artist_covers WHERE artist_id = ?`).get(artist.id);
+        return row && row.image ? { image: row.image, mimeType: row.mime_type } : null;
+    }
+
+    searchTracks(query) {
+        const db = getDatabase();
+        const q = `%${query}%`;
+        return db.prepare(`
+            SELECT t.internal_id as id, t.title,
+                   ar.name as artist, a.name as album
+            FROM tracks t
+            LEFT JOIN artists ar ON ar.id = t.artist_id
+            LEFT JOIN albums a ON a.id = t.album_id
+            WHERE t.title LIKE ? OR ar.name LIKE ? OR a.name LIKE ?
+            ORDER BY t.title ASC
+            LIMIT 10
+        `).all(q, q, q);
+    }
+
+    deleteTrack(trackInternalId) {
+        const db = getDatabase();
+        const track = db.prepare("SELECT id, title, album_id, artist_id FROM tracks WHERE internal_id = ?").get(trackInternalId);
+        if (!track) return null;
+
+        const mappings = this.findMappingByTrackId(trackInternalId);
+        const albumId = track.album_id;
+        const artistId = track.artist_id;
+
+        db.prepare("DELETE FROM tracks WHERE id = ?").run(track.id);
+
+        if (albumId) {
+            const remaining = db.prepare("SELECT COUNT(*) as c FROM tracks WHERE album_id = ?").get(albumId).c;
+            if (remaining === 0) {
+                db.prepare("DELETE FROM album_covers WHERE album_id = ?").run(albumId);
+                db.prepare("DELETE FROM albums WHERE id = ?").run(albumId);
+            }
+        }
+        if (artistId) {
+            const remaining = db.prepare("SELECT COUNT(*) as c FROM albums WHERE artist_id = ?").get(artistId).c;
+            if (remaining === 0) {
+                db.prepare("DELETE FROM artist_covers WHERE artist_id = ?").run(artistId);
+                db.prepare("DELETE FROM artists WHERE id = ?").run(artistId);
+            }
+        }
+
+        return { title: track.title, mappings };
+    }
 }
 
 module.exports = new MetadataService();

@@ -119,6 +119,29 @@ function initSchema() {
         CREATE INDEX IF NOT EXISTS idx_play_history_user ON play_history(user_id);
         CREATE INDEX IF NOT EXISTS idx_play_history_track ON play_history(track_id);
         CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
+
+        CREATE TABLE IF NOT EXISTS cache_entries (
+            checksum TEXT PRIMARY KEY,
+            file_path TEXT NOT NULL,
+            file_size INTEGER NOT NULL,
+            last_accessed DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS album_covers (
+            album_id INTEGER PRIMARY KEY,
+            thumbnail BLOB,
+            full_size BLOB,
+            mime_type TEXT DEFAULT 'image/jpeg',
+            FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS artist_covers (
+            artist_id INTEGER PRIMARY KEY,
+            thumbnail BLOB,
+            full_size BLOB,
+            mime_type TEXT DEFAULT 'image/jpeg',
+            FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
+        );
     `);
 }
 

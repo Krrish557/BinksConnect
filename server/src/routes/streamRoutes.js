@@ -9,14 +9,17 @@ const router = express.Router();
 
 router.get("/:trackId", authMiddleware, async (req, res) => {
     try {
+        const rangeHeader = req.headers.range || null;
+
         if (req.session.providerId === "telegram") {
             const provider = new TelegramStorageProvider({});
-            const result = await provider.download(req.params.trackId);
+            const result = await provider.download(req.params.trackId, rangeHeader);
 
             metadataService.recordPlay(req.session.userId, req.params.trackId);
 
             res.set("Content-Type", result.contentType);
             res.set("Accept-Ranges", "bytes");
+            res.set("Cache-Control", "private, max-age=86400");
 
             if (result.contentLength) {
                 res.set("Content-Length", result.contentLength);
@@ -32,11 +35,11 @@ router.get("/:trackId", authMiddleware, async (req, res) => {
         }
 
         const provider = providerManager.getProvider(req.session);
-        const rangeHeader = req.headers.range || null;
         const result = await provider.getStream(req.params.trackId, rangeHeader);
 
         res.set("Content-Type", result.contentType);
         res.set("Accept-Ranges", "bytes");
+        res.set("Cache-Control", "private, max-age=86400");
 
         if (result.contentLength) {
             res.set("Content-Length", result.contentLength);

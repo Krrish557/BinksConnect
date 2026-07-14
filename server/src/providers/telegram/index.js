@@ -3,10 +3,9 @@ const telegramBot = require("../../telegram/bot");
 const metadataService = require("../../services/metadataService");
 const { createAllocator } = require("../channelAllocator");
 const { getDatabase } = require("../../db/database");
-const crypto = require("crypto");
+const audioCache = require("../../cache/audioCache");
 const fs = require("fs");
-const path = require("path");
-const os = require("os");
+const { Readable } = require("stream");
 
 class TelegramStorageProvider extends BaseProvider {
     constructor(config) {
@@ -22,13 +21,8 @@ class TelegramStorageProvider extends BaseProvider {
         return this._allocator;
     }
 
-    get tmpDir() {
-        const dir = path.join(os.tmpdir(), "binksconnect");
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        return dir;
-    }
-
     async upload(filePath, uploadedBy = "admin") {
+        const crypto = require("crypto");
         const fileBuffer = fs.readFileSync(filePath);
         const checksum = crypto.createHash("sha256").update(fileBuffer).digest("hex");
 
@@ -54,41 +48,115 @@ class TelegramStorageProvider extends BaseProvider {
         };
     }
 
-    async download(trackInternalId) {
+    async download(trackInternalId, rangeHeader = null) {
         const mappings = metadataService.findMappingByTrackId(trackInternalId);
         const mapping = mappings.find((m) => m.provider === "telegram");
         if (!mapping) throw new Error(`No Telegram mapping found for track: ${trackInternalId}`);
 
-        const cachePath = path.join(this.tmpDir, `${mapping.checksum || mapping.telegram_file_unique_id}.audio`);
-        if (fs.existsSync(cachePath)) {
-            const stat = fs.statSync(cachePath);
-            return {
-                stream: fs.createReadStream(cachePath),
-                status: 200,
-                contentType: mapping.mime_type || "audio/mpeg",
-                contentLength: String(stat.size),
-                contentRange: null,
-            };
+        const checksum = mapping.checksum || mapping.telegram_file_unique_id;
+        const contentType = mapping.mime_type || "audio/mpeg";
+
+        const cached = audioCache.getCachedStream(checksum);
+        if (cached) {
+            return this._serveFromCache(cached, contentType, rangeHeader);
         }
 
         const result = await telegramBot.downloadFile(mapping.telegram_file_id);
-        const nodeStream = require("stream").Readable.fromWeb(result.stream);
-        const writeStream = fs.createWriteStream(cachePath);
-        nodeStream.pipe(writeStream);
+        const webStream = result.stream;
 
-        await new Promise((resolve, reject) => {
-            writeStream.on("finish", resolve);
-            writeStream.on("error", reject);
-        });
+        const chunks = [];
+        const reader = webStream.getReader();
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(Buffer.from(value));
+        }
+        const fullBuffer = Buffer.concat(chunks);
 
-        const stat = fs.statSync(cachePath);
+        audioCache.storeToCache(checksum, fullBuffer);
+
+        if (rangeHeader) {
+            return this._serveRange(fullBuffer, contentType, rangeHeader);
+        }
+
         return {
-            stream: fs.createReadStream(cachePath),
+            stream: Readable.from(fullBuffer),
             status: 200,
-            contentType: mapping.mime_type || "audio/mpeg",
-            contentLength: String(stat.size),
+            contentType,
+            contentLength: String(fullBuffer.length),
             contentRange: null,
         };
+    }
+
+    _serveFromCache(cached, contentType, rangeHeader) {
+        if (rangeHeader) {
+            return this._serveRangeFromPath(cached, contentType, rangeHeader);
+        }
+        return {
+            stream: cached.stream,
+            status: 200,
+            contentType,
+            contentLength: String(cached.fileSize),
+            contentRange: null,
+        };
+    }
+
+    _serveRangeFromPath(cached, contentType, rangeHeader) {
+        const totalSize = cached.fileSize;
+        const range = this._parseRange(rangeHeader, totalSize);
+        if (!range) {
+            return {
+                stream: cached.stream,
+                status: 200,
+                contentType,
+                contentLength: String(totalSize),
+                contentRange: null,
+            };
+        }
+        const { start, end } = range;
+        const chunkSize = end - start + 1;
+        const stream = fs.createReadStream(cached.stream.path, { start, end });
+        return {
+            stream,
+            status: 206,
+            contentType,
+            contentLength: String(chunkSize),
+            contentRange: `bytes ${start}-${end}/${totalSize}`,
+        };
+    }
+
+    _serveRange(buffer, contentType, rangeHeader) {
+        const totalSize = buffer.length;
+        const range = this._parseRange(rangeHeader, totalSize);
+        if (!range) {
+            return {
+                stream: Readable.from(buffer),
+                status: 200,
+                contentType,
+                contentLength: String(totalSize),
+                contentRange: null,
+            };
+        }
+        const { start, end } = range;
+        const chunkSize = end - start + 1;
+        const chunk = buffer.subarray(start, end + 1);
+        return {
+            stream: Readable.from(chunk),
+            status: 206,
+            contentType,
+            contentLength: String(chunkSize),
+            contentRange: `bytes ${start}-${end}/${totalSize}`,
+        };
+    }
+
+    _parseRange(rangeHeader, totalSize) {
+        if (!rangeHeader || !rangeHeader.startsWith("bytes=")) return null;
+        const parts = rangeHeader.slice(6).split("-");
+        if (parts.length !== 2) return null;
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : totalSize - 1;
+        if (isNaN(start) || isNaN(end) || start < 0 || end >= totalSize || start > end) return null;
+        return { start, end };
     }
 
     async delete(trackInternalId) {
