@@ -1,45 +1,8 @@
-# BinksConnect — TODO
+fix plyalist cover, add option to directly add songs with one click. 
+add login for various users. 
+<!-- add dowload progress bar for current, and next in queue song. 
 
-## Telegram Provider
-- [ ] Server: Set up GramJS MTProto client (`server/src/telegram/client.js`)
-- [ ] Server: Implement phone number + code auth flow
-- [ ] Server: Save/load GramJS session strings securely
-- [ ] Server: Build channel crawler — iterate audio messages from specified channels
-- [ ] Server: Parse audio metadata (ID3 tags, filename, captions, thumbnails)
-- [ ] Server: Build album/artist grouping heuristics from raw channel posts
-- [ ] Server: Index tracks into a local store (JSON or SQLite)
-- [ ] Server: Create REST API routes (`/api/telegram/*`)
-- [ ] Server: Implement audio stream proxy with HTTP Range request support
-- [ ] Server: Handle Telegram file reference expiry + refresh
-- [ ] Server: Add rate limit / flood wait handling with exponential backoff
-- [ ] Client: Create Telegram provider class (`client/src/providers/telegram/index.js`)
-- [ ] Client: Implement all provider interface methods (getAlbums, getSongs, getArtists, search, etc.)
-- [ ] Client: Add Telegram onboarding flow — API ID/Hash input → phone → verification code
-- [ ] Client: Remove Telegram from COMING_SOON list in onboarding page
-- [ ] Client: Register Telegram provider in provider registry
-
-## Lyrics
-- [ ] Set up lyrics provider (Genius API or alternative)\n
-- [ ] Build lyrics fetch endpoint on server
-- [ ] Implement lyrics side panel in full player
-- [ ] Create lyrics page with synced/highlighted lyrics view
-- [ ] Handle instrumental / no-lyrics states gracefully
-
-## Queue & Playback
-- [ ] Implement queue reordering (drag-and-drop)
-- [ ] Add queue persistence across page reloads
-- [ ] Add volume persistence across sessions
-- [ ] Implement gapless playback
-- [ ] Implement crossfade between tracks
-- [ ] Add audio equalizer / visualizer
-- [ ] Implement keyboard shortcuts (space=play/pause, arrows=seek, etc.)
-
-## Favourites & Library
-- [ ] Add album favouriting toggle UI
-- [ ] Add artist favouriting toggle UI
-- [ ] Persist favourites server-side (currently Navidrome-only)
-- [ ] Add "Add to Playlist" context menu option for tracks
-
+bug, pressed space and it continued a song while i played with mouse another song played. (2 songs together) -->
 ## Database
 - [ ] Set up MongoDB connection
 - [ ] Create User model (local auth + provider sessions)

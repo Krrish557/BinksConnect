@@ -42,6 +42,9 @@ export default function FullPlayer() {
         reorderQueue,
         lyrics,
         fetchLyrics,
+        bufferProgress,
+        nextTrackProgress,
+        nextTrackId,
     } = usePlayerStore();
 
     const [tab, setTab] = useState("queue");
@@ -201,6 +204,10 @@ export default function FullPlayer() {
                     <div className="relative h-1.5 group/seek cursor-pointer">
                         <div className="w-full h-1.5 bg-white/10 rounded-full">
                             <div
+                                className="absolute top-0 left-0 h-1.5 bg-white/20 rounded-full pointer-events-none"
+                                style={{ width: `${bufferProgress}%` }}
+                            />
+                            <div
                                 className="h-1.5 bg-[#1db954] rounded-full relative"
                                 style={{ width: `${progress}%` }}
                             >
@@ -218,7 +225,14 @@ export default function FullPlayer() {
                     </div>
                     <div className="flex justify-between mt-1.5 text-xs text-[#B3B3B3]">
                         <span>{formatTime(currentTime)}</span>
-                        <span>{formatTime(duration)}</span>
+                        <div className="flex items-center gap-2">
+                            {nextTrackId && nextTrackProgress < 100 && (
+                                <span className="text-[10px] text-[#B3B3B3]/50">
+                                    Next: {Math.round(nextTrackProgress)}%
+                                </span>
+                            )}
+                            <span>{formatTime(duration)}</span>
+                        </div>
                     </div>
                 </div>
 

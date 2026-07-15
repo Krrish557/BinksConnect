@@ -4,6 +4,7 @@ import { apiClient } from "@/services/apiClient";
 import { lyricsService } from "@/services/lyricsService";
 
 let audio = null;
+let prefetchAbort = null;
 
 export const usePlayerStore = create(
     persist(
@@ -21,6 +22,9 @@ export const usePlayerStore = create(
             isRepeat: false,
             recentlyPlayed: [],
             lyrics: null,
+            bufferProgress: 0,
+            nextTrackProgress: 0,
+            nextTrackId: null,
 
             initAudio: () => {
                 if (audio) return;
@@ -33,6 +37,13 @@ export const usePlayerStore = create(
 
                 audio.ontimeupdate = () => {
                     set({ currentTime: audio.currentTime });
+                };
+
+                audio.onprogress = () => {
+                    if (audio.buffered.length > 0 && audio.duration > 0) {
+                        const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
+                        set({ bufferProgress: Math.min((bufferedEnd / audio.duration) * 100, 100) });
+                    }
                 };
 
                 audio.onended = () => {
@@ -56,6 +67,7 @@ export const usePlayerStore = create(
                 });
 
                 get().loadTrack();
+                get().play();
                 get()._addToRecentlyPlayed(tracks[safeIndex]);
             },
 
@@ -64,6 +76,8 @@ export const usePlayerStore = create(
                 if (!currentTrack) return;
 
                 get().initAudio();
+
+                if (prefetchAbort) { prefetchAbort.abort(); prefetchAbort = null; }
 
                 audio.pause();
                 audio.src = apiClient.getStreamUrl(currentTrack.id);
@@ -74,6 +88,10 @@ export const usePlayerStore = create(
                     currentTime: 0,
                     duration: 0,
                     isReady: false,
+                    isPlaying: false,
+                    bufferProgress: 0,
+                    nextTrackProgress: 0,
+                    nextTrackId: null,
                 });
 
                 if (typeof navigator !== "undefined" && navigator.mediaSession) {
@@ -93,9 +111,54 @@ export const usePlayerStore = create(
                 try {
                     await audio.play();
                     set({ isPlaying: true });
+                    get()._prefetchNextTrack();
                 } catch (e) {
                     console.warn("Playback failed:", e.message);
                 }
+            },
+
+            _prefetchNextTrack: () => {
+                const { queue, currentIndex, isShuffle, currentTrack } = get();
+                if (queue.length <= 1) return;
+
+                if (prefetchAbort) { prefetchAbort.abort(); }
+
+                let nextIndex;
+                if (isShuffle) {
+                    nextIndex = Math.floor(Math.random() * queue.length);
+                } else {
+                    nextIndex = currentIndex + 1;
+                    if (nextIndex >= queue.length) {
+                        set({ nextTrackProgress: 0, nextTrackId: null });
+                        return;
+                    }
+                }
+
+                const nextTrack = queue[nextIndex];
+                if (!nextTrack || nextTrack.id === currentTrack?.id) return;
+
+                const url = apiClient.getStreamUrl(nextTrack.id);
+                const controller = new AbortController();
+                prefetchAbort = controller;
+
+                set({ nextTrackProgress: 0, nextTrackId: nextTrack.id });
+
+                fetch(url, { signal: controller.signal }).then(async (res) => {
+                    if (!res.ok) return;
+                    const contentLength = parseInt(res.headers.get("content-length") || "0", 10);
+                    if (!contentLength || !res.body) {
+                        set({ nextTrackProgress: 100 });
+                        return;
+                    }
+                    const reader = res.body.getReader();
+                    let received = 0;
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        received += value.length;
+                        set({ nextTrackProgress: Math.min((received / contentLength) * 100, 100) });
+                    }
+                }).catch(() => {});
             },
 
             pause: () => {

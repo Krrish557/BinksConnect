@@ -1,0 +1,10 @@
+{
+  "name": "binksconnect",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node run-tests.js",
+    "test:server": "cd server && npm test",
+    "test:client": "cd client && npm run lint && npm run build"
+  }
+}

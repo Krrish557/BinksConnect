@@ -15,6 +15,9 @@ export default function BottomPlayer() {
         volume,
         isShuffle,
         isRepeat,
+        bufferProgress,
+        nextTrackProgress,
+        nextTrackId,
         togglePlay,
         next,
         previous,
@@ -73,6 +76,11 @@ export default function BottomPlayer() {
                     <p className="text-xs text-[#B3B3B3] truncate">
                         {currentTrack.artist}
                     </p>
+                    {nextTrackId && nextTrackProgress < 100 && (
+                        <p className="text-[10px] text-[#B3B3B3]/60 truncate mt-0.5">
+                            Next ready: {Math.round(nextTrackProgress)}%
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -137,6 +145,10 @@ export default function BottomPlayer() {
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover/seek:opacity-100 transition-opacity" />
                             </div>
                         </div>
+                        <div
+                            className="absolute top-0 left-0 h-1 bg-white/15 rounded-full pointer-events-none"
+                            style={{ width: `${bufferProgress}%` }}
+                        />
                         <input
                             type="range"
                             min="0"
