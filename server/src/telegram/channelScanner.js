@@ -6,7 +6,7 @@ const mm = require("music-metadata");
 const sharp = require("sharp");
 const { scanFile } = require("./scanner");
 const metadataService = require("../services/metadataService");
-const { getDatabase } = require("../db/database");
+const { dbGet } = require("../db/dbHelpers");
 const { parseArtists } = require("../utils/artistParser");
 
 const AUDIO_MIME_PREFIXES = ["audio/"];
@@ -15,9 +15,8 @@ function sanitizeFileName(name) {
     return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").replace(/\s+/g, " ").trim();
 }
 
-function isRegisteredChannel(channelId) {
-    const db = getDatabase();
-    const ch = db.prepare("SELECT * FROM telegram_channels WHERE channel_id = ? AND is_active = 1").get(String(channelId));
+async function isRegisteredChannel(channelId) {
+    const ch = await dbGet("SELECT * FROM telegram_channels WHERE channel_id = ? AND is_active = 1", String(channelId));
     return !!ch;
 }
 
@@ -57,7 +56,7 @@ async function processChannelPost(ctx, bot) {
     }
 
     const chatId = String(msg.chat.id);
-    if (!isRegisteredChannel(chatId)) {
+    if (!await isRegisteredChannel(chatId)) {
         console.log(`[Scanner] Skipping: channel ${chatId} not registered`);
         return;
     }
@@ -102,7 +101,7 @@ async function processChannelPost(ctx, bot) {
         }
 
         const checksum = crypto.createHash("sha256").update(buffer).digest("hex");
-        const existing = metadataService.findTrackByChecksum(checksum);
+        const existing = await metadataService.findTrackByChecksum(checksum);
         if (existing) {
             console.log(`[Scanner] Skipping ${fileName}: duplicate (checksum match)`);
             cleanup(tmpPath);
@@ -147,12 +146,12 @@ async function processChannelPost(ctx, bot) {
         if (metadata.artist) {
             const parsedArtists = parseArtists(metadata.artist);
             if (parsedArtists.length > 0) {
-                const primary = metadataService.findOrCreateArtist(parsedArtists[0]);
+                const primary = await metadataService.findOrCreateArtist(parsedArtists[0]);
                 artistDbId = primary.dbId;
                 albumArtistDbId = primary.dbId;
 
                 for (let i = 1; i < parsedArtists.length; i++) {
-                    const feat = metadataService.findOrCreateArtist(parsedArtists[i]);
+                    const feat = await metadataService.findOrCreateArtist(parsedArtists[i]);
                     if (feat) {
                         parsedFeatArtists.push(feat.dbId);
                     }
@@ -162,17 +161,17 @@ async function processChannelPost(ctx, bot) {
 
         let albumDbId = null;
         if (metadata.album) {
-            const album = metadataService.createAlbum(metadata.album, artistDbId, metadata.year || 0);
+            const album = await metadataService.createAlbum(metadata.album, artistDbId, metadata.year || 0);
             albumDbId = album.dbId;
         }
 
-        const track = metadataService.createTrack(metadata, albumDbId, artistDbId, albumArtistDbId);
+        const track = await metadataService.createTrack(metadata, albumDbId, artistDbId, albumArtistDbId);
 
         for (const featDbId of parsedFeatArtists) {
-            metadataService.linkTrackArtist(track.dbId, featDbId, "featured");
+            await metadataService.linkTrackArtist(track.dbId, featDbId, "featured");
         }
 
-        metadataService.createProviderMapping(track.dbId, "telegram", {
+        await metadataService.createProviderMapping(track.dbId, "telegram", {
             telegramChannelId: chatId,
             telegramMessageId: messageId,
             telegramFileId: fileId,
@@ -191,13 +190,13 @@ async function processChannelPost(ctx, bot) {
                 const thumbnail = await sharp(inputBuffer).resize(300, 300, { fit: "cover" }).jpeg({ quality: 80 }).toBuffer();
                 const mime = picture.format || "image/jpeg";
                 if (track.dbId && albumDbId) {
-                    metadataService.storeAlbumCover(albumDbId, thumbnail, fullSize, mime);
+                    await metadataService.storeAlbumCover(albumDbId, thumbnail, fullSize, mime);
                 }
                 if (track.dbId && artistDbId) {
-                    metadataService.storeArtistCover(artistDbId, thumbnail, fullSize, mime);
+                    await metadataService.storeArtistCover(artistDbId, thumbnail, fullSize, mime);
                 }
                 for (const featDbId of parsedFeatArtists) {
-                    metadataService.storeArtistCover(featDbId, thumbnail, fullSize, mime);
+                    await metadataService.storeArtistCover(featDbId, thumbnail, fullSize, mime);
                 }
                 console.log(`[Scanner] Extracted cover art for: ${metadata.title}`);
             } catch (artErr) {

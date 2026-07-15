@@ -9,7 +9,7 @@ router.get("/", authMiddleware, async (req, res) => {
         if (req.session.providerId !== "telegram") {
             return res.status(400).json({ error: "Playlists only supported for Telegram provider" });
         }
-        const playlists = metadataService.getUserPlaylists(req.session.userId);
+        const playlists = await metadataService.getUserPlaylists(req.session.userId);
         return res.json({ playlists });
     } catch (err) {
         console.error("Get playlists error:", err);
@@ -26,7 +26,7 @@ router.post("/", authMiddleware, async (req, res) => {
         const trimmed = (name || "").trim();
         if (!trimmed) return res.status(400).json({ error: "Playlist name required" });
         if (trimmed.length > 200) return res.status(400).json({ error: "Playlist name too long (max 200 chars)" });
-        const playlist = metadataService.createPlaylist(req.session.userId, trimmed);
+        const playlist = await metadataService.createPlaylist(req.session.userId, trimmed);
         return res.json(playlist);
     } catch (err) {
         console.error("Create playlist error:", err);
@@ -39,7 +39,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
         if (req.session.providerId !== "telegram") {
             return res.status(400).json({ error: "Playlists only supported for Telegram provider" });
         }
-        const playlist = metadataService.getPlaylist(req.params.id, req.session.userId);
+        const playlist = await metadataService.getPlaylist(req.params.id, req.session.userId);
         if (!playlist) return res.status(404).json({ error: "Playlist not found" });
         return res.json(playlist);
     } catch (err) {
@@ -55,7 +55,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
         }
         const { name } = req.body;
         if (!name) return res.status(400).json({ error: "name required" });
-        metadataService.renamePlaylist(req.params.id, req.session.userId, name);
+        await metadataService.renamePlaylist(req.params.id, req.session.userId, name);
         return res.json({ success: true });
     } catch (err) {
         console.error("Rename playlist error:", err);
@@ -68,7 +68,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         if (req.session.providerId !== "telegram") {
             return res.status(400).json({ error: "Playlists only supported for Telegram provider" });
         }
-        const deleted = metadataService.deletePlaylist(req.params.id, req.session.userId);
+        const deleted = await metadataService.deletePlaylist(req.params.id, req.session.userId);
         if (!deleted) return res.status(404).json({ error: "Playlist not found" });
         return res.json({ success: true });
     } catch (err) {
@@ -84,7 +84,7 @@ router.post("/:id/tracks", authMiddleware, async (req, res) => {
         }
         const { trackId, position } = req.body;
         if (!trackId) return res.status(400).json({ error: "trackId required" });
-        const added = metadataService.addTrackToPlaylist(req.params.id, req.session.userId, trackId, position);
+        const added = await metadataService.addTrackToPlaylist(req.params.id, req.session.userId, trackId, position);
         if (!added) return res.status(404).json({ error: "Playlist or track not found" });
         return res.json({ success: true });
     } catch (err) {
@@ -98,7 +98,7 @@ router.delete("/:id/tracks/:trackId", authMiddleware, async (req, res) => {
         if (req.session.providerId !== "telegram") {
             return res.status(400).json({ error: "Playlists only supported for Telegram provider" });
         }
-        const removed = metadataService.removeTrackFromPlaylist(req.params.id, req.session.userId, req.params.trackId);
+        const removed = await metadataService.removeTrackFromPlaylist(req.params.id, req.session.userId, req.params.trackId);
         if (!removed) return res.status(404).json({ error: "Playlist or track not found" });
         return res.json({ success: true });
     } catch (err) {
@@ -114,7 +114,7 @@ router.put("/:id/reorder", authMiddleware, async (req, res) => {
         }
         const { trackIds } = req.body;
         if (!Array.isArray(trackIds) || trackIds.length === 0) return res.status(400).json({ error: "Non-empty trackIds array required" });
-        const reordered = metadataService.reorderPlaylist(req.params.id, req.session.userId, trackIds);
+        const reordered = await metadataService.reorderPlaylist(req.params.id, req.session.userId, trackIds);
         if (!reordered) return res.status(404).json({ error: "Playlist not found" });
         return res.json({ success: true });
     } catch (err) {

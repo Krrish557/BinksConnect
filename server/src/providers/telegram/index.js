@@ -2,7 +2,6 @@ const BaseProvider = require("../base");
 const telegramBot = require("../../telegram/bot");
 const metadataService = require("../../services/metadataService");
 const { createAllocator } = require("../channelAllocator");
-const { getDatabase } = require("../../db/database");
 const audioCache = require("../../cache/audioCache");
 const fs = require("fs");
 const { Readable } = require("stream");
@@ -26,12 +25,12 @@ class TelegramStorageProvider extends BaseProvider {
         const fileBuffer = fs.readFileSync(filePath);
         const checksum = crypto.createHash("sha256").update(fileBuffer).digest("hex");
 
-        const existing = metadataService.findTrackByChecksum(checksum);
+        const existing = await metadataService.findTrackByChecksum(checksum);
         if (existing) {
             return { success: true, trackId: existing.id, duplicate: true };
         }
 
-        const channelId = this.allocator.allocate();
+        const channelId = await this.allocator.allocate();
         const result = await telegramBot.uploadAudio(filePath, channelId);
 
         return {
@@ -49,14 +48,14 @@ class TelegramStorageProvider extends BaseProvider {
     }
 
     async download(trackInternalId, rangeHeader = null) {
-        const mappings = metadataService.findMappingByTrackId(trackInternalId);
+        const mappings = await metadataService.findMappingByTrackId(trackInternalId);
         const mapping = mappings.find((m) => m.provider === "telegram");
         if (!mapping) throw new Error(`No Telegram mapping found for track: ${trackInternalId}`);
 
         const checksum = mapping.checksum || mapping.telegram_file_unique_id;
         const contentType = mapping.mime_type || "audio/mpeg";
 
-        const cached = audioCache.getCachedStream(checksum);
+        const cached = await audioCache.getCachedStream(checksum);
         if (cached) {
             return this._serveFromCache(cached, contentType, rangeHeader);
         }
@@ -73,7 +72,7 @@ class TelegramStorageProvider extends BaseProvider {
         }
         const fullBuffer = Buffer.concat(chunks);
 
-        audioCache.storeToCache(checksum, fullBuffer);
+        await audioCache.storeToCache(checksum, fullBuffer);
 
         if (rangeHeader) {
             return this._serveRange(fullBuffer, contentType, rangeHeader);
@@ -160,7 +159,7 @@ class TelegramStorageProvider extends BaseProvider {
     }
 
     async delete(trackInternalId) {
-        const mappings = metadataService.findMappingByTrackId(trackInternalId);
+        const mappings = await metadataService.findMappingByTrackId(trackInternalId);
         for (const mapping of mappings) {
             if (mapping.provider === "telegram" && mapping.telegram_channel_id && mapping.telegram_message_id) {
                 await telegramBot.deleteMessage(mapping.telegram_channel_id, mapping.telegram_message_id);
@@ -170,7 +169,7 @@ class TelegramStorageProvider extends BaseProvider {
     }
 
     async exists(trackInternalId) {
-        const mappings = metadataService.findMappingByTrackId(trackInternalId);
+        const mappings = await metadataService.findMappingByTrackId(trackInternalId);
         return mappings.some((m) => m.provider === "telegram");
     }
 
@@ -179,7 +178,7 @@ class TelegramStorageProvider extends BaseProvider {
     }
 
     async verify(trackInternalId) {
-        const mappings = metadataService.findMappingByTrackId(trackInternalId);
+        const mappings = await metadataService.findMappingByTrackId(trackInternalId);
         const results = [];
         for (const mapping of mappings) {
             if (mapping.provider === "telegram") {

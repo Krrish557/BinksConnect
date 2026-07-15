@@ -1,9 +1,9 @@
 const jwt = require("jsonwebtoken");
-const { getDatabase } = require("../db/database");
+const { dbGet } = require("../db/dbHelpers");
 
 const JWT_SECRET = process.env.JWT_SECRET || "binksconnect-dev-secret-change-in-production";
 
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
     let token = null;
 
     const authHeader = req.headers.authorization;
@@ -19,8 +19,7 @@ function authMiddleware(req, res, next) {
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        const db = getDatabase();
-        const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(decoded.sessionId);
+        const session = await dbGet("SELECT * FROM sessions WHERE id = ?", decoded.sessionId);
 
         if (!session) {
             return res.status(401).json({ error: "Session not found" });

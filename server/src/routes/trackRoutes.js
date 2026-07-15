@@ -9,7 +9,7 @@ router.get("/random", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
             const size = parseInt(req.query.size) || 20;
-            const songs = metadataService.getRandomSongs(size);
+            const songs = await metadataService.getRandomSongs(size);
             return res.json(songs);
         }
         const provider = providerManager.getProvider(req.session);
@@ -26,7 +26,7 @@ router.get("/", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
             const offset = parseInt(req.query.offset) || 0;
-            const songs = metadataService.getSongs(offset);
+            const songs = await metadataService.getSongs(offset);
             return res.json(songs);
         }
         const provider = providerManager.getProvider(req.session);
@@ -42,7 +42,7 @@ router.get("/", authMiddleware, async (req, res) => {
 router.get("/starred", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
-            const starred = metadataService.getStarredItems(req.session.userId);
+            const starred = await metadataService.getStarredItems(req.session.userId);
             return res.json(starred);
         }
         const provider = providerManager.getProvider(req.session);

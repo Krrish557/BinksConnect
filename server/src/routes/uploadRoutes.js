@@ -9,7 +9,7 @@ const { authMiddleware } = require("../middleware/auth");
 const { scanFile } = require("../telegram/scanner");
 const metadataService = require("../services/metadataService");
 const TelegramStorageProvider = require("../providers/telegram");
-const { getDatabase } = require("../db/database");
+const { dbGet, dbAll } = require("../db/dbHelpers");
 
 const router = express.Router();
 
@@ -39,7 +39,7 @@ router.post("/", authMiddleware, upload.array("files", 20), async (req, res) => 
                 }
 
                 const checksum = crypto.createHash("sha256").update(fileBuffer).digest("hex");
-                const existing = metadataService.findTrackByChecksum(checksum);
+                const existing = await metadataService.findTrackByChecksum(checksum);
                 if (existing) {
                     cleanup(file.path);
                     results.push({ fileName: file.originalname || file.filename, success: true, trackId: existing.id, duplicate: true });
@@ -80,17 +80,17 @@ router.post("/", authMiddleware, upload.array("files", 20), async (req, res) => 
 
                 let artistDbId = null;
                 if (metadata.artist) {
-                    const artist = metadataService.createArtist(metadata.artist);
+                    const artist = await metadataService.createArtist(metadata.artist);
                     artistDbId = artist.dbId;
                 }
 
                 let albumDbId = null;
                 if (metadata.album) {
-                    const album = metadataService.createAlbum(metadata.album, artistDbId, metadata.year || 0);
+                    const album = await metadataService.createAlbum(metadata.album, artistDbId, metadata.year || 0);
                     albumDbId = album.dbId;
                 }
 
-                const track = metadataService.createTrack(metadata, albumDbId, artistDbId);
+                const track = await metadataService.createTrack(metadata, albumDbId, artistDbId);
 
                 const uploadResult = await provider.upload(file.path, uploadedBy);
                 if (!uploadResult.success) {
@@ -99,7 +99,7 @@ router.post("/", authMiddleware, upload.array("files", 20), async (req, res) => 
                     continue;
                 }
 
-                metadataService.createProviderMapping(track.dbId, "telegram", {
+                await metadataService.createProviderMapping(track.dbId, "telegram", {
                     telegramChannelId: uploadResult.channelId,
                     telegramMessageId: uploadResult.messageId,
                     telegramFileId: uploadResult.fileId,
@@ -118,10 +118,10 @@ router.post("/", authMiddleware, upload.array("files", 20), async (req, res) => 
                         const thumbnail = await sharp(inputBuffer).resize(300, 300, { fit: "cover" }).jpeg({ quality: 80 }).toBuffer();
                         const mime = picture.format || "image/jpeg";
                         if (albumDbId) {
-                            metadataService.storeAlbumCover(albumDbId, thumbnail, fullSize, mime);
+                            await metadataService.storeAlbumCover(albumDbId, thumbnail, fullSize, mime);
                         }
                         if (artistDbId) {
-                            metadataService.storeArtistCover(artistDbId, thumbnail, fullSize, mime);
+                            await metadataService.storeArtistCover(artistDbId, thumbnail, fullSize, mime);
                         }
                     } catch (artErr) {
                         console.log(`[Upload] Failed to extract cover art: ${artErr.message}`);
@@ -155,14 +155,19 @@ router.post("/", authMiddleware, upload.array("files", 20), async (req, res) => 
     }
 });
 
-router.get("/status", authMiddleware, (req, res) => {
-    const db = getDatabase();
-    const trackCount = db.prepare("SELECT COUNT(*) as count FROM tracks").get().count;
-    const albumCount = db.prepare("SELECT COUNT(*) as count FROM albums").get().count;
-    const artistCount = db.prepare("SELECT COUNT(*) as count FROM artists").get().count;
-    const mappingCount = db.prepare("SELECT COUNT(*) as count FROM provider_mappings WHERE provider = 'telegram'").get().count;
-    const channels = db.prepare("SELECT channel_id, title, is_active FROM telegram_channels").all();
-    return res.json({ trackCount, albumCount, artistCount, mappingCount, channels });
+router.get("/status", authMiddleware, async (req, res) => {
+    const trackCountRow = await dbGet("SELECT COUNT(*) as count FROM tracks");
+    const albumCountRow = await dbGet("SELECT COUNT(*) as count FROM albums");
+    const artistCountRow = await dbGet("SELECT COUNT(*) as count FROM artists");
+    const mappingCountRow = await dbGet("SELECT COUNT(*) as count FROM provider_mappings WHERE provider = 'telegram'");
+    const channels = await dbAll("SELECT channel_id, title, is_active FROM telegram_channels");
+    return res.json({
+        trackCount: trackCountRow.count,
+        albumCount: albumCountRow.count,
+        artistCount: artistCountRow.count,
+        mappingCount: mappingCountRow.count,
+        channels,
+    });
 });
 
 function cleanup(filePath) {

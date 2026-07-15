@@ -44,7 +44,7 @@ app.use("/api/admin", adminRoutes);
 app.get("/api/starred", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
-            const starred = metadataService.getStarredItems(req.session.userId);
+            const starred = await metadataService.getStarredItems(req.session.userId);
             return res.json(starred);
         }
         const provider = providerManager.getProvider(req.session);
@@ -62,13 +62,17 @@ app.get("/", (req, res) => {
 
 const { startPolling } = require("./src/telegram/bot");
 const { initCache } = require("./src/cache/audioCache");
+const { initDatabase } = require("./src/db/database");
 
 if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-        initCache();
-        startPolling();
-    });
+    (async () => {
+        await initDatabase();
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+            initCache();
+            startPolling();
+        });
+    })();
 }
 
 module.exports = app;

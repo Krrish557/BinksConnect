@@ -13,7 +13,7 @@ router.get("/", authMiddleware, async (req, res) => {
                 return res.json({ songs: [], albums: [], artists: [] });
             }
             if (query.length > 200) return res.status(400).json({ error: "Query too long (max 200 chars)" });
-            const results = metadataService.searchFTS5(query);
+            const results = await metadataService.searchFTS5(query);
             return res.json(results);
         }
         const provider = providerManager.getProvider(req.session);

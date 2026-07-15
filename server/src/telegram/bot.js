@@ -7,7 +7,7 @@ const sharp = require("sharp");
 const { processChannelPost } = require("./channelScanner");
 const metadataService = require("../services/metadataService");
 const audioCache = require("../cache/audioCache");
-const { getDatabase } = require("../db/database");
+const { dbGet, dbAll, dbRun } = require("../db/dbHelpers");
 
 let botInstance = null;
 let pollingStarted = false;
@@ -73,7 +73,7 @@ function getBot() {
         );
     });
 
-    botInstance.command("addchannel", (ctx) => {
+    botInstance.command("addchannel", async (ctx) => {
         const userId = String(ctx.from?.id);
         const sudoId = String(process.env.SUDO_USER_ID || "");
         if (!sudoId || userId !== sudoId) {
@@ -88,21 +88,20 @@ function getBot() {
         }
 
         try {
-            const db = getDatabase();
-            const existing = db.prepare("SELECT channel_id FROM telegram_channels WHERE channel_id = ?").get(channelId);
+            const existing = await dbGet("SELECT channel_id FROM telegram_channels WHERE channel_id = ?", channelId);
             if (existing) {
                 ctx.reply(`Channel ${channelId} is already registered.`);
                 return;
             }
 
-            db.prepare("INSERT INTO telegram_channels (channel_id, title) VALUES (?, ?)").run(channelId, channelId);
+            await dbRun("INSERT INTO telegram_channels (channel_id, title) VALUES (?, ?)", channelId, channelId);
             ctx.reply(`Channel ${channelId} registered.\n\nMake sure the bot is added as an admin to this channel. New audio files will be indexed automatically.`);
         } catch (err) {
             ctx.reply("Failed to register channel: " + err.message);
         }
     });
 
-    botInstance.command("removechannel", (ctx) => {
+    botInstance.command("removechannel", async (ctx) => {
         const userId = String(ctx.from?.id);
         const sudoId = String(process.env.SUDO_USER_ID || "");
         if (!sudoId || userId !== sudoId) {
@@ -117,8 +116,7 @@ function getBot() {
         }
 
         try {
-            const db = getDatabase();
-            const result = db.prepare("DELETE FROM telegram_channels WHERE channel_id = ?").run(channelId);
+            const result = await dbRun("DELETE FROM telegram_channels WHERE channel_id = ?", channelId);
             if (result.changes === 0) {
                 ctx.reply(`Channel ${channelId} not found.`);
                 return;
@@ -129,10 +127,9 @@ function getBot() {
         }
     });
 
-    botInstance.command("channels", (ctx) => {
+    botInstance.command("channels", async (ctx) => {
         try {
-            const db = getDatabase();
-            const channels = db.prepare("SELECT channel_id, title, is_active, strategy FROM telegram_channels ORDER BY created_at ASC").all();
+            const channels = await dbAll("SELECT channel_id, title, is_active, strategy FROM telegram_channels ORDER BY created_at ASC");
             if (channels.length === 0) {
                 ctx.reply("No channels registered.\n\nUse /addchannel <channel_id> to add one.");
                 return;
@@ -147,13 +144,12 @@ function getBot() {
         }
     });
 
-    botInstance.command("status", (ctx) => {
+    botInstance.command("status", async (ctx) => {
         try {
-            const db = getDatabase();
-            const tracks = db.prepare("SELECT COUNT(*) as c FROM tracks").get().c;
-            const albums = db.prepare("SELECT COUNT(*) as c FROM albums").get().c;
-            const artists = db.prepare("SELECT COUNT(*) as c FROM artists").get().c;
-            const channels = db.prepare("SELECT COUNT(*) as c FROM telegram_channels WHERE is_active = 1").get().c;
+            const tracks = (await dbGet("SELECT COUNT(*) as c FROM tracks")).c;
+            const albums = (await dbGet("SELECT COUNT(*) as c FROM albums")).c;
+            const artists = (await dbGet("SELECT COUNT(*) as c FROM artists")).c;
+            const channels = (await dbGet("SELECT COUNT(*) as c FROM telegram_channels WHERE is_active = 1")).c;
             const cache = audioCache.getCacheStats();
 
             ctx.reply(
@@ -173,13 +169,12 @@ function getBot() {
         await ctx.reply("Starting rescan... This may take a while.");
 
         try {
-            const db = getDatabase();
-            const mappings = db.prepare(`
+            const mappings = await dbAll(`
                 SELECT pm.checksum, pm.file_name, t.internal_id as track_id, t.title
                 FROM provider_mappings pm
                 JOIN tracks t ON t.id = pm.track_id
                 WHERE pm.provider = 'telegram' AND pm.checksum IS NOT NULL
-            `).all();
+            `);
 
             let extracted = 0;
             let skipped = 0;
@@ -187,7 +182,7 @@ function getBot() {
             let notCached = 0;
 
             for (const mapping of mappings) {
-                const cached = audioCache.getCachedStream(mapping.checksum);
+                const cached = await audioCache.getCachedStream(mapping.checksum);
                 if (!cached) {
                     notCached++;
                     continue;
@@ -209,14 +204,14 @@ function getBot() {
                     const thumbnail = await sharp(inputBuffer).resize(300, 300, { fit: "cover" }).jpeg({ quality: 80 }).toBuffer();
                     const mime = picture.format || "image/jpeg";
 
-                    const track = db.prepare("SELECT album_id, artist_id FROM tracks WHERE internal_id = ?").get(mapping.track_id);
+                    const track = await dbGet("SELECT album_id, artist_id FROM tracks WHERE internal_id = ?", mapping.track_id);
                     if (!track) { failed++; continue; }
 
                     if (track.album_id) {
-                        metadataService.storeAlbumCover(track.album_id, thumbnail, fullSize, mime);
+                        await metadataService.storeAlbumCover(track.album_id, thumbnail, fullSize, mime);
                     }
                     if (track.artist_id) {
-                        metadataService.storeArtistCover(track.artist_id, thumbnail, fullSize, mime);
+                        await metadataService.storeArtistCover(track.artist_id, thumbnail, fullSize, mime);
                     }
                     extracted++;
                 } catch {
@@ -246,7 +241,7 @@ function getBot() {
 
         console.log(`[Bot] Inline query: "${rawQuery}" from user ${ctx.from?.id}`);
 
-        const results = metadataService.searchTracks(rawQuery);
+        const results = await metadataService.searchTracks(rawQuery);
         console.log(`[Bot] Found ${results.length} tracks for "${rawQuery}"`);
 
         const inlineResults = results.map((r, i) => ({
@@ -276,7 +271,7 @@ function getBot() {
             return;
         }
 
-        const results = metadataService.searchTracks(query);
+        const results = await metadataService.searchTracks(query);
         if (results.length === 0) {
             ctx.reply(`No tracks found matching "${query}"`);
             return;
@@ -311,7 +306,7 @@ function getBot() {
         console.log(`[Bot] Callback delete: track ${trackId} by user ${userId}`);
 
         try {
-            const result = metadataService.deleteTrack(trackId);
+            const result = await metadataService.deleteTrack(trackId);
             if (!result) {
                 ctx.answerCallbackQuery({ text: "Track not found", show_alert: true });
                 return;
@@ -324,7 +319,7 @@ function getBot() {
                     if (ok) cleaned++;
                 }
                 if (m.checksum) {
-                    audioCache.removeChecksum(m.checksum);
+                    await audioCache.removeChecksum(m.checksum);
                 }
             }
 

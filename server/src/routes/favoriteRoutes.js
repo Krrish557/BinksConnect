@@ -11,7 +11,7 @@ router.post("/toggle", authMiddleware, async (req, res) => {
         }
         const { trackId } = req.body;
         if (!trackId) return res.status(400).json({ error: "trackId required" });
-        const isFavorited = metadataService.toggleFavorite(req.session.userId, trackId);
+        const isFavorited = await metadataService.toggleFavorite(req.session.userId, trackId);
         return res.json({ success: true, isFavorited });
     } catch (err) {
         console.error("Toggle favorite error:", err);
@@ -29,7 +29,7 @@ router.post("/check", authMiddleware, async (req, res) => {
             return res.json({ favorited: {} });
         }
         if (trackIds.length > 100) return res.status(400).json({ error: "Maximum 100 trackIds per request" });
-        const favorited = metadataService.checkFavorites(req.session.userId, trackIds);
+        const favorited = await metadataService.checkFavorites(req.session.userId, trackIds);
         return res.json({ favorited });
     } catch (err) {
         console.error("Check favorites error:", err);
@@ -42,7 +42,7 @@ router.get("/", authMiddleware, async (req, res) => {
         if (req.session.providerId !== "telegram") {
             return res.status(400).json({ error: "Favorites only supported for Telegram provider" });
         }
-        const starred = metadataService.getStarredItems(req.session.userId);
+        const starred = await metadataService.getStarredItems(req.session.userId);
         return res.json(starred);
     } catch (err) {
         console.error("Get favorites error:", err);
@@ -59,7 +59,7 @@ router.post("/artists/toggle", authMiddleware, async (req, res) => {
         }
         const { artistId } = req.body;
         if (!artistId) return res.status(400).json({ error: "artistId required" });
-        const isFavorited = metadataService.toggleFavoriteArtist(req.session.userId, artistId);
+        const isFavorited = await metadataService.toggleFavoriteArtist(req.session.userId, artistId);
         return res.json({ success: true, isFavorited });
     } catch (err) {
         console.error("Toggle favourite artist error:", err);
@@ -77,7 +77,7 @@ router.post("/artists/check", authMiddleware, async (req, res) => {
             return res.json({ favorited: {} });
         }
         if (artistIds.length > 100) return res.status(400).json({ error: "Maximum 100 artistIds per request" });
-        const favorited = metadataService.checkFavoriteArtists(req.session.userId, artistIds);
+        const favorited = await metadataService.checkFavoriteArtists(req.session.userId, artistIds);
         return res.json({ favorited });
     } catch (err) {
         console.error("Check favourite artists error:", err);
@@ -90,7 +90,7 @@ router.get("/artists", authMiddleware, async (req, res) => {
         if (req.session.providerId !== "telegram") {
             return res.status(400).json({ error: "Only supported for Telegram provider" });
         }
-        const artists = metadataService.getFavouriteArtists(req.session.userId);
+        const artists = await metadataService.getFavouriteArtists(req.session.userId);
         return res.json({ artists });
     } catch (err) {
         console.error("Get favourite artists error:", err);
@@ -107,7 +107,7 @@ router.post("/albums/toggle", authMiddleware, async (req, res) => {
         }
         const { albumId } = req.body;
         if (!albumId) return res.status(400).json({ error: "albumId required" });
-        const isFavorited = metadataService.toggleFavoriteAlbum(req.session.userId, albumId);
+        const isFavorited = await metadataService.toggleFavoriteAlbum(req.session.userId, albumId);
         return res.json({ success: true, isFavorited });
     } catch (err) {
         console.error("Toggle favourite album error:", err);
@@ -125,7 +125,7 @@ router.post("/albums/check", authMiddleware, async (req, res) => {
             return res.json({ favorited: {} });
         }
         if (albumIds.length > 100) return res.status(400).json({ error: "Maximum 100 albumIds per request" });
-        const favorited = metadataService.checkFavoriteAlbums(req.session.userId, albumIds);
+        const favorited = await metadataService.checkFavoriteAlbums(req.session.userId, albumIds);
         return res.json({ favorited });
     } catch (err) {
         console.error("Check favourite albums error:", err);
@@ -138,7 +138,7 @@ router.get("/albums", authMiddleware, async (req, res) => {
         if (req.session.providerId !== "telegram") {
             return res.status(400).json({ error: "Only supported for Telegram provider" });
         }
-        const albums = metadataService.getFavouriteAlbums(req.session.userId);
+        const albums = await metadataService.getFavouriteAlbums(req.session.userId);
         return res.json({ albums });
     } catch (err) {
         console.error("Get favourite albums error:", err);

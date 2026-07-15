@@ -1,4 +1,4 @@
-const { getDatabase } = require("../db/database");
+const { dbGet, dbRun } = require("../db/dbHelpers");
 
 const LRCLIB_BASE = "https://lrclib.net/api";
 const GENIUS_BASE = "https://genius.com/api";
@@ -132,9 +132,8 @@ async function fetchFromGenius(artist, title) {
     }
 }
 
-function getCachedLyrics(trackDbId) {
-    const db = getDatabase();
-    const row = db.prepare("SELECT * FROM lyrics_cache WHERE track_id = ?").get(trackDbId);
+async function getCachedLyrics(trackDbId) {
+    const row = await dbGet("SELECT * FROM lyrics_cache WHERE track_id = ?", trackDbId);
     if (!row) return null;
     let syncedLines = [];
     if (row.synced_json) {
@@ -153,12 +152,11 @@ function getCachedLyrics(trackDbId) {
     };
 }
 
-function cacheLyrics(trackDbId, provider, data) {
-    const db = getDatabase();
-    db.prepare(`
+async function cacheLyrics(trackDbId, provider, data) {
+    await dbRun(`
         INSERT OR REPLACE INTO lyrics_cache (track_id, provider, synced, plain, synced_json, fetched_at)
         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-    `).run(
+    `,
         trackDbId,
         provider,
         data.synced ? 1 : 0,
@@ -172,7 +170,7 @@ class LyricsService {
         if (!artist || !title) return null;
 
         if (trackDbId) {
-            const cached = getCachedLyrics(trackDbId);
+            const cached = await getCachedLyrics(trackDbId);
             if (cached) return cached;
         }
 
@@ -191,7 +189,7 @@ class LyricsService {
         }
 
         if (result && trackDbId) {
-            cacheLyrics(trackDbId, provider, result);
+            await cacheLyrics(trackDbId, provider, result);
         }
 
         return result;

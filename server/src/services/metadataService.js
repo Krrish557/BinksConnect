@@ -1,48 +1,44 @@
-const { getDatabase } = require("../db/database");
+const { dbGet, dbAll, dbRun, dbExec, dbTransaction } = require("../db/dbHelpers");
 const { generateId } = require("../db/ids");
 const { normalizeArtistName } = require("../utils/artistParser");
 
 class MetadataService {
-    createArtist(name, coverUrl = null) {
-        const db = getDatabase();
+    async createArtist(name, coverUrl = null) {
         const internalId = generateId("art");
-        const existing = db.prepare("SELECT id, internal_id FROM artists WHERE name = ?").get(name);
+        const existing = await dbGet("SELECT id, internal_id FROM artists WHERE name = ?", name);
         if (existing) return { id: existing.internal_id, dbId: existing.id };
-        const result = db.prepare("INSERT INTO artists (internal_id, name, cover_url) VALUES (?, ?, ?)").run(internalId, name, coverUrl);
+        const result = await dbRun("INSERT INTO artists (internal_id, name, cover_url) VALUES (?, ?, ?)", internalId, name, coverUrl);
         return { id: internalId, dbId: result.lastInsertRowid };
     }
 
-    findOrCreateArtist(name, coverUrl = null) {
+    async findOrCreateArtist(name, coverUrl = null) {
         if (!name || typeof name !== "string") return null;
         const trimmed = name.trim();
         if (!trimmed) return null;
 
-        const db = getDatabase();
         const norm = normalizeArtistName(trimmed);
 
-        const existing = db.prepare(`
+        const existing = await dbGet(`
             SELECT id, internal_id FROM artists
             WHERE LOWER(REPLACE(name, ' ', ' ')) = ?
-        `).get(norm);
+        `, norm);
 
         if (existing) return { id: existing.internal_id, dbId: existing.id };
 
         const internalId = generateId("art");
-        const result = db.prepare("INSERT INTO artists (internal_id, name, cover_url) VALUES (?, ?, ?)").run(internalId, trimmed, coverUrl);
+        const result = await dbRun("INSERT INTO artists (internal_id, name, cover_url) VALUES (?, ?, ?)", internalId, trimmed, coverUrl);
         return { id: internalId, dbId: result.lastInsertRowid };
     }
 
-    linkTrackArtist(trackDbId, artistDbId, role = "primary") {
-        const db = getDatabase();
-        db.prepare("INSERT OR IGNORE INTO track_artists (track_id, artist_id, role) VALUES (?, ?, ?)").run(trackDbId, artistDbId, role);
+    async linkTrackArtist(trackDbId, artistDbId, role = "primary") {
+        await dbRun("INSERT OR IGNORE INTO track_artists (track_id, artist_id, role) VALUES (?, ?, ?)", trackDbId, artistDbId, role);
     }
 
-    getFeaturedTracks(artistInternalId) {
-        const db = getDatabase();
-        const artist = db.prepare("SELECT id FROM artists WHERE internal_id = ?").get(artistInternalId);
+    async getFeaturedTracks(artistInternalId) {
+        const artist = await dbGet("SELECT id FROM artists WHERE internal_id = ?", artistInternalId);
         if (!artist) return [];
 
-        const rows = db.prepare(`
+        const rows = await dbAll(`
             SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
                    ar.name as artist, ar.internal_id as artistId,
                    a.name as album, a.internal_id as albumId
@@ -52,7 +48,7 @@ class MetadataService {
             LEFT JOIN albums a ON a.id = t.album_id
             WHERE ta.artist_id = ? AND ta.role = 'featured'
             ORDER BY t.title ASC
-        `).all(artist.id);
+        `, artist.id);
 
         return rows.map((s) => ({
             id: s.id, title: s.title, artist: s.artist || "Unknown",
@@ -63,22 +59,20 @@ class MetadataService {
         }));
     }
 
-    createAlbum(name, artistDbId, year = 0, coverUrl = null) {
-        const db = getDatabase();
+    async createAlbum(name, artistDbId, year = 0, coverUrl = null) {
         const internalId = generateId("alb");
-        const existing = db.prepare("SELECT id, internal_id FROM albums WHERE name = ? AND artist_id = ?").get(name, artistDbId || null);
+        const existing = await dbGet("SELECT id, internal_id FROM albums WHERE name = ? AND artist_id = ?", name, artistDbId || null);
         if (existing) return { id: existing.internal_id, dbId: existing.id };
-        const result = db.prepare("INSERT INTO albums (internal_id, name, artist_id, year, cover_url) VALUES (?, ?, ?, ?, ?)").run(internalId, name, artistDbId || null, year, coverUrl);
+        const result = await dbRun("INSERT INTO albums (internal_id, name, artist_id, year, cover_url) VALUES (?, ?, ?, ?, ?)", internalId, name, artistDbId || null, year, coverUrl);
         return { id: internalId, dbId: result.lastInsertRowid };
     }
 
-    createTrack(metadata, albumDbId, artistDbId, albumArtistDbId) {
-        const db = getDatabase();
+    async createTrack(metadata, albumDbId, artistDbId, albumArtistDbId) {
         const internalId = generateId("trk");
-        const result = db.prepare(`
+        const result = await dbRun(`
             INSERT INTO tracks (internal_id, title, artist_id, album_id, album_artist_id, duration, genre, year, track_number, bitrate)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
+        `,
             internalId,
             metadata.title || "Unknown",
             artistDbId || null,
@@ -93,12 +87,11 @@ class MetadataService {
         return { id: internalId, dbId: result.lastInsertRowid };
     }
 
-    createProviderMapping(trackDbId, provider, fileData) {
-        const db = getDatabase();
-        const result = db.prepare(`
+    async createProviderMapping(trackDbId, provider, fileData) {
+        const result = await dbRun(`
             INSERT INTO provider_mappings (track_id, provider, provider_track_id, telegram_channel_id, telegram_message_id, telegram_file_id, telegram_file_unique_id, file_name, file_size, mime_type, checksum, uploaded_by)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
+        `,
             trackDbId,
             provider,
             fileData.providerTrackId || null,
@@ -115,37 +108,33 @@ class MetadataService {
         return result.lastInsertRowid;
     }
 
-    findTrackByChecksum(checksum) {
-        const db = getDatabase();
-        const row = db.prepare(`
+    async findTrackByChecksum(checksum) {
+        const row = await dbGet(`
             SELECT t.internal_id, t.title, pm.provider
             FROM provider_mappings pm
             JOIN tracks t ON t.id = pm.track_id
             WHERE pm.checksum = ?
             LIMIT 1
-        `).get(checksum);
+        `, checksum);
         return row || null;
     }
 
-    findMappingByTrackId(trackInternalId) {
-        const db = getDatabase();
-        return db.prepare(`
+    async findMappingByTrackId(trackInternalId) {
+        return await dbAll(`
             SELECT pm.*, t.internal_id as track_internal_id
             FROM provider_mappings pm
             JOIN tracks t ON t.id = pm.track_id
             WHERE t.internal_id = ?
-        `).all(trackInternalId);
+        `, trackInternalId);
     }
 
-    resolveTrackId(internalId) {
-        const db = getDatabase();
-        const track = db.prepare("SELECT id FROM tracks WHERE internal_id = ?").get(internalId);
+    async resolveTrackId(internalId) {
+        const track = await dbGet("SELECT id FROM tracks WHERE internal_id = ?", internalId);
         return track ? track.id : null;
     }
 
-    getAlbums(offset = 0, limit = 50) {
-        const db = getDatabase();
-        const rows = db.prepare(`
+    async getAlbums(offset = 0, limit = 50) {
+        const rows = await dbAll(`
             SELECT a.internal_id as id, a.name, a.year, a.cover_url as coverUrl,
                    ar.name as artist, ar.internal_id as artistId,
                    (SELECT COUNT(*) FROM tracks WHERE album_id = a.id) as songCount,
@@ -155,7 +144,7 @@ class MetadataService {
             WHERE (SELECT COUNT(*) FROM tracks WHERE album_id = a.id) > 0
             ORDER BY a.name ASC
             LIMIT ? OFFSET ?
-        `).all(limit, offset);
+        `, limit, offset);
         return rows.map((r) => ({
             id: r.id,
             name: r.name,
@@ -170,17 +159,16 @@ class MetadataService {
         }));
     }
 
-    getAlbumTracks(albumInternalId) {
-        const db = getDatabase();
-        const album = db.prepare(`
+    async getAlbumTracks(albumInternalId) {
+        const album = await dbGet(`
             SELECT a.*, ar.name as artist_name, ar.internal_id as artist_internal_id
             FROM albums a
             LEFT JOIN artists ar ON ar.id = a.artist_id
             WHERE a.internal_id = ?
-        `).get(albumInternalId);
+        `, albumInternalId);
         if (!album) return null;
 
-        const songs = db.prepare(`
+        const songs = await dbAll(`
             SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
                    ar.name as artist, ar.internal_id as artistId,
                    a.name as album_name, a.internal_id as albumId
@@ -189,7 +177,7 @@ class MetadataService {
             LEFT JOIN albums a ON a.id = t.album_id
             WHERE t.album_id = ?
             ORDER BY t.track_number ASC, t.title ASC
-        `).all(album.id);
+        `, album.id);
 
         return {
             album: {
@@ -220,9 +208,8 @@ class MetadataService {
         };
     }
 
-    getRecentAlbums(userId, size = 12) {
-        const db = getDatabase();
-        const rows = db.prepare(`
+    async getRecentAlbums(userId, size = 12) {
+        const rows = await dbAll(`
             SELECT DISTINCT a.internal_id as id, a.name, a.year, a.cover_url as coverUrl,
                    ar.name as artist, ar.internal_id as artistId,
                    MAX(ph.played_at) as last_played
@@ -234,7 +221,7 @@ class MetadataService {
             GROUP BY a.id
             ORDER BY last_played DESC
             LIMIT ?
-        `).all(userId, size);
+        `, userId, size);
         return rows.map((r) => ({
             id: r.id, name: r.name, artist: r.artist || "Unknown", artistId: r.artistId,
             year: r.year || 0, coverUrl: r.coverUrl || `/api/art/${r.id}`,
@@ -242,16 +229,15 @@ class MetadataService {
         }));
     }
 
-    getNewestAlbums(size = 12) {
-        const db = getDatabase();
-        const rows = db.prepare(`
+    async getNewestAlbums(size = 12) {
+        const rows = await dbAll(`
             SELECT a.internal_id as id, a.name, a.year, a.cover_url as coverUrl,
                    ar.name as artist, ar.internal_id as artistId
             FROM albums a
             LEFT JOIN artists ar ON ar.id = a.artist_id
             ORDER BY a.created_at DESC
             LIMIT ?
-        `).all(size);
+        `, size);
         return rows.map((r) => ({
             id: r.id, name: r.name, artist: r.artist || "Unknown", artistId: r.artistId,
             year: r.year || 0, coverUrl: r.coverUrl || `/api/art/${r.id}`,
@@ -259,9 +245,8 @@ class MetadataService {
         }));
     }
 
-    getFrequentAlbums(userId, size = 12) {
-        const db = getDatabase();
-        const rows = db.prepare(`
+    async getFrequentAlbums(userId, size = 12) {
+        const rows = await dbAll(`
             SELECT a.internal_id as id, a.name, a.year, a.cover_url as coverUrl,
                    ar.name as artist, ar.internal_id as artistId,
                    COUNT(ph.id) as play_count
@@ -273,7 +258,7 @@ class MetadataService {
             GROUP BY a.id
             ORDER BY play_count DESC
             LIMIT ?
-        `).all(userId, size);
+        `, userId, size);
         return rows.map((r) => ({
             id: r.id, name: r.name, artist: r.artist || "Unknown", artistId: r.artistId,
             year: r.year || 0, coverUrl: r.coverUrl || `/api/art/${r.id}`,
@@ -281,9 +266,8 @@ class MetadataService {
         }));
     }
 
-    getStarredItems(userId) {
-        const db = getDatabase();
-        const songs = db.prepare(`
+    async getStarredItems(userId) {
+        const songs = await dbAll(`
             SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
                    ar.name as artist, ar.internal_id as artistId,
                    a.name as album, a.internal_id as albumId
@@ -293,17 +277,17 @@ class MetadataService {
             LEFT JOIN albums a ON a.id = t.album_id
             WHERE f.user_id = ?
             ORDER BY t.title ASC
-        `).all(userId);
+        `, userId);
 
         const albumIds = [...new Set(songs.map((s) => s.albumId).filter(Boolean))];
         const albums = albumIds.length > 0
-            ? db.prepare(`
+            ? await dbAll(`
                 SELECT a.internal_id as id, a.name, a.year, a.cover_url as coverUrl,
                        ar.name as artist, ar.internal_id as artistId
                 FROM albums a
                 LEFT JOIN artists ar ON ar.id = a.artist_id
                 WHERE a.id IN (${albumIds.map(() => "?").join(",")})
-            `).all(...albumIds)
+            `, ...albumIds)
             : [];
 
         return {
@@ -323,9 +307,8 @@ class MetadataService {
         };
     }
 
-    getSongs(offset = 0, limit = 50) {
-        const db = getDatabase();
-        const rows = db.prepare(`
+    async getSongs(offset = 0, limit = 50) {
+        const rows = await dbAll(`
             SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
                    ar.name as artist, ar.internal_id as artistId,
                    a.name as album, a.internal_id as albumId
@@ -334,7 +317,7 @@ class MetadataService {
             LEFT JOIN albums a ON a.id = t.album_id
             ORDER BY t.title ASC
             LIMIT ? OFFSET ?
-        `).all(limit, offset);
+        `, limit, offset);
         return rows.map((s) => ({
             id: s.id, title: s.title, artist: s.artist || "Unknown",
             artistId: s.artistId || null,
@@ -344,9 +327,8 @@ class MetadataService {
         }));
     }
 
-    getRandomSongs(size = 20) {
-        const db = getDatabase();
-        const rows = db.prepare(`
+    async getRandomSongs(size = 20) {
+        const rows = await dbAll(`
             SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
                    ar.name as artist, ar.internal_id as artistId,
                    a.name as album, a.internal_id as albumId
@@ -355,7 +337,7 @@ class MetadataService {
             LEFT JOIN albums a ON a.id = t.album_id
             ORDER BY RANDOM()
             LIMIT ?
-        `).all(size);
+        `, size);
         return rows.map((s) => ({
             id: s.id, title: s.title, artist: s.artist || "Unknown",
             artistId: s.artistId || null,
@@ -365,9 +347,8 @@ class MetadataService {
         }));
     }
 
-    getArtists() {
-        const db = getDatabase();
-        const rows = db.prepare(`
+    async getArtists() {
+        const rows = await dbAll(`
             SELECT ar.internal_id as id, ar.name,
                    (SELECT COUNT(DISTINCT a.id) FROM albums a WHERE a.artist_id = ar.id) as albumCount,
                    (SELECT COUNT(DISTINCT t.id) FROM tracks t WHERE t.artist_id = ar.id) as trackCount
@@ -380,7 +361,7 @@ class MetadataService {
                 SELECT DISTINCT artist_id FROM albums WHERE artist_id IS NOT NULL
             )
             ORDER BY ar.name ASC
-        `).all();
+        `);
         return rows.map((a) => ({
             id: a.id, name: a.name, albumCount: a.albumCount,
             trackCount: a.trackCount,
@@ -389,21 +370,20 @@ class MetadataService {
         }));
     }
 
-    getArtist(artistInternalId) {
-        const db = getDatabase();
-        const artist = db.prepare("SELECT * FROM artists WHERE internal_id = ?").get(artistInternalId);
+    async getArtist(artistInternalId) {
+        const artist = await dbGet("SELECT * FROM artists WHERE internal_id = ?", artistInternalId);
         if (!artist) return null;
 
-        const albums = db.prepare(`
+        const albums = await dbAll(`
             SELECT a.internal_id as id, a.name, a.year, a.cover_url as coverUrl,
                    (SELECT COUNT(*) FROM tracks WHERE album_id = a.id) as songCount,
                    (SELECT COALESCE(SUM(duration), 0) FROM tracks WHERE album_id = a.id) as duration
             FROM albums a
             WHERE a.artist_id = ?
             ORDER BY a.year ASC, a.name ASC
-        `).all(artist.id);
+        `, artist.id);
 
-        const featuredTracks = db.prepare(`
+        const featuredTracks = await dbAll(`
             SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
                    ar.name as artist, ar.internal_id as artistId,
                    a.name as album, a.internal_id as albumId
@@ -413,7 +393,7 @@ class MetadataService {
             LEFT JOIN albums a ON a.id = t.album_id
             WHERE ta.artist_id = ? AND ta.role = 'featured'
             ORDER BY t.title ASC
-        `).all(artist.id);
+        `, artist.id);
 
         return {
             id: artist.internal_id,
@@ -438,11 +418,10 @@ class MetadataService {
         };
     }
 
-    search(query) {
-        const db = getDatabase();
+    async search(query) {
         const q = `%${query.replace(/%/g, "\\%").replace(/_/g, "\\_")}%`;
 
-        const songs = db.prepare(`
+        const songs = await dbAll(`
             SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
                    ar.name as artist, ar.internal_id as artistId,
                    a.name as album, a.internal_id as albumId
@@ -452,9 +431,9 @@ class MetadataService {
             WHERE t.title LIKE ? OR ar.name LIKE ? OR a.name LIKE ?
             ORDER BY t.title ASC
             LIMIT 20
-        `).all(q, q, q);
+        `, q, q, q);
 
-        const albums = db.prepare(`
+        const albums = await dbAll(`
             SELECT a.internal_id as id, a.name, a.year, a.cover_url as coverUrl,
                    ar.name as artist, ar.internal_id as artistId
             FROM albums a
@@ -462,16 +441,16 @@ class MetadataService {
             WHERE a.name LIKE ? OR ar.name LIKE ?
             ORDER BY a.name ASC
             LIMIT 10
-        `).all(q, q);
+        `, q, q);
 
-        const artists = db.prepare(`
+        const artists = await dbAll(`
             SELECT ar.internal_id as id, ar.name,
                    (SELECT COUNT(DISTINCT a.id) FROM albums a WHERE a.artist_id = ar.id) as albumCount
             FROM artists ar
             WHERE ar.name LIKE ?
             ORDER BY ar.name ASC
             LIMIT 10
-        `).all(q);
+        `, q);
 
         return {
             songs: songs.map((s) => ({
@@ -493,98 +472,87 @@ class MetadataService {
         };
     }
 
-    recordPlay(userId, trackInternalId) {
-        const db = getDatabase();
-        const trackId = this.resolveTrackId(trackInternalId);
+    async recordPlay(userId, trackInternalId) {
+        const trackId = await this.resolveTrackId(trackInternalId);
         if (!trackId) return;
-        db.prepare("INSERT INTO play_history (user_id, track_id) VALUES (?, ?)").run(userId, trackId);
+        await dbRun("INSERT INTO play_history (user_id, track_id) VALUES (?, ?)", userId, trackId);
     }
 
-    toggleFavorite(userId, trackInternalId) {
-        const db = getDatabase();
-        const trackId = this.resolveTrackId(trackInternalId);
+    async toggleFavorite(userId, trackInternalId) {
+        const trackId = await this.resolveTrackId(trackInternalId);
         if (!trackId) return false;
-        const existing = db.prepare("SELECT 1 FROM favorites WHERE user_id = ? AND track_id = ?").get(userId, trackId);
+        const existing = await dbGet("SELECT 1 FROM favorites WHERE user_id = ? AND track_id = ?", userId, trackId);
         if (existing) {
-            db.prepare("DELETE FROM favorites WHERE user_id = ? AND track_id = ?").run(userId, trackId);
+            await dbRun("DELETE FROM favorites WHERE user_id = ? AND track_id = ?", userId, trackId);
             return false;
         } else {
-            db.prepare("INSERT INTO favorites (user_id, track_id) VALUES (?, ?)").run(userId, trackId);
+            await dbRun("INSERT INTO favorites (user_id, track_id) VALUES (?, ?)", userId, trackId);
             return true;
         }
     }
 
-    checkFavorites(userId, trackInternalIds) {
-        const db = getDatabase();
+    async checkFavorites(userId, trackInternalIds) {
         const result = {};
         for (const internalId of trackInternalIds) {
-            const trackId = this.resolveTrackId(internalId);
+            const trackId = await this.resolveTrackId(internalId);
             if (!trackId) {
                 result[internalId] = false;
                 continue;
             }
-            const exists = db.prepare("SELECT 1 FROM favorites WHERE user_id = ? AND track_id = ?").get(userId, trackId);
+            const exists = await dbGet("SELECT 1 FROM favorites WHERE user_id = ? AND track_id = ?", userId, trackId);
             result[internalId] = !!exists;
         }
         return result;
     }
 
-    getTrackCount() {
-        const db = getDatabase();
-        const row = db.prepare("SELECT COUNT(*) as count FROM tracks").get();
+    async getTrackCount() {
+        const row = await dbGet("SELECT COUNT(*) as count FROM tracks");
         return row.count;
     }
 
-    getArtistCount() {
-        const db = getDatabase();
-        const row = db.prepare("SELECT COUNT(*) as count FROM artists").get();
+    async getArtistCount() {
+        const row = await dbGet("SELECT COUNT(*) as count FROM artists");
         return row.count;
     }
 
-    getAlbumCount() {
-        const db = getDatabase();
-        const row = db.prepare("SELECT COUNT(*) as count FROM albums").get();
+    async getAlbumCount() {
+        const row = await dbGet("SELECT COUNT(*) as count FROM albums");
         return row.count;
     }
 
-    storeAlbumCover(albumDbId, thumbnail, fullSize, mimeType = "image/jpeg") {
-        const db = getDatabase();
-        db.prepare(`
+    async storeAlbumCover(albumDbId, thumbnail, fullSize, mimeType = "image/jpeg") {
+        await dbRun(`
             INSERT OR REPLACE INTO album_covers (album_id, thumbnail, full_size, mime_type)
             VALUES (?, ?, ?, ?)
-        `).run(albumDbId, thumbnail, fullSize, mimeType);
+        `, albumDbId, thumbnail, fullSize, mimeType);
     }
 
-    storeArtistCover(artistDbId, thumbnail, fullSize, mimeType = "image/jpeg") {
-        const db = getDatabase();
-        db.prepare(`
+    async storeArtistCover(artistDbId, thumbnail, fullSize, mimeType = "image/jpeg") {
+        await dbRun(`
             INSERT OR REPLACE INTO artist_covers (artist_id, thumbnail, full_size, mime_type)
             VALUES (?, ?, ?, ?)
-        `).run(artistDbId, thumbnail, fullSize, mimeType);
+        `, artistDbId, thumbnail, fullSize, mimeType);
     }
 
-    getAlbumCover(albumInternalId, size = "full") {
-        const db = getDatabase();
-        const album = db.prepare("SELECT id FROM albums WHERE internal_id = ?").get(albumInternalId);
+    async getAlbumCover(albumInternalId, size = "full") {
+        const album = await dbGet("SELECT id FROM albums WHERE internal_id = ?", albumInternalId);
         if (!album) return null;
         const col = size === "thumb" ? "thumbnail" : "full_size";
-        const row = db.prepare(`SELECT ${col} as image, mime_type FROM album_covers WHERE album_id = ?`).get(album.id);
+        const row = await dbGet(`SELECT ${col} as image, mime_type FROM album_covers WHERE album_id = ?`, album.id);
         return row && row.image ? { image: row.image, mimeType: row.mime_type } : null;
     }
 
-    getArtistCover(artistInternalId, size = "full") {
-        const db = getDatabase();
-        const artist = db.prepare("SELECT id FROM artists WHERE internal_id = ?").get(artistInternalId);
+    async getArtistCover(artistInternalId, size = "full") {
+        const artist = await dbGet("SELECT id FROM artists WHERE internal_id = ?", artistInternalId);
         if (!artist) return null;
         const col = size === "thumb" ? "thumbnail" : "full_size";
-        const row = db.prepare(`SELECT ${col} as image, mime_type FROM artist_covers WHERE artist_id = ?`).get(artist.id);
+        const row = await dbGet(`SELECT ${col} as image, mime_type FROM artist_covers WHERE artist_id = ?`, artist.id);
         return row && row.image ? { image: row.image, mimeType: row.mime_type } : null;
     }
 
-    searchTracks(query) {
-        const db = getDatabase();
+    async searchTracks(query) {
         const q = `%${query.replace(/%/g, "\\%").replace(/_/g, "\\_")}%`;
-        return db.prepare(`
+        return await dbAll(`
             SELECT t.internal_id as id, t.title,
                    ar.name as artist, a.name as album
             FROM tracks t
@@ -593,36 +561,35 @@ class MetadataService {
             WHERE t.title LIKE ? OR ar.name LIKE ? OR a.name LIKE ?
             ORDER BY t.title ASC
             LIMIT 10
-        `).all(q, q, q);
+        `, q, q, q);
     }
 
-    deleteTrack(trackInternalId) {
-        const db = getDatabase();
-        const track = db.prepare("SELECT id, title, album_id, artist_id FROM tracks WHERE internal_id = ?").get(trackInternalId);
+    async deleteTrack(trackInternalId) {
+        const track = await dbGet("SELECT id, title, album_id, artist_id FROM tracks WHERE internal_id = ?", trackInternalId);
         if (!track) return null;
 
-        const mappings = this.findMappingByTrackId(trackInternalId);
+        const mappings = await this.findMappingByTrackId(trackInternalId);
         const albumId = track.album_id;
         const artistId = track.artist_id;
 
-        db.prepare("DELETE FROM favorites WHERE track_id = ?").run(track.id);
-        db.prepare("DELETE FROM playlist_tracks WHERE track_id = ?").run(track.id);
-        db.prepare("DELETE FROM track_artists WHERE track_id = ?").run(track.id);
-        db.prepare("DELETE FROM lyrics_cache WHERE track_id = ?").run(track.id);
-        db.prepare("DELETE FROM tracks WHERE id = ?").run(track.id);
+        await dbRun("DELETE FROM favorites WHERE track_id = ?", track.id);
+        await dbRun("DELETE FROM playlist_tracks WHERE track_id = ?", track.id);
+        await dbRun("DELETE FROM track_artists WHERE track_id = ?", track.id);
+        await dbRun("DELETE FROM lyrics_cache WHERE track_id = ?", track.id);
+        await dbRun("DELETE FROM tracks WHERE id = ?", track.id);
 
         if (albumId) {
-            const remaining = db.prepare("SELECT COUNT(*) as c FROM tracks WHERE album_id = ?").get(albumId).c;
-            if (remaining === 0) {
-                db.prepare("DELETE FROM album_covers WHERE album_id = ?").run(albumId);
-                db.prepare("DELETE FROM albums WHERE id = ?").run(albumId);
+            const remaining = await dbGet("SELECT COUNT(*) as c FROM tracks WHERE album_id = ?", albumId);
+            if (remaining.c === 0) {
+                await dbRun("DELETE FROM album_covers WHERE album_id = ?", albumId);
+                await dbRun("DELETE FROM albums WHERE id = ?", albumId);
             }
         }
         if (artistId) {
-            const remaining = db.prepare("SELECT COUNT(*) as c FROM albums WHERE artist_id = ?").get(artistId).c;
-            if (remaining === 0) {
-                db.prepare("DELETE FROM artist_covers WHERE artist_id = ?").run(artistId);
-                db.prepare("DELETE FROM artists WHERE id = ?").run(artistId);
+            const remaining = await dbGet("SELECT COUNT(*) as c FROM albums WHERE artist_id = ?", artistId);
+            if (remaining.c === 0) {
+                await dbRun("DELETE FROM artist_covers WHERE artist_id = ?", artistId);
+                await dbRun("DELETE FROM artists WHERE id = ?", artistId);
             }
         }
 
@@ -631,24 +598,22 @@ class MetadataService {
 
     // ─── Playlists ────────────────────────────────────────
 
-    createPlaylist(userId, name) {
-        const db = getDatabase();
+    async createPlaylist(userId, name) {
         const { generateId } = require("../db/ids");
         const internalId = generateId("pl");
-        db.prepare("INSERT INTO playlists (internal_id, user_id, name) VALUES (?, ?, ?)").run(internalId, userId, name || "New Playlist");
+        await dbRun("INSERT INTO playlists (internal_id, user_id, name) VALUES (?, ?, ?)", internalId, userId, name || "New Playlist");
         return { id: internalId, name: name || "New Playlist", trackCount: 0, duration: 0 };
     }
 
-    getUserPlaylists(userId) {
-        const db = getDatabase();
-        const rows = db.prepare(`
+    async getUserPlaylists(userId) {
+        const rows = await dbAll(`
             SELECT p.*,
                    (SELECT COUNT(*) FROM playlist_tracks pt WHERE pt.playlist_id = p.id) as trackCount,
                    (SELECT COALESCE(SUM(t.duration), 0) FROM playlist_tracks pt JOIN tracks t ON t.id = pt.track_id WHERE pt.playlist_id = p.id) as duration
             FROM playlists p
             WHERE p.user_id = ?
             ORDER BY p.updated_at DESC
-        `).all(userId);
+        `, userId);
         return rows.map((r) => ({
             id: r.internal_id,
             name: r.name,
@@ -659,12 +624,11 @@ class MetadataService {
         }));
     }
 
-    getPlaylist(playlistInternalId, userId) {
-        const db = getDatabase();
-        const playlist = db.prepare("SELECT * FROM playlists WHERE internal_id = ? AND user_id = ?").get(playlistInternalId, userId);
+    async getPlaylist(playlistInternalId, userId) {
+        const playlist = await dbGet("SELECT * FROM playlists WHERE internal_id = ? AND user_id = ?", playlistInternalId, userId);
         if (!playlist) return null;
 
-        const tracks = db.prepare(`
+        const tracks = await dbAll(`
             SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
                    ar.name as artist, ar.internal_id as artistId,
                    a.name as album, a.internal_id as albumId
@@ -674,7 +638,7 @@ class MetadataService {
             LEFT JOIN albums a ON a.id = t.album_id
             WHERE pt.playlist_id = ?
             ORDER BY pt.position ASC
-        `).all(playlist.id);
+        `, playlist.id);
 
         return {
             id: playlist.internal_id,
@@ -691,99 +655,89 @@ class MetadataService {
         };
     }
 
-    renamePlaylist(playlistInternalId, userId, name) {
-        const db = getDatabase();
-        db.prepare("UPDATE playlists SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE internal_id = ? AND user_id = ?").run(name, playlistInternalId, userId);
+    async renamePlaylist(playlistInternalId, userId, name) {
+        await dbRun("UPDATE playlists SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE internal_id = ? AND user_id = ?", name, playlistInternalId, userId);
     }
 
-    deletePlaylist(playlistInternalId, userId) {
-        const db = getDatabase();
-        const playlist = db.prepare("SELECT id FROM playlists WHERE internal_id = ? AND user_id = ?").get(playlistInternalId, userId);
+    async deletePlaylist(playlistInternalId, userId) {
+        const playlist = await dbGet("SELECT id FROM playlists WHERE internal_id = ? AND user_id = ?", playlistInternalId, userId);
         if (!playlist) return false;
-        db.prepare("DELETE FROM playlists WHERE id = ?").run(playlist.id);
+        await dbRun("DELETE FROM playlists WHERE id = ?", playlist.id);
         return true;
     }
 
-    addTrackToPlaylist(playlistInternalId, userId, trackInternalId, position) {
-        const db = getDatabase();
-        const playlist = db.prepare("SELECT id FROM playlists WHERE internal_id = ? AND user_id = ?").get(playlistInternalId, userId);
+    async addTrackToPlaylist(playlistInternalId, userId, trackInternalId, position) {
+        const playlist = await dbGet("SELECT id FROM playlists WHERE internal_id = ? AND user_id = ?", playlistInternalId, userId);
         if (!playlist) return false;
-        const track = db.prepare("SELECT id FROM tracks WHERE internal_id = ?").get(trackInternalId);
+        const track = await dbGet("SELECT id FROM tracks WHERE internal_id = ?", trackInternalId);
         if (!track) return false;
 
         if (position !== undefined && position !== null) {
-            db.prepare("UPDATE playlist_tracks SET position = position + 1 WHERE playlist_id = ? AND position >= ?").run(playlist.id, position);
-            db.prepare("INSERT OR IGNORE INTO playlist_tracks (playlist_id, track_id, position) VALUES (?, ?, ?)").run(playlist.id, track.id, position);
+            await dbRun("UPDATE playlist_tracks SET position = position + 1 WHERE playlist_id = ? AND position >= ?", playlist.id, position);
+            await dbRun("INSERT OR IGNORE INTO playlist_tracks (playlist_id, track_id, position) VALUES (?, ?, ?)", playlist.id, track.id, position);
         } else {
-            const maxPos = db.prepare("SELECT COALESCE(MAX(position), -1) as pos FROM playlist_tracks WHERE playlist_id = ?").get(playlist.id).pos;
-            db.prepare("INSERT OR IGNORE INTO playlist_tracks (playlist_id, track_id, position) VALUES (?, ?, ?)").run(playlist.id, track.id, maxPos + 1);
+            const maxPos = await dbGet("SELECT COALESCE(MAX(position), -1) as pos FROM playlist_tracks WHERE playlist_id = ?", playlist.id);
+            await dbRun("INSERT OR IGNORE INTO playlist_tracks (playlist_id, track_id, position) VALUES (?, ?, ?)", playlist.id, track.id, maxPos.pos + 1);
         }
-        db.prepare("UPDATE playlists SET updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(playlist.id);
+        await dbRun("UPDATE playlists SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", playlist.id);
         return true;
     }
 
-    removeTrackFromPlaylist(playlistInternalId, userId, trackInternalId) {
-        const db = getDatabase();
-        const playlist = db.prepare("SELECT id FROM playlists WHERE internal_id = ? AND user_id = ?").get(playlistInternalId, userId);
+    async removeTrackFromPlaylist(playlistInternalId, userId, trackInternalId) {
+        const playlist = await dbGet("SELECT id FROM playlists WHERE internal_id = ? AND user_id = ?", playlistInternalId, userId);
         if (!playlist) return false;
-        const track = db.prepare("SELECT id FROM tracks WHERE internal_id = ?").get(trackInternalId);
+        const track = await dbGet("SELECT id FROM tracks WHERE internal_id = ?", trackInternalId);
         if (!track) return false;
-        db.prepare("DELETE FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?").run(playlist.id, track.id);
-        db.prepare("UPDATE playlists SET updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(playlist.id);
+        await dbRun("DELETE FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?", playlist.id, track.id);
+        await dbRun("UPDATE playlists SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", playlist.id);
         return true;
     }
 
-    reorderPlaylist(playlistInternalId, userId, trackInternalIds) {
-        const db = getDatabase();
-        const playlist = db.prepare("SELECT id FROM playlists WHERE internal_id = ? AND user_id = ?").get(playlistInternalId, userId);
+    async reorderPlaylist(playlistInternalId, userId, trackInternalIds) {
+        const playlist = await dbGet("SELECT id FROM playlists WHERE internal_id = ? AND user_id = ?", playlistInternalId, userId);
         if (!playlist) return false;
 
-        const updatePos = db.prepare("UPDATE playlist_tracks SET position = ? WHERE playlist_id = ? AND track_id = ?");
-        const getTrackId = db.prepare("SELECT id FROM tracks WHERE internal_id = ?");
-        const reorder = db.transaction(() => {
+        const reorder = async () => {
             for (let i = 0; i < trackInternalIds.length; i++) {
-                const track = getTrackId.get(trackInternalIds[i]);
+                const track = await dbGet("SELECT id FROM tracks WHERE internal_id = ?", trackInternalIds[i]);
                 if (track) {
-                    updatePos.run(i, playlist.id, track.id);
+                    await dbRun("UPDATE playlist_tracks SET position = ? WHERE playlist_id = ? AND track_id = ?", i, playlist.id, track.id);
                 }
             }
-        });
-        reorder();
-        db.prepare("UPDATE playlists SET updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(playlist.id);
+        };
+        await dbTransaction(reorder);
+        await dbRun("UPDATE playlists SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", playlist.id);
         return true;
     }
 
     // ─── Favourite Artists ────────────────────────────────
 
-    toggleFavoriteArtist(userId, artistInternalId) {
-        const db = getDatabase();
-        const artist = db.prepare("SELECT id FROM artists WHERE internal_id = ?").get(artistInternalId);
+    async toggleFavoriteArtist(userId, artistInternalId) {
+        const artist = await dbGet("SELECT id FROM artists WHERE internal_id = ?", artistInternalId);
         if (!artist) return false;
-        const existing = db.prepare("SELECT 1 FROM favourite_artists WHERE user_id = ? AND artist_id = ?").get(userId, artist.id);
+        const existing = await dbGet("SELECT 1 FROM favourite_artists WHERE user_id = ? AND artist_id = ?", userId, artist.id);
         if (existing) {
-            db.prepare("DELETE FROM favourite_artists WHERE user_id = ? AND artist_id = ?").run(userId, artist.id);
+            await dbRun("DELETE FROM favourite_artists WHERE user_id = ? AND artist_id = ?", userId, artist.id);
             return false;
         } else {
-            db.prepare("INSERT INTO favourite_artists (user_id, artist_id) VALUES (?, ?)").run(userId, artist.id);
+            await dbRun("INSERT INTO favourite_artists (user_id, artist_id) VALUES (?, ?)", userId, artist.id);
             return true;
         }
     }
 
-    checkFavoriteArtists(userId, artistInternalIds) {
-        const db = getDatabase();
+    async checkFavoriteArtists(userId, artistInternalIds) {
         const result = {};
         for (const internalId of artistInternalIds) {
-            const artist = db.prepare("SELECT id FROM artists WHERE internal_id = ?").get(internalId);
+            const artist = await dbGet("SELECT id FROM artists WHERE internal_id = ?", internalId);
             if (!artist) { result[internalId] = false; continue; }
-            const exists = db.prepare("SELECT 1 FROM favourite_artists WHERE user_id = ? AND artist_id = ?").get(userId, artist.id);
+            const exists = await dbGet("SELECT 1 FROM favourite_artists WHERE user_id = ? AND artist_id = ?", userId, artist.id);
             result[internalId] = !!exists;
         }
         return result;
     }
 
-    getFavouriteArtists(userId) {
-        const db = getDatabase();
-        const rows = db.prepare(`
+    async getFavouriteArtists(userId) {
+        const rows = await dbAll(`
             SELECT ar.internal_id as id, ar.name,
                    (SELECT COUNT(DISTINCT a.id) FROM albums a WHERE a.artist_id = ar.id) as albumCount,
                    (SELECT COUNT(DISTINCT t.id) FROM tracks t WHERE t.artist_id = ar.id) as trackCount
@@ -791,7 +745,7 @@ class MetadataService {
             JOIN artists ar ON ar.id = fa.artist_id
             WHERE fa.user_id = ?
             ORDER BY ar.name ASC
-        `).all(userId);
+        `, userId);
         return rows.map((a) => ({
             id: a.id, name: a.name, albumCount: a.albumCount,
             trackCount: a.trackCount, coverArt: `/api/art/artist/${a.id}`,
@@ -801,35 +755,32 @@ class MetadataService {
 
     // ─── Favourite Albums ─────────────────────────────────
 
-    toggleFavoriteAlbum(userId, albumInternalId) {
-        const db = getDatabase();
-        const album = db.prepare("SELECT id FROM albums WHERE internal_id = ?").get(albumInternalId);
+    async toggleFavoriteAlbum(userId, albumInternalId) {
+        const album = await dbGet("SELECT id FROM albums WHERE internal_id = ?", albumInternalId);
         if (!album) return false;
-        const existing = db.prepare("SELECT 1 FROM favourite_albums WHERE user_id = ? AND album_id = ?").get(userId, album.id);
+        const existing = await dbGet("SELECT 1 FROM favourite_albums WHERE user_id = ? AND album_id = ?", userId, album.id);
         if (existing) {
-            db.prepare("DELETE FROM favourite_albums WHERE user_id = ? AND album_id = ?").run(userId, album.id);
+            await dbRun("DELETE FROM favourite_albums WHERE user_id = ? AND album_id = ?", userId, album.id);
             return false;
         } else {
-            db.prepare("INSERT INTO favourite_albums (user_id, album_id) VALUES (?, ?)").run(userId, album.id);
+            await dbRun("INSERT INTO favourite_albums (user_id, album_id) VALUES (?, ?)", userId, album.id);
             return true;
         }
     }
 
-    checkFavoriteAlbums(userId, albumInternalIds) {
-        const db = getDatabase();
+    async checkFavoriteAlbums(userId, albumInternalIds) {
         const result = {};
         for (const internalId of albumInternalIds) {
-            const album = db.prepare("SELECT id FROM albums WHERE internal_id = ?").get(internalId);
+            const album = await dbGet("SELECT id FROM albums WHERE internal_id = ?", internalId);
             if (!album) { result[internalId] = false; continue; }
-            const exists = db.prepare("SELECT 1 FROM favourite_albums WHERE user_id = ? AND album_id = ?").get(userId, album.id);
+            const exists = await dbGet("SELECT 1 FROM favourite_albums WHERE user_id = ? AND album_id = ?", userId, album.id);
             result[internalId] = !!exists;
         }
         return result;
     }
 
-    getFavouriteAlbums(userId) {
-        const db = getDatabase();
-        const rows = db.prepare(`
+    async getFavouriteAlbums(userId) {
+        const rows = await dbAll(`
             SELECT a.internal_id as id, a.name, a.year, a.cover_url as coverUrl,
                    ar.name as artist, ar.internal_id as artistId,
                    (SELECT COUNT(*) FROM tracks WHERE album_id = a.id) as songCount,
@@ -839,7 +790,7 @@ class MetadataService {
             LEFT JOIN artists ar ON ar.id = a.artist_id
             WHERE fa.user_id = ?
             ORDER BY a.name ASC
-        `).all(userId);
+        `, userId);
         return rows.map((r) => ({
             id: r.id, name: r.name, artist: r.artist || "Unknown", artistId: r.artistId,
             year: r.year || 0, coverUrl: r.coverUrl || `/api/art/${r.id}`,
@@ -849,30 +800,27 @@ class MetadataService {
 
     // ─── Smart Playlists ──────────────────────────────────
 
-    createSmartPlaylist(userId, name, ruleType, ruleLimit = 50) {
-        const db = getDatabase();
+    async createSmartPlaylist(userId, name, ruleType, ruleLimit = 50) {
         const { generateId } = require("../db/ids");
         const internalId = generateId("spl");
-        db.prepare("INSERT INTO smart_playlists (internal_id, user_id, name, rule_type, rule_limit) VALUES (?, ?, ?, ?, ?)").run(internalId, userId, name, ruleType, ruleLimit);
+        await dbRun("INSERT INTO smart_playlists (internal_id, user_id, name, rule_type, rule_limit) VALUES (?, ?, ?, ?, ?)", internalId, userId, name, ruleType, ruleLimit);
         return { id: internalId, name, ruleType, ruleLimit };
     }
 
-    getUserSmartPlaylists(userId) {
-        const db = getDatabase();
-        return db.prepare("SELECT * FROM smart_playlists WHERE user_id = ? ORDER BY created_at DESC").all(userId).map((r) => ({
+    async getUserSmartPlaylists(userId) {
+        const rows = await dbAll("SELECT * FROM smart_playlists WHERE user_id = ? ORDER BY created_at DESC", userId);
+        return rows.map((r) => ({
             id: r.internal_id, name: r.name, ruleType: r.rule_type, ruleLimit: r.rule_limit,
         }));
     }
 
-    deleteSmartPlaylist(internalId, userId) {
-        const db = getDatabase();
-        const result = db.prepare("DELETE FROM smart_playlists WHERE internal_id = ? AND user_id = ?").run(internalId, userId);
+    async deleteSmartPlaylist(internalId, userId) {
+        const result = await dbRun("DELETE FROM smart_playlists WHERE internal_id = ? AND user_id = ?", internalId, userId);
         return result.changes > 0;
     }
 
-    evaluateSmartPlaylist(internalId, userId) {
-        const db = getDatabase();
-        const sp = db.prepare("SELECT * FROM smart_playlists WHERE internal_id = ? AND user_id = ?").get(internalId, userId);
+    async evaluateSmartPlaylist(internalId, userId) {
+        const sp = await dbGet("SELECT * FROM smart_playlists WHERE internal_id = ? AND user_id = ?", internalId, userId);
         if (!sp) return null;
 
         let query;
@@ -955,9 +903,9 @@ class MetadataService {
 
         let rows;
         if (sp.rule_type === "forgotten_gems") {
-            rows = db.prepare(query).all(userId, userId, sp.rule_limit);
+            rows = await dbAll(query, userId, userId, sp.rule_limit);
         } else {
-            rows = db.prepare(query).all(sp.rule_limit);
+            rows = await dbAll(query, sp.rule_limit);
         }
 
         return {
@@ -977,15 +925,14 @@ class MetadataService {
 
     // ─── FTS5 Search ──────────────────────────────────────
 
-    searchFTS5(query) {
-        const db = getDatabase();
+    async searchFTS5(query) {
         const q = query.trim();
         if (!q) return { songs: [], albums: [], artists: [] };
 
         try {
             const ftsQuery = q.split(/\s+/).map((w) => `"${w.replace(/"/g, '""')}"`).join(" OR ");
 
-            const songs = db.prepare(`
+            const songs = await dbAll(`
                 SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
                        ar.name as artist, ar.internal_id as artistId,
                        a.name as album, a.internal_id as albumId,
@@ -997,9 +944,9 @@ class MetadataService {
                 WHERE tracks_fts MATCH ?
                 ORDER BY rank
                 LIMIT 20
-            `).all(ftsQuery);
+            `, ftsQuery);
 
-            const albums = db.prepare(`
+            const albums = await dbAll(`
                 SELECT a.internal_id as id, a.name, a.year, a.cover_url as coverUrl,
                        ar.name as artist, ar.internal_id as artistId,
                        rank
@@ -1009,9 +956,9 @@ class MetadataService {
                 WHERE albums_fts MATCH ?
                 ORDER BY rank
                 LIMIT 10
-            `).all(ftsQuery);
+            `, ftsQuery);
 
-            const artists = db.prepare(`
+            const artists = await dbAll(`
                 SELECT ar.internal_id as id, ar.name,
                        (SELECT COUNT(DISTINCT a.id) FROM albums a WHERE a.artist_id = ar.id) as albumCount,
                        rank
@@ -1020,7 +967,7 @@ class MetadataService {
                 WHERE artists_fts MATCH ?
                 ORDER BY rank
                 LIMIT 10
-            `).all(ftsQuery);
+            `, ftsQuery);
 
             return {
                 songs: songs.map((s) => ({

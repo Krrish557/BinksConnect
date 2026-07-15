@@ -1,7 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
-const { getDatabase } = require("../db/database");
+const { dbGet, dbRun } = require("../db/dbHelpers");
 const { generateToken } = require("../middleware/auth");
 
 const router = express.Router();
@@ -13,14 +13,13 @@ router.post("/register", async (req, res) => {
             return res.status(400).json({ error: "Username and password required" });
         }
 
-        const db = getDatabase();
-        const existing = db.prepare("SELECT id FROM users WHERE username = ?").get(username);
+        const existing = await dbGet("SELECT id FROM users WHERE username = ?", username);
         if (existing) {
             return res.status(409).json({ error: "Username already exists" });
         }
 
         const hash = bcrypt.hashSync(password, 10);
-        const result = db.prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)").run(username, hash);
+        const result = await dbRun("INSERT INTO users (username, password_hash) VALUES (?, ?)", username, hash);
 
         return res.status(201).json({ success: true, userId: result.lastInsertRowid });
     } catch (err) {
@@ -62,15 +61,14 @@ router.post("/login", async (req, res) => {
                 return res.status(401).json({ error: "Invalid Navidrome credentials" });
             }
 
-            const db = getDatabase();
-            const dbUser = db.prepare("SELECT id FROM users WHERE username = ?").get(subsonicUser);
+            const dbUser = await dbGet("SELECT id FROM users WHERE username = ?", subsonicUser);
 
             let userId;
             if (dbUser) {
                 userId = dbUser.id;
             } else {
                 const fakeHash = bcrypt.hashSync(subsonicPassword, 10);
-                const result = db.prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)").run(subsonicUser, fakeHash);
+                const result = await dbRun("INSERT INTO users (username, password_hash) VALUES (?, ?)", subsonicUser, fakeHash);
                 userId = result.lastInsertRowid;
             }
 
@@ -82,7 +80,8 @@ router.post("/login", async (req, res) => {
                 token,
             };
 
-            db.prepare("INSERT INTO sessions (id, user_id, provider_id, provider_config) VALUES (?, ?, ?, ?)").run(
+            await dbRun(
+                "INSERT INTO sessions (id, user_id, provider_id, provider_config) VALUES (?, ?, ?, ?)",
                 sessionId,
                 userId,
                 "navidrome",
@@ -104,22 +103,22 @@ router.post("/login", async (req, res) => {
                 return res.status(500).json({ error: "Telegram bot not configured on server" });
             }
 
-            const db = getDatabase();
             const telegramUser = "telegram_user";
-            let dbUser = db.prepare("SELECT id FROM users WHERE username = ?").get(telegramUser);
+            let dbUser = await dbGet("SELECT id FROM users WHERE username = ?", telegramUser);
             let userId;
             if (dbUser) {
                 userId = dbUser.id;
             } else {
                 const fakeHash = bcrypt.hashSync("telegram-session", 10);
-                const result = db.prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)").run(telegramUser, fakeHash);
+                const result = await dbRun("INSERT INTO users (username, password_hash) VALUES (?, ?)", telegramUser, fakeHash);
                 userId = result.lastInsertRowid;
             }
 
             const sessionId = crypto.randomUUID();
             const providerConfig = { botConfigured: true };
 
-            db.prepare("INSERT INTO sessions (id, user_id, provider_id, provider_config) VALUES (?, ?, ?, ?)").run(
+            await dbRun(
+                "INSERT INTO sessions (id, user_id, provider_id, provider_config) VALUES (?, ?, ?, ?)",
                 sessionId, userId, "telegram", JSON.stringify(providerConfig)
             );
 
@@ -152,10 +151,9 @@ router.get("/me", require("../middleware/auth").authMiddleware, (req, res) => {
     return res.json(data);
 });
 
-router.post("/logout", require("../middleware/auth").authMiddleware, (req, res) => {
+router.post("/logout", require("../middleware/auth").authMiddleware, async (req, res) => {
     try {
-        const db = getDatabase();
-        db.prepare("DELETE FROM sessions WHERE id = ?").run(req.session.sessionId);
+        await dbRun("DELETE FROM sessions WHERE id = ?", req.session.sessionId);
         return res.json({ success: true });
     } catch (err) {
         console.error("Logout error:", err);

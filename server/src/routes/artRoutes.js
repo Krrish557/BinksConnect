@@ -17,7 +17,7 @@ router.get("/:albumId", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
             const size = req.query.size === "thumb" ? "thumb" : "full";
-            const cover = metadataService.getAlbumCover(req.params.albumId, size);
+            const cover = await metadataService.getAlbumCover(req.params.albumId, size);
 
             if (cover) {
                 res.set("Content-Type", cover.mimeType);
@@ -47,7 +47,7 @@ router.get("/artist/:artistId", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
             const size = req.query.size === "thumb" ? "thumb" : "full";
-            const cover = metadataService.getArtistCover(req.params.artistId, size);
+            const cover = await metadataService.getArtistCover(req.params.artistId, size);
 
             if (cover) {
                 res.set("Content-Type", cover.mimeType);

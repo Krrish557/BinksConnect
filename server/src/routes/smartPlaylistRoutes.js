@@ -9,7 +9,7 @@ router.get("/", authMiddleware, async (req, res) => {
         if (req.session.providerId !== "telegram") {
             return res.status(400).json({ error: "Smart playlists only supported for Telegram provider" });
         }
-        const playlists = metadataService.getUserSmartPlaylists(req.session.userId);
+        const playlists = await metadataService.getUserSmartPlaylists(req.session.userId);
         return res.json({ playlists });
     } catch (err) {
         console.error("Get smart playlists error:", err);
@@ -27,7 +27,7 @@ router.post("/", authMiddleware, async (req, res) => {
         const validTypes = ["most_played", "recently_added", "frequently_played", "forgotten_gems", "random"];
         if (!validTypes.includes(ruleType)) return res.status(400).json({ error: `ruleType must be one of: ${validTypes.join(", ")}` });
         const safeLimit = Math.max(1, Math.min(500, parseInt(ruleLimit, 10) || 50));
-        const playlist = metadataService.createSmartPlaylist(req.session.userId, name, ruleType, safeLimit);
+        const playlist = await metadataService.createSmartPlaylist(req.session.userId, name, ruleType, safeLimit);
         return res.json(playlist);
     } catch (err) {
         console.error("Create smart playlist error:", err);
@@ -40,7 +40,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
         if (req.session.providerId !== "telegram") {
             return res.status(400).json({ error: "Smart playlists only supported for Telegram provider" });
         }
-        const result = metadataService.evaluateSmartPlaylist(req.params.id, req.session.userId);
+        const result = await metadataService.evaluateSmartPlaylist(req.params.id, req.session.userId);
         if (!result) return res.status(404).json({ error: "Smart playlist not found" });
         return res.json(result);
     } catch (err) {
@@ -54,7 +54,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         if (req.session.providerId !== "telegram") {
             return res.status(400).json({ error: "Smart playlists only supported for Telegram provider" });
         }
-        const deleted = metadataService.deleteSmartPlaylist(req.params.id, req.session.userId);
+        const deleted = await metadataService.deleteSmartPlaylist(req.params.id, req.session.userId);
         if (!deleted) return res.status(404).json({ error: "Smart playlist not found" });
         return res.json({ success: true });
     } catch (err) {

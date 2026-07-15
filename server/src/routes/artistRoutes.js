@@ -8,7 +8,7 @@ const router = express.Router();
 router.get("/", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
-            const artists = metadataService.getArtists();
+            const artists = await metadataService.getArtists();
             return res.json(artists);
         }
         const provider = providerManager.getProvider(req.session);
@@ -23,7 +23,7 @@ router.get("/", authMiddleware, async (req, res) => {
 router.get("/:id", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
-            const artist = metadataService.getArtist(req.params.id);
+            const artist = await metadataService.getArtist(req.params.id);
             if (!artist) return res.status(404).json({ error: "Artist not found" });
             return res.json(artist);
         }

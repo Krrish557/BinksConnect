@@ -27,7 +27,7 @@ let seed;
 
 beforeAll(() => {
     testDb = createTestDb();
-    database.getDatabase.mockImplementation(() => testDb);
+    database.getDatabase.mockImplementation(() => ({ type: "sqlite", client: testDb }));
     app = require("../../server");
 });
 

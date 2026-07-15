@@ -9,7 +9,7 @@ router.get("/", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
             const offset = parseInt(req.query.offset) || 0;
-            const albums = metadataService.getAlbums(offset);
+            const albums = await metadataService.getAlbums(offset);
             return res.json(albums);
         }
         const provider = providerManager.getProvider(req.session);
@@ -26,7 +26,7 @@ router.get("/recent", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
             const size = parseInt(req.query.size) || 12;
-            const albums = metadataService.getRecentAlbums(req.session.userId, size);
+            const albums = await metadataService.getRecentAlbums(req.session.userId, size);
             return res.json(albums);
         }
         const provider = providerManager.getProvider(req.session);
@@ -43,7 +43,7 @@ router.get("/newest", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
             const size = parseInt(req.query.size) || 12;
-            const albums = metadataService.getNewestAlbums(size);
+            const albums = await metadataService.getNewestAlbums(size);
             return res.json(albums);
         }
         const provider = providerManager.getProvider(req.session);
@@ -60,7 +60,7 @@ router.get("/frequent", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
             const size = parseInt(req.query.size) || 12;
-            const albums = metadataService.getFrequentAlbums(req.session.userId, size);
+            const albums = await metadataService.getFrequentAlbums(req.session.userId, size);
             return res.json(albums);
         }
         const provider = providerManager.getProvider(req.session);
@@ -76,7 +76,7 @@ router.get("/frequent", authMiddleware, async (req, res) => {
 router.get("/:id", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
-            const data = metadataService.getAlbumTracks(req.params.id);
+            const data = await metadataService.getAlbumTracks(req.params.id);
             if (!data) return res.status(404).json({ error: "Album not found" });
             return res.json(data);
         }

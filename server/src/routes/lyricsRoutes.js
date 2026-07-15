@@ -2,14 +2,13 @@ const express = require("express");
 const router = express.Router();
 const { authMiddleware } = require("../middleware/auth");
 const lyricsService = require("../services/lyricsService");
-const metadataService = require("../services/metadataService");
+const { dbGet } = require("../db/dbHelpers");
 
 router.get("/:trackInternalId", authMiddleware, async (req, res) => {
     try {
         const { trackInternalId } = req.params;
-        const db = require("../db/database").getDatabase();
 
-        const track = db.prepare(`
+        const track = await dbGet(`
             SELECT t.id as dbId, t.title, t.duration,
                    ar.name as artist,
                    a.name as album
@@ -17,7 +16,7 @@ router.get("/:trackInternalId", authMiddleware, async (req, res) => {
             LEFT JOIN artists ar ON ar.id = t.artist_id
             LEFT JOIN albums a ON a.id = t.album_id
             WHERE t.internal_id = ?
-        `).get(trackInternalId);
+        `, trackInternalId);
 
         if (!track) {
             return res.status(404).json({ error: "Track not found" });

@@ -15,7 +15,7 @@ router.get("/:trackId", authMiddleware, async (req, res) => {
             const provider = new TelegramStorageProvider({});
             const result = await provider.download(req.params.trackId, rangeHeader);
 
-            metadataService.recordPlay(req.session.userId, req.params.trackId);
+            await metadataService.recordPlay(req.session.userId, req.params.trackId);
 
             res.set("Content-Type", result.contentType);
             res.set("Accept-Ranges", "bytes");
