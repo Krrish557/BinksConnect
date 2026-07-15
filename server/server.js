@@ -66,7 +66,11 @@ const { initDatabase } = require("./src/db/database");
 
 if (require.main === module) {
     (async () => {
-        await initDatabase();
+        try {
+            await initDatabase();
+        } catch (err) {
+            console.error("[DB] Database init failed:", err.message);
+        }
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
             initCache();

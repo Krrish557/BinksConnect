@@ -53,15 +53,7 @@ async function dbExec(sql) {
 async function dbTransaction(fn) {
     const { type, client } = getDatabase();
     if (type === "turso") {
-        await client.execute("BEGIN");
-        try {
-            const result = await fn();
-            await client.execute("COMMIT");
-            return result;
-        } catch (err) {
-            await client.execute("ROLLBACK");
-            throw err;
-        }
+        return fn();
     }
     if (fn.constructor.name === "AsyncFunction") {
         client.prepare("BEGIN").run();

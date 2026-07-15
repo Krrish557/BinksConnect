@@ -533,7 +533,6 @@ async function initSchemaTurso(client) {
     const { parseArtists, normalizeArtistName } = require("../utils/artistParser");
     const { generateId } = require("./ids");
 
-    await client.execute("BEGIN");
     try {
         const artistsResult = await client.execute("SELECT id, internal_id, name FROM artists");
         const nameToId = new Map();
@@ -714,17 +713,14 @@ async function initSchemaTurso(client) {
             }
         }
 
-        await client.execute("COMMIT");
+        await client.execute({
+            sql: "INSERT INTO schema_migrations (name) VALUES (?)",
+            args: ["artist_normalization"],
+        });
+        console.log("[DB] artist_normalization migration complete (Turso)");
     } catch (err) {
-        await client.execute("ROLLBACK");
-        throw err;
+        console.error("[DB] artist_normalization migration failed (will retry):", err.message);
     }
-
-    await client.execute({
-        sql: "INSERT INTO schema_migrations (name) VALUES (?)",
-        args: ["artist_normalization"],
-    });
-    console.log("[DB] artist_normalization migration complete (Turso)");
 }
 
 module.exports = { getDatabase, initDatabase };
