@@ -4,7 +4,8 @@ import { usePlayerStore } from "@/store/playerStore";
 import NowPlayingBar from "@/components/ui/NowPlayingBar";
 import { formatTime } from "@/utils/format";
 import usePlaylistStore from "@/store/playlistStore";
-import { useState, useRef } from "react";
+import { trackService } from "@/services/trackService";
+import { useState, useRef, useEffect } from "react";
 import { apiClient } from "@/services/apiClient";
 
 export default function SongRow({
@@ -23,7 +24,25 @@ export default function SongRow({
     const isActive = currentTrack?.id === song.id;
 
     const [menuOpen, setMenuOpen] = useState(false);
+    const [isFavorited, setIsFavorited] = useState(false);
     const menuRef = useRef(null);
+
+    useEffect(() => {
+        trackService.checkFavorites([song.id]).then((res) => {
+            setIsFavorited(!!res.favorited[song.id]);
+        }).catch(() => {});
+    }, [song.id]);
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handler = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, [menuOpen]);
 
     const handleClick = () => {
         if (onPlay) onPlay();
@@ -33,6 +52,17 @@ export default function SongRow({
         e.stopPropagation();
         addTrack(playlistId, song);
         setMenuOpen(false);
+    };
+
+    const handleToggleFavorite = async (e) => {
+        e.stopPropagation();
+        try {
+            const res = await trackService.toggleFavorite(song.id);
+            setIsFavorited(res.isFavorited);
+            setMenuOpen(false);
+        } catch (err) {
+            console.error("Toggle favorite error:", err);
+        }
     };
 
     return (
@@ -84,7 +114,7 @@ export default function SongRow({
                     {formatTime(song.duration)}
                 </span>
 
-                {contextMenu && playlists.length > 0 && (
+                {contextMenu && (
                     <div className="relative" ref={menuRef}>
                         <button
                             onClick={(e) => {
@@ -98,20 +128,35 @@ export default function SongRow({
 
                         {menuOpen && (
                             <div className="absolute right-0 bottom-full mb-1 w-48 bg-[#282828] rounded-lg shadow-xl z-50 py-1">
-                                <p className="text-xs text-[#B3B3B3] px-3 py-1">
-                                    Add to playlist
-                                </p>
-                                {playlists.map((p) => (
-                                    <button
-                                        key={p.id}
-                                        onClick={(e) =>
-                                            handleAddToPlaylist(e, p.id)
-                                        }
-                                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
-                                    >
-                                        {p.name}
-                                    </button>
-                                ))}
+                                <button
+                                    onClick={handleToggleFavorite}
+                                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition flex items-center gap-2"
+                                >
+                                    <span className={isFavorited ? "text-[#1db954]" : ""}>
+                                        {isFavorited ? "♥" : "♡"}
+                                    </span>
+                                    {isFavorited ? "Remove from favorites" : "Add to favorites"}
+                                </button>
+
+                                {playlists.length > 0 && (
+                                    <>
+                                        <div className="border-t border-white/10 my-1" />
+                                        <p className="text-xs text-[#B3B3B3] px-3 py-1">
+                                            Add to playlist
+                                        </p>
+                                        {playlists.map((p) => (
+                                            <button
+                                                key={p.id}
+                                                onClick={(e) =>
+                                                    handleAddToPlaylist(e, p.id)
+                                                }
+                                                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                            >
+                                                {p.name}
+                                            </button>
+                                        ))}
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>

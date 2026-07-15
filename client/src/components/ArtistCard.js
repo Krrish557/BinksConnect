@@ -1,9 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { apiClient } from "@/services/apiClient";
 
-export default function ArtistCard({ artist, coverUrl }) {
+export default function ArtistCard({ artist }) {
     const router = useRouter();
+    const coverUrl = artist.coverArt ? apiClient.resolveUrl(artist.coverArt) : null;
 
     return (
         <div

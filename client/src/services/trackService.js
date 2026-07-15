@@ -13,6 +13,14 @@ export const trackService = {
         return apiClient.get("/api/starred");
     },
 
+    async toggleFavorite(trackId) {
+        return apiClient.post("/api/favorites/toggle", { trackId });
+    },
+
+    async checkFavorites(trackIds) {
+        return apiClient.post("/api/favorites/check", { trackIds });
+    },
+
     getStreamUrl(trackId) {
         return apiClient.getStreamUrl(trackId);
     },

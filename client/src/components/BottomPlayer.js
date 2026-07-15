@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePlayerStore } from "@/store/playerStore";
+import { trackService } from "@/services/trackService";
 import { formatTime } from "@/utils/format";
 import { apiClient } from "@/services/apiClient";
 
@@ -22,6 +24,26 @@ export default function BottomPlayer() {
         toggleRepeat,
         openPlayer,
     } = usePlayerStore();
+
+    const [isFavorited, setIsFavorited] = useState(false);
+
+    useEffect(() => {
+        if (!currentTrack) return;
+        trackService.checkFavorites([currentTrack.id]).then((res) => {
+            setIsFavorited(!!res.favorited[currentTrack.id]);
+        }).catch(() => {});
+    }, [currentTrack?.id]);
+
+    const handleToggleFavorite = async (e) => {
+        e.stopPropagation();
+        if (!currentTrack) return;
+        try {
+            const res = await trackService.toggleFavorite(currentTrack.id);
+            setIsFavorited(res.isFavorited);
+        } catch (err) {
+            console.error("Toggle favorite error:", err);
+        }
+    };
 
     const progress = duration ? (currentTime / duration) * 100 : 0;
 
@@ -135,6 +157,15 @@ export default function BottomPlayer() {
                 className="hidden md:flex items-center gap-2 w-1/4 justify-end"
                 onClick={(e) => e.stopPropagation()}
             >
+                <button
+                    onClick={handleToggleFavorite}
+                    className={`text-lg transition-colors ${
+                        isFavorited ? "text-[#1db954]" : "text-[#B3B3B3] hover:text-white"
+                    }`}
+                    title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                >
+                    {isFavorited ? "♥" : "♡"}
+                </button>
                 <span className="text-sm text-[#B3B3B3]">
                     {volume === 0 ? "🔇" : volume < 0.5 ? "🔉" : "🔊"}
                 </span>

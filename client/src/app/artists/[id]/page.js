@@ -49,6 +49,8 @@ export default function ArtistPage() {
     if (loading) return <LoadingState message="Loading artist..." />;
     if (!artist) return null;
 
+    const hasFeaturedTracks = artist.featuredTracks && artist.featuredTracks.length > 0;
+
     return (
         <main className="pb-10">
             <div
@@ -59,7 +61,15 @@ export default function ArtistPage() {
             >
                 <div className="flex flex-col md:flex-row gap-6 items-end">
                     <div className="w-40 h-40 rounded-full bg-[#282828] flex items-center justify-center text-6xl shrink-0 overflow-hidden shadow-2xl">
-                        👤
+                        {artist.coverArt ? (
+                            <img
+                                src={apiClient.resolveUrl(artist.coverArt)}
+                                alt={artist.name}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            "👤"
+                        )}
                     </div>
                     <div>
                         <p className="text-xs font-bold uppercase text-[#B3B3B3] mb-1">
@@ -70,6 +80,7 @@ export default function ArtistPage() {
                         </h1>
                         <p className="text-[#B3B3B3] text-sm mt-2">
                             {artist.albumCount} albums
+                            {hasFeaturedTracks && ` · ${artist.featuredTracks.length} featured tracks`}
                         </p>
                     </div>
                 </div>
@@ -116,6 +127,26 @@ export default function ArtistPage() {
                         ))}
                     </HorizontalScroller>
                 </div>
+            )}
+
+            {hasFeaturedTracks && (
+                <section className="px-3 mt-8">
+                    <h2 className="text-xl font-bold text-white px-3 mb-3">
+                        Appears On
+                    </h2>
+                    <div className="space-y-1">
+                        {artist.featuredTracks.map((song, i) => (
+                            <SongRow
+                                key={song.id}
+                                song={song}
+                                index={i}
+                                showIndex
+                                showAlbum
+                                onPlay={() => setQueue(artist.featuredTracks, i)}
+                            />
+                        ))}
+                    </div>
+                </section>
             )}
         </main>
     );

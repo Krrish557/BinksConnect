@@ -4,6 +4,7 @@ import Sidebar from "./Sidebar";
 import BottomPlayer from "./BottomPlayer";
 import MobileNav from "./MobileNav";
 import FullPlayer from "./FullPlayer";
+import KeyboardShortcuts from "./KeyboardShortcuts";
 import { usePlayerStore } from "@/store/playerStore";
 
 export default function AppLayout({ children }) {
@@ -38,6 +39,9 @@ export default function AppLayout({ children }) {
 
             {/* FULL PLAYER OVERLAY — still fixed since it's a fullscreen overlay */}
             {isPlayerOpen && <FullPlayer />}
+
+            {/* KEYBOARD SHORTCUTS */}
+            <KeyboardShortcuts />
         </div>
     );
 }

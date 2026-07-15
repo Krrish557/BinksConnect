@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePlayerStore } from "@/store/playerStore";
+import { trackService } from "@/services/trackService";
 import QueueItem from "./QueueItem";
 import { formatTime } from "@/utils/format";
 import { apiClient } from "@/services/apiClient";
@@ -28,11 +29,18 @@ export default function FullPlayer() {
         toggleRepeat,
     } = usePlayerStore();
 
-    const [tab, setTab] = useState("queue"); // "queue" | "related"
+    const [tab, setTab] = useState("queue");
+    const [isFavorited, setIsFavorited] = useState(false);
     const startYRef = useRef(null);
     const containerRef = useRef(null);
 
-    // Swipe down to close
+    useEffect(() => {
+        if (!currentTrack) return;
+        trackService.checkFavorites([currentTrack.id]).then((res) => {
+            setIsFavorited(!!res.favorited[currentTrack.id]);
+        }).catch(() => {});
+    }, [currentTrack?.id]);
+
     useEffect(() => {
         const el = containerRef.current;
         if (!el) return;
@@ -55,6 +63,17 @@ export default function FullPlayer() {
             el.removeEventListener("touchend", onTouchEnd);
         };
     }, [closePlayer]);
+
+    const handleToggleFavorite = async (e) => {
+        e.stopPropagation();
+        if (!currentTrack) return;
+        try {
+            const res = await trackService.toggleFavorite(currentTrack.id);
+            setIsFavorited(res.isFavorited);
+        } catch (err) {
+            console.error("Toggle favorite error:", err);
+        }
+    };
 
     if (!currentTrack) return null;
 
@@ -115,7 +134,14 @@ export default function FullPlayer() {
                             {currentTrack.artist}
                         </p>
                     </div>
-                    <div className="ml-4 text-[#B3B3B3] text-2xl">♡</div>
+                    <button
+                        onClick={handleToggleFavorite}
+                        className={`ml-4 text-2xl transition-colors ${
+                            isFavorited ? "text-[#1db954]" : "text-[#B3B3B3] hover:text-white"
+                        }`}
+                    >
+                        {isFavorited ? "♥" : "♡"}
+                    </button>
                 </div>
 
                 {/* SEEK BAR */}

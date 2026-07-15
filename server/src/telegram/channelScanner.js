@@ -7,6 +7,7 @@ const sharp = require("sharp");
 const { scanFile } = require("./scanner");
 const metadataService = require("../services/metadataService");
 const { getDatabase } = require("../db/database");
+const { parseArtists } = require("../utils/artistParser");
 
 const AUDIO_MIME_PREFIXES = ["audio/"];
 
@@ -141,9 +142,22 @@ async function processChannelPost(ctx, bot) {
         }
 
         let artistDbId = null;
+        let albumArtistDbId = null;
+        let parsedFeatArtists = [];
         if (metadata.artist) {
-            const artist = metadataService.createArtist(metadata.artist);
-            artistDbId = artist.dbId;
+            const parsedArtists = parseArtists(metadata.artist);
+            if (parsedArtists.length > 0) {
+                const primary = metadataService.findOrCreateArtist(parsedArtists[0]);
+                artistDbId = primary.dbId;
+                albumArtistDbId = primary.dbId;
+
+                for (let i = 1; i < parsedArtists.length; i++) {
+                    const feat = metadataService.findOrCreateArtist(parsedArtists[i]);
+                    if (feat) {
+                        parsedFeatArtists.push(feat.dbId);
+                    }
+                }
+            }
         }
 
         let albumDbId = null;
@@ -152,7 +166,11 @@ async function processChannelPost(ctx, bot) {
             albumDbId = album.dbId;
         }
 
-        const track = metadataService.createTrack(metadata, albumDbId, artistDbId);
+        const track = metadataService.createTrack(metadata, albumDbId, artistDbId, albumArtistDbId);
+
+        for (const featDbId of parsedFeatArtists) {
+            metadataService.linkTrackArtist(track.dbId, featDbId, "featured");
+        }
 
         metadataService.createProviderMapping(track.dbId, "telegram", {
             telegramChannelId: chatId,
@@ -177,6 +195,9 @@ async function processChannelPost(ctx, bot) {
                 }
                 if (track.dbId && artistDbId) {
                     metadataService.storeArtistCover(artistDbId, thumbnail, fullSize, mime);
+                }
+                for (const featDbId of parsedFeatArtists) {
+                    metadataService.storeArtistCover(featDbId, thumbnail, fullSize, mime);
                 }
                 console.log(`[Scanner] Extracted cover art for: ${metadata.title}`);
             } catch (artErr) {

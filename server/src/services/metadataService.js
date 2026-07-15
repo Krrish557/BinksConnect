@@ -1,5 +1,6 @@
 const { getDatabase } = require("../db/database");
 const { generateId } = require("../db/ids");
+const { normalizeArtistName } = require("../utils/artistParser");
 
 class MetadataService {
     createArtist(name, coverUrl = null) {
@@ -11,6 +12,56 @@ class MetadataService {
         return { id: internalId, dbId: result.lastInsertRowid };
     }
 
+    findOrCreateArtist(name, coverUrl = null) {
+        if (!name || typeof name !== "string") return null;
+        const trimmed = name.trim();
+        if (!trimmed) return null;
+
+        const db = getDatabase();
+        const norm = normalizeArtistName(trimmed);
+
+        const existing = db.prepare(`
+            SELECT id, internal_id FROM artists
+            WHERE LOWER(REPLACE(name, ' ', ' ')) = ?
+        `).get(norm);
+
+        if (existing) return { id: existing.internal_id, dbId: existing.id };
+
+        const internalId = generateId("art");
+        const result = db.prepare("INSERT INTO artists (internal_id, name, cover_url) VALUES (?, ?, ?)").run(internalId, trimmed, coverUrl);
+        return { id: internalId, dbId: result.lastInsertRowid };
+    }
+
+    linkTrackArtist(trackDbId, artistDbId, role = "primary") {
+        const db = getDatabase();
+        db.prepare("INSERT OR IGNORE INTO track_artists (track_id, artist_id, role) VALUES (?, ?, ?)").run(trackDbId, artistDbId, role);
+    }
+
+    getFeaturedTracks(artistInternalId) {
+        const db = getDatabase();
+        const artist = db.prepare("SELECT id FROM artists WHERE internal_id = ?").get(artistInternalId);
+        if (!artist) return [];
+
+        const rows = db.prepare(`
+            SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
+                   ar.name as artist, ar.internal_id as artistId,
+                   a.name as album, a.internal_id as albumId
+            FROM track_artists ta
+            JOIN tracks t ON t.id = ta.track_id
+            LEFT JOIN artists ar ON ar.id = t.artist_id
+            LEFT JOIN albums a ON a.id = t.album_id
+            WHERE ta.artist_id = ? AND ta.role = 'featured'
+            ORDER BY t.title ASC
+        `).all(artist.id);
+
+        return rows.map((s) => ({
+            id: s.id, title: s.title, artist: s.artist || "Unknown",
+            album: s.album, albumId: s.albumId, duration: s.duration || 0,
+            track: s.track || 0, cover: `/api/art/${s.albumId}`,
+            url: `/api/stream/${s.id}`, provider: "telegram",
+        }));
+    }
+
     createAlbum(name, artistDbId, year = 0, coverUrl = null) {
         const db = getDatabase();
         const internalId = generateId("alb");
@@ -20,17 +71,18 @@ class MetadataService {
         return { id: internalId, dbId: result.lastInsertRowid };
     }
 
-    createTrack(metadata, albumDbId, artistDbId) {
+    createTrack(metadata, albumDbId, artistDbId, albumArtistDbId) {
         const db = getDatabase();
         const internalId = generateId("trk");
         const result = db.prepare(`
-            INSERT INTO tracks (internal_id, title, artist_id, album_id, duration, genre, year, track_number, bitrate)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO tracks (internal_id, title, artist_id, album_id, album_artist_id, duration, genre, year, track_number, bitrate)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
             internalId,
             metadata.title || "Unknown",
             artistDbId || null,
             albumDbId || null,
+            albumArtistDbId || artistDbId || null,
             metadata.duration || 0,
             metadata.genre || null,
             metadata.year || null,
@@ -99,6 +151,7 @@ class MetadataService {
                    (SELECT COALESCE(SUM(duration), 0) FROM tracks WHERE album_id = a.id) as duration
             FROM albums a
             LEFT JOIN artists ar ON ar.id = a.artist_id
+            WHERE (SELECT COUNT(*) FROM tracks WHERE album_id = a.id) > 0
             ORDER BY a.name ASC
             LIMIT ? OFFSET ?
         `).all(limit, offset);
@@ -310,14 +363,24 @@ class MetadataService {
     getArtists() {
         const db = getDatabase();
         const rows = db.prepare(`
-            SELECT ar.internal_id as id, ar.name, ar.cover_url as coverArt,
-                   (SELECT COUNT(DISTINCT a.id) FROM albums a WHERE a.artist_id = ar.id) as albumCount
+            SELECT ar.internal_id as id, ar.name,
+                   (SELECT COUNT(DISTINCT a.id) FROM albums a WHERE a.artist_id = ar.id) as albumCount,
+                   (SELECT COUNT(DISTINCT t.id) FROM tracks t WHERE t.artist_id = ar.id) as trackCount
             FROM artists ar
+            WHERE ar.id IN (
+                SELECT DISTINCT artist_id FROM tracks WHERE artist_id IS NOT NULL
+                UNION
+                SELECT DISTINCT artist_id FROM track_artists WHERE artist_id IS NOT NULL
+                UNION
+                SELECT DISTINCT artist_id FROM albums WHERE artist_id IS NOT NULL
+            )
             ORDER BY ar.name ASC
         `).all();
         return rows.map((a) => ({
             id: a.id, name: a.name, albumCount: a.albumCount,
-            coverArt: a.coverArt, provider: "telegram",
+            trackCount: a.trackCount,
+            coverArt: `/api/art/artist/${a.id}`,
+            provider: "telegram",
         }));
     }
 
@@ -335,11 +398,23 @@ class MetadataService {
             ORDER BY a.year ASC, a.name ASC
         `).all(artist.id);
 
+        const featuredTracks = db.prepare(`
+            SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
+                   ar.name as artist, ar.internal_id as artistId,
+                   a.name as album, a.internal_id as albumId
+            FROM track_artists ta
+            JOIN tracks t ON t.id = ta.track_id
+            LEFT JOIN artists ar ON ar.id = t.artist_id
+            LEFT JOIN albums a ON a.id = t.album_id
+            WHERE ta.artist_id = ? AND ta.role = 'featured'
+            ORDER BY t.title ASC
+        `).all(artist.id);
+
         return {
             id: artist.internal_id,
             name: artist.name,
             albumCount: albums.length,
-            coverArt: artist.cover_url,
+            coverArt: `/api/art/artist/${artist.internal_id}`,
             provider: "telegram",
             album: albums.map((a) => ({
                 id: a.id, name: a.name, artist: artist.name,
@@ -347,6 +422,12 @@ class MetadataService {
                 coverUrl: a.coverUrl || `/api/art/${a.id}`,
                 songCount: a.songCount, duration: a.duration,
                 provider: "telegram",
+            })),
+            featuredTracks: featuredTracks.map((s) => ({
+                id: s.id, title: s.title, artist: s.artist || "Unknown",
+                album: s.album, albumId: s.albumId, duration: s.duration || 0,
+                track: s.track || 0, cover: `/api/art/${s.albumId}`,
+                url: `/api/stream/${s.id}`, provider: "telegram",
             })),
         };
     }
@@ -378,7 +459,7 @@ class MetadataService {
         `).all(q, q);
 
         const artists = db.prepare(`
-            SELECT ar.internal_id as id, ar.name, ar.cover_url as coverArt,
+            SELECT ar.internal_id as id, ar.name,
                    (SELECT COUNT(DISTINCT a.id) FROM albums a WHERE a.artist_id = ar.id) as albumCount
             FROM artists ar
             WHERE ar.name LIKE ?
@@ -400,7 +481,7 @@ class MetadataService {
             })),
             artists: artists.map((a) => ({
                 id: a.id, name: a.name, albumCount: a.albumCount,
-                coverArt: a.coverArt, provider: "telegram",
+                coverArt: `/api/art/artist/${a.id}`, provider: "telegram",
             })),
         };
     }
@@ -424,6 +505,21 @@ class MetadataService {
             db.prepare("INSERT INTO favorites (user_id, track_id) VALUES (?, ?)").run(userId, trackId);
             return true;
         }
+    }
+
+    checkFavorites(userId, trackInternalIds) {
+        const db = getDatabase();
+        const result = {};
+        for (const internalId of trackInternalIds) {
+            const trackId = this.resolveTrackId(internalId);
+            if (!trackId) {
+                result[internalId] = false;
+                continue;
+            }
+            const exists = db.prepare("SELECT 1 FROM favorites WHERE user_id = ? AND track_id = ?").get(userId, trackId);
+            result[internalId] = !!exists;
+        }
+        return result;
     }
 
     getTrackCount() {
