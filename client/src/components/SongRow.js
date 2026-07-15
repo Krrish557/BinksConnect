@@ -7,6 +7,7 @@ import usePlaylistStore from "@/store/playlistStore";
 import { trackService } from "@/services/trackService";
 import { useState, useRef, useEffect } from "react";
 import { apiClient } from "@/services/apiClient";
+import { useRouter } from "next/navigation";
 
 export default function SongRow({
     song,
@@ -20,6 +21,9 @@ export default function SongRow({
     const isPlaying = usePlayerStore((s) => s.isPlaying);
     const playlists = usePlaylistStore((s) => s.playlists);
     const addTrack = usePlaylistStore((s) => s.addTrack);
+    const addToQueue = usePlayerStore((s) => s.addToQueue);
+    const playNext = usePlayerStore((s) => s.playNext);
+    const router = useRouter();
 
     const isActive = currentTrack?.id === song.id;
 
@@ -63,6 +67,30 @@ export default function SongRow({
         } catch (err) {
             console.error("Toggle favorite error:", err);
         }
+    };
+
+    const handlePlayNext = (e) => {
+        e.stopPropagation();
+        playNext(song);
+        setMenuOpen(false);
+    };
+
+    const handleAddToQueue = (e) => {
+        e.stopPropagation();
+        addToQueue(song);
+        setMenuOpen(false);
+    };
+
+    const handleGoToAlbum = (e) => {
+        e.stopPropagation();
+        setMenuOpen(false);
+        if (song.albumId) router.push(`/albums/${song.albumId}`);
+    };
+
+    const handleGoToArtist = (e) => {
+        e.stopPropagation();
+        setMenuOpen(false);
+        if (song.artistId) router.push(`/artists/${song.artistId}`);
     };
 
     return (
@@ -137,6 +165,40 @@ export default function SongRow({
                                     </span>
                                     {isFavorited ? "Remove from favorites" : "Add to favorites"}
                                 </button>
+
+                                <button
+                                    onClick={handlePlayNext}
+                                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                >
+                                    Play Next
+                                </button>
+
+                                <button
+                                    onClick={handleAddToQueue}
+                                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                >
+                                    Add to Queue
+                                </button>
+
+                                <div className="border-t border-white/10 my-1" />
+
+                                {song.albumId && (
+                                    <button
+                                        onClick={handleGoToAlbum}
+                                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                    >
+                                        Go to Album
+                                    </button>
+                                )}
+
+                                {song.artistId && (
+                                    <button
+                                        onClick={handleGoToArtist}
+                                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                    >
+                                        Go to Artist
+                                    </button>
+                                )}
 
                                 {playlists.length > 0 && (
                                     <>

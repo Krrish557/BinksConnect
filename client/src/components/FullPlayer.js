@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { usePlayerStore } from "@/store/playerStore";
 import { trackService } from "@/services/trackService";
 import QueueItem from "./QueueItem";
+import SyncedLyrics from "./SyncedLyrics";
 import { formatTime } from "@/utils/format";
 import { apiClient } from "@/services/apiClient";
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 export default function FullPlayer() {
     const {
@@ -27,6 +39,9 @@ export default function FullPlayer() {
         isRepeat,
         toggleShuffle,
         toggleRepeat,
+        reorderQueue,
+        lyrics,
+        fetchLyrics,
     } = usePlayerStore();
 
     const [tab, setTab] = useState("queue");
@@ -34,12 +49,34 @@ export default function FullPlayer() {
     const startYRef = useRef(null);
     const containerRef = useRef(null);
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: { distance: 5 },
+        })
+    );
+
     useEffect(() => {
         if (!currentTrack) return;
         trackService.checkFavorites([currentTrack.id]).then((res) => {
             setIsFavorited(!!res.favorited[currentTrack.id]);
         }).catch(() => {});
     }, [currentTrack?.id]);
+
+    useEffect(() => {
+        if (tab === "lyrics" && currentTrack) {
+            fetchLyrics(currentTrack);
+        }
+    }, [tab, currentTrack?.id]);
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (e.detail?.time !== undefined) {
+                seek(e.detail.time);
+            }
+        };
+        window.addEventListener("lyricsSeek", handler);
+        return () => window.removeEventListener("lyricsSeek", handler);
+    }, [seek]);
 
     useEffect(() => {
         const el = containerRef.current;
@@ -75,10 +112,25 @@ export default function FullPlayer() {
         }
     };
 
+    const handleDragEnd = useCallback(
+        (event) => {
+            const { active, over } = event;
+            if (!over || active.id === over.id) return;
+
+            const oldItems = queue.map((t, i) => `${t.id}-${i}`);
+            const oldIndex = oldItems.indexOf(active.id);
+            const newIndex = oldItems.indexOf(over.id);
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                reorderQueue(oldIndex, newIndex);
+            }
+        },
+        [queue, reorderQueue]
+    );
+
     if (!currentTrack) return null;
 
     const progress = duration ? (currentTime / duration) * 100 : 0;
-
     const playFromQueue = (index) => setQueue(queue, index);
 
     return (
@@ -235,9 +287,9 @@ export default function FullPlayer() {
                     <span className="text-sm text-[#B3B3B3]">🔊</span>
                 </div>
 
-                {/* QUEUE TABS */}
+                {/* TABS */}
                 <div className="flex gap-4 border-b border-white/10 mb-4">
-                    {["queue"].map((t) => (
+                    {["queue", "lyrics"].map((t) => (
                         <button
                             key={t}
                             onClick={() => setTab(t)}
@@ -247,23 +299,42 @@ export default function FullPlayer() {
                                     : "text-[#B3B3B3] border-transparent hover:text-white"
                             }`}
                         >
-                            Up Next
+                            {t === "queue" ? "Up Next" : "Lyrics"}
                         </button>
                     ))}
                 </div>
 
-                {/* QUEUE LIST */}
-                <div className="space-y-1">
-                    {queue.map((track, index) => (
-                        <QueueItem
-                            key={`${track.id}-${index}`}
-                            track={track}
-                            index={index}
-                            isActive={index === currentIndex}
-                            onClick={() => playFromQueue(index)}
-                        />
-                    ))}
-                </div>
+                {/* TAB CONTENT */}
+                {tab === "queue" && (
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={queue.map((t, i) => `${t.id}-${i}`)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="space-y-1">
+                                {queue.map((track, index) => (
+                                    <QueueItem
+                                        key={`${track.id}-${index}`}
+                                        track={track}
+                                        index={index}
+                                        isActive={index === currentIndex}
+                                        onClick={() => playFromQueue(index)}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
+                )}
+
+                {tab === "lyrics" && (
+                    <div className="h-80">
+                        <SyncedLyrics lyrics={lyrics} currentTime={currentTime} />
+                    </div>
+                )}
             </div>
         </div>
     );

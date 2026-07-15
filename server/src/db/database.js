@@ -158,6 +158,16 @@ function initSchema() {
         );
 
         CREATE INDEX IF NOT EXISTS idx_track_artists_artist ON track_artists(artist_id);
+
+        CREATE TABLE IF NOT EXISTS lyrics_cache (
+            track_id INTEGER PRIMARY KEY,
+            provider TEXT NOT NULL,
+            synced INTEGER DEFAULT 0,
+            plain TEXT,
+            synced_json TEXT,
+            fetched_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE
+        );
     `);
 
     runMigrations();

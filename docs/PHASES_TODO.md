@@ -183,113 +183,73 @@ A one-time migration script to:
 
 ---
 
-## Phase 4: Lyrics
+## Phase 4: Lyrics + Queue Reordering + Context Menu ✅
 
-### 4.1 Overview
+> Implemented: 2026-07-15
 
-Add synced (timed) and plain lyrics to the player. This is a Day 2 feature from the project overview and a key differentiator.
+### 4A. Server — Track artistId + Lyrics infrastructure
 
-### 4.2 Lyrics Provider
+- Added `artistId` to all track mappings in `metadataService.js` (7 song mapping locations)
+- Created `lyrics_cache` table in `database.js`
+- Created `server/src/services/lyricsService.js` — LRCLIB primary, Genius fallback, SQLite cache
+- Created `server/src/routes/lyricsRoutes.js` — `GET /api/lyrics/:trackInternalId`
+- Registered lyrics route in `server.js`
 
-**Primary: LRCLIB** (https://lrclib.net)
-- Free, no API key required
-- Provides synced LRC timestamps
-- Large coverage for popular music
-- Rate limited but generous
+### 4B. Queue Reordering (@dnd-kit)
 
-**Fallback: Genius** (https://genius.com/api)
-- Plain text lyrics (no timestamps)
-- Good coverage for edge cases
-- Requires API key (free tier available)
+- Installed `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`
+- **QueueItem** — wraps in `useSortable()`, has drag handle (`⠿`), context menu (Play Next, Remove from Queue, Go to Album/Artist)
+- **FullPlayer** — wraps queue in `<DndContext>` + `<SortableContext>`, `onDragEnd` calls `reorderQueue()`
 
-### 4.3 Server-Side Implementation
+### 4C. PlayerStore — New actions
 
-#### 4.3.1 New Lyrics Service
+| Action | Description |
+|--------|-------------|
+| `addToQueue(track)` | Append track to end of queue |
+| `playNext(track)` | Insert track after current playing |
+| `removeFromQueue(index)` | Remove track, adjust currentIndex |
+| `reorderQueue(from, to)` | Drag-reorder, track currentTrack |
+| `fetchLyrics(track)` | Fetch from `/api/lyrics`, store in state |
 
-**File:** `server/src/services/lyricsService.js`
+### 4D. Expanded SongRow Context Menu
 
-```
-fetchLyrics(artist, title, album?, duration?)
-  → Try LRCLIB first: GET https://lrclib.net/api/get?artist_name=X&track_name=Y&album_name=Z&duration=N
-  → If no synced lyrics, try LRCLIB search: GET https://lrclib.net/api/search?q=X+Y
-  → Fallback to Genius: GET https://genius.com/api/search?q=X+Y
-  → Return { synced: bool, plain: string, syncedLines?: [{ time: float, text: string }] }
-```
+Menu items:
+1. Toggle favorite *(existing)*
+2. **Play Next** *(new)*
+3. **Add to Queue** *(new)*
+4. *(separator)*
+5. **Go to Album** *(new)* — navigates `/albums/${albumId}`
+6. **Go to Artist** *(new)* — navigates `/artists/${artistId}`
+7. *(separator)*
+8. Add to playlist... *(existing)*
 
-#### 4.3.2 Lyrics API Endpoint
+### 4E. Lyrics in FullPlayer
 
-```
-GET /api/lyrics/:trackInternalId
-```
+- **Lyrics tab** alongside "Up Next" in FullPlayer
+- Fetches lyrics on tab open
+- Renders `SyncedLyrics` component
+- Synced highlighting, auto-scroll, click-to-seek
+- Instrumental and "not found" states handled
 
-**Response:**
-```json
-{
-  "synced": true,
-  "plain": "[00:12.00] First line\n[00:15.50] Second line",
-  "syncedLines": [
-    { "time": 12.0, "text": "First line" },
-    { "time": 15.5, "text": "Second line" }
-  ]
-}
-```
+### Files created/modified
 
-#### 4.3.3 Lyrics Caching
+| Action | File |
+|--------|------|
+| Created | `server/src/services/lyricsService.js` |
+| Created | `server/src/routes/lyricsRoutes.js` |
+| Created | `client/src/services/lyricsService.js` |
+| Created | `client/src/components/SyncedLyrics.js` |
+| Modified | `server/src/services/metadataService.js` (artistId) |
+| Modified | `server/src/db/database.js` (lyrics_cache table) |
+| Modified | `server/server.js` (register lyrics route) |
+| Modified | `client/src/store/playerStore.js` (queue actions + lyrics) |
+| Modified | `client/src/components/SongRow.js` (expanded menu) |
+| Modified | `client/src/components/QueueItem.js` (DnD + context menu) |
+| Modified | `client/src/components/FullPlayer.js` (DnD + lyrics tab) |
 
-Cache fetched lyrics in SQLite to avoid repeated API calls:
+---
 
-```sql
-CREATE TABLE lyrics_cache (
-    track_id INTEGER PRIMARY KEY,
-    provider TEXT NOT NULL,
-    synced INTEGER DEFAULT 0,
-    plain TEXT,
-    synced_json TEXT,  -- JSON array of {time, text}
-    fetched_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE
-);
-```
-
-### 4.4 Frontend Implementation
-
-#### 4.4.1 Synced Lyrics Component
-
-**File:** `client/src/components/SyncedLyrics.js`
-
-- Parse LRC timestamps into `{ time, text }` array
-- Highlight current line based on `currentTime` from player store
-- Auto-scroll to keep current line centered
-- Smooth scroll animation (CSS `scroll-behavior: smooth`)
-- Fall back to plain text display if no synced lyrics
-
-#### 4.4.2 Lyrics in FullPlayer
-
-- Add "Lyrics" tab next to "Queue" tab in FullPlayer
-- When Lyrics tab is active, show `SyncedLyrics` component
-- Large, readable font (similar to Spotify's lyrics view)
-- Semi-transparent background with album art color accent
-- If no lyrics available, show "No lyrics available for this track"
-
-#### 4.4.3 Lyrics Page
-
-**File:** `client/src/app/lyrics/page.js` (currently a stub)
-
-- Standalone full-screen lyrics view
-- Accessible from sidebar or as a route
-- Shows current track's lyrics with synced highlighting
-- Background: blurred album art
-- Minimal controls: back button, track info
-
-### 4.5 Edge Cases
-
-- **Instrumental tracks:** LRCLIB returns `{"instrumental": true}` — show "This track is instrumental"
-- **No lyrics found:** Show "No lyrics available for this track"
-- **Rate limiting:** Implement exponential backoff on LRCLIB 429 responses
-- **Language:** LRCLIB returns `lang` field — could be used for future i18n
-
-### 4.6 Dependencies
-
-No new npm packages needed — LRCLIB and Genius both use plain HTTP.
+### 4.6 Edge Cases
 
 ---
 

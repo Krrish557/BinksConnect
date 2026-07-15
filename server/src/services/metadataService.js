@@ -56,6 +56,7 @@ class MetadataService {
 
         return rows.map((s) => ({
             id: s.id, title: s.title, artist: s.artist || "Unknown",
+            artistId: s.artistId || null,
             album: s.album, albumId: s.albumId, duration: s.duration || 0,
             track: s.track || 0, cover: `/api/art/${s.albumId}`,
             url: `/api/stream/${s.id}`, provider: "telegram",
@@ -206,6 +207,7 @@ class MetadataService {
                 id: s.id,
                 title: s.title,
                 artist: s.artist || "Unknown",
+                artistId: s.artistId || null,
                 album: s.album_name,
                 albumId: s.albumId,
                 duration: s.duration || 0,
@@ -307,6 +309,7 @@ class MetadataService {
         return {
             songs: songs.map((s) => ({
                 id: s.id, title: s.title, artist: s.artist || "Unknown",
+                artistId: s.artistId || null,
                 album: s.album, albumId: s.albumId, duration: s.duration || 0,
                 track: s.track || 0, cover: `/api/art/${s.albumId}`,
                 url: `/api/stream/${s.id}`, provider: "telegram",
@@ -334,6 +337,7 @@ class MetadataService {
         `).all(limit, offset);
         return rows.map((s) => ({
             id: s.id, title: s.title, artist: s.artist || "Unknown",
+            artistId: s.artistId || null,
             album: s.album, albumId: s.albumId, duration: s.duration || 0,
             track: s.track || 0, cover: `/api/art/${s.albumId}`,
             url: `/api/stream/${s.id}`, provider: "telegram",
@@ -354,6 +358,7 @@ class MetadataService {
         `).all(size);
         return rows.map((s) => ({
             id: s.id, title: s.title, artist: s.artist || "Unknown",
+            artistId: s.artistId || null,
             album: s.album, albumId: s.albumId, duration: s.duration || 0,
             track: s.track || 0, cover: `/api/art/${s.albumId}`,
             url: `/api/stream/${s.id}`, provider: "telegram",
@@ -425,6 +430,7 @@ class MetadataService {
             })),
             featuredTracks: featuredTracks.map((s) => ({
                 id: s.id, title: s.title, artist: s.artist || "Unknown",
+                artistId: s.artistId || null,
                 album: s.album, albumId: s.albumId, duration: s.duration || 0,
                 track: s.track || 0, cover: `/api/art/${s.albumId}`,
                 url: `/api/stream/${s.id}`, provider: "telegram",
@@ -470,6 +476,7 @@ class MetadataService {
         return {
             songs: songs.map((s) => ({
                 id: s.id, title: s.title, artist: s.artist || "Unknown",
+                artistId: s.artistId || null,
                 album: s.album, albumId: s.albumId, duration: s.duration || 0,
                 track: s.track || 0, cover: `/api/art/${s.albumId}`,
                 url: `/api/stream/${s.id}`, provider: "telegram",

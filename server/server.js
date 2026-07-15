@@ -11,6 +11,7 @@ const streamRoutes = require("./src/routes/streamRoutes");
 const artRoutes = require("./src/routes/artRoutes");
 const uploadRoutes = require("./src/routes/uploadRoutes");
 const favoriteRoutes = require("./src/routes/favoriteRoutes");
+const lyricsRoutes = require("./src/routes/lyricsRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const { authMiddleware } = require("./src/middleware/auth");
 const providerManager = require("./src/providers/manager");
@@ -33,6 +34,7 @@ app.use("/api/stream", streamRoutes);
 app.use("/api/art", artRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/lyrics", lyricsRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.get("/api/starred", authMiddleware, async (req, res) => {

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { apiClient } from "@/services/apiClient";
+import { lyricsService } from "@/services/lyricsService";
 
 let audio = null;
 
@@ -19,6 +20,7 @@ export const usePlayerStore = create(
             isShuffle: false,
             isRepeat: false,
             recentlyPlayed: [],
+            lyrics: null,
 
             initAudio: () => {
                 if (audio) return;
@@ -197,6 +199,86 @@ export const usePlayerStore = create(
                         recentlyPlayed: [track, ...filtered].slice(0, 20),
                     };
                 });
+            },
+
+            addToQueue: (track) => {
+                set((state) => ({
+                    queue: [...state.queue, track],
+                }));
+            },
+
+            playNext: (track) => {
+                const { queue, currentIndex, currentTrack } = get();
+                if (queue.length === 0) {
+                    set({ queue: [track], currentIndex: 0, currentTrack: track });
+                    get().loadTrack();
+                    get().play();
+                    get()._addToRecentlyPlayed(track);
+                    return;
+                }
+                const insertAt = currentIndex + 1;
+                const newQueue = [...queue];
+                newQueue.splice(insertAt, 0, track);
+                set({
+                    queue: newQueue,
+                    currentIndex: currentIndex + 1,
+                    currentTrack: currentTrack || track,
+                });
+            },
+
+            removeFromQueue: (index) => {
+                const { queue, currentIndex, currentTrack } = get();
+                if (index < 0 || index >= queue.length) return;
+                const newQueue = [...queue];
+                newQueue.splice(index, 1);
+                let newIndex = currentIndex;
+                if (index < currentIndex) {
+                    newIndex = currentIndex - 1;
+                } else if (index === currentIndex) {
+                    newIndex = Math.min(currentIndex, newQueue.length - 1);
+                }
+                set({
+                    queue: newQueue,
+                    currentIndex: newIndex,
+                    currentTrack: newQueue[newIndex] || currentTrack,
+                });
+                if (newIndex !== currentIndex && newQueue.length > 0) {
+                    get().loadTrack();
+                }
+            },
+
+            reorderQueue: (fromIndex, toIndex) => {
+                const { queue, currentIndex, currentTrack } = get();
+                if (fromIndex === toIndex) return;
+                if (fromIndex < 0 || fromIndex >= queue.length) return;
+                if (toIndex < 0 || toIndex >= queue.length) return;
+                const newQueue = [...queue];
+                const [moved] = newQueue.splice(fromIndex, 1);
+                newQueue.splice(toIndex, 0, moved);
+                let newIndex = currentIndex;
+                if (fromIndex === currentIndex) {
+                    newIndex = toIndex;
+                } else if (fromIndex < currentIndex && toIndex >= currentIndex) {
+                    newIndex = currentIndex - 1;
+                } else if (fromIndex > currentIndex && toIndex <= currentIndex) {
+                    newIndex = currentIndex + 1;
+                }
+                set({
+                    queue: newQueue,
+                    currentIndex: newIndex,
+                    currentTrack: newQueue[newIndex] || currentTrack,
+                });
+            },
+
+            fetchLyrics: async (track) => {
+                if (!track?.id) return;
+                set({ lyrics: null });
+                try {
+                    const result = await lyricsService.getLyrics(track.id);
+                    set({ lyrics: result });
+                } catch {
+                    set({ lyrics: { synced: false, plain: "", syncedLines: [], notFound: true } });
+                }
             },
 
             openPlayer: () => set({ isPlayerOpen: true }),
