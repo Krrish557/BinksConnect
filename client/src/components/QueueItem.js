@@ -24,7 +24,7 @@ export default function QueueItem({ track, isActive, index, onClick }) {
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: `${track.id}-${index}` });
+    } = useSortable({ id: `${track?.id || "empty"}-${index}` });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -43,6 +43,8 @@ export default function QueueItem({ track, isActive, index, onClick }) {
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
     }, [menuOpen]);
+
+    if (!track) return null;
 
     const handlePlayNext = (e) => {
         e.stopPropagation();

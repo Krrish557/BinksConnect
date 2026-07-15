@@ -253,166 +253,125 @@ Menu items:
 
 ---
 
-## Phase 5: Server-side Playlists + Library Management
+## Phase 5: Server-side Playlists + Library Management ✅
 
-### 5.1 Server-side Playlist Persistence
+> Implemented: 2026-07-15
 
-**Problem:** Playlists are currently localStorage-only via Zustand persist. They're lost on cache clear, not shared across devices, and not accessible via API.
+### 5.1 Server-side Playlists
 
-#### 5.1.1 Database Schema
+- **DB:** `playlists` + `playlist_tracks` tables with proper FK constraints
+- **API:** Full CRUD at `/api/playlists` — list, create, get, rename, delete, add/remove tracks, reorder
+- **Store:** Rewrote `playlistStore.js` — API-backed with localStorage offline cache + auto-migration
+- **Auto-migrate:** On first load, if localStorage has playlists and server has none, pushes them to server
 
-```sql
-CREATE TABLE playlists (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    internal_id TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL,
-    description TEXT,
-    created_by TEXT DEFAULT 'user',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+### 5.2 Extended Favourites
 
-CREATE TABLE playlist_tracks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    playlist_id INTEGER NOT NULL,
-    track_id INTEGER NOT NULL,
-    position INTEGER NOT NULL,
-    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
-    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
-    UNIQUE(playlist_id, track_id)
-);
-```
+- **DB:** `favourite_artists` + `favourite_albums` tables
+- **API:** Extend `/api/favorites` — toggle, check, list for artists and albums
+- **Frontend:** Heart toggle on `ArtistCard` and `AlbumCard` (hover to reveal, persisted to server)
+- **Service:** `favouriteService.js` for all favourite API calls
 
-#### 5.1.2 API Routes
+### 5.3 FTS5 Search
 
-**File:** `server/src/routes/playlistRoutes.js`
+- **DB:** FTS5 virtual tables (`tracks_fts`, `artists_fts`, `albums_fts`) + triggers for auto-sync
+- **Search:** `metadataService.searchFTS5()` — ranked results, graceful fallback to LIKE if FTS5 unavailable
+- **Route:** `searchRoutes.js` now calls `searchFTS5()` instead of `search()`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/playlists` | List all playlists (with track count, duration) |
-| `POST` | `/api/playlists` | Create playlist `{ name, description? }` |
-| `PUT` | `/api/playlists/:id` | Rename playlist `{ name }` |
-| `DELETE` | `/api/playlists/:id` | Delete playlist |
-| `GET` | `/api/playlists/:id` | Get playlist with tracks |
-| `POST` | `/api/playlists/:id/tracks` | Add track `{ trackId, position? }` |
-| `DELETE` | `/api/playlists/:id/tracks/:trackId` | Remove track |
-| `PUT` | `/api/playlists/:id/reorder` | Reorder tracks `{ trackIds: [ordered ids] }` |
+### 5.4 Smart Playlists
 
-#### 5.1.3 Frontend Migration
+- **DB:** `smart_playlists` table (name, rule_type, rule_limit)
+- **API:** `/api/smart-playlists` — list, create, evaluate, delete
+- **Rules:** most_played, recently_added, frequently_played, forgotten_gems, random
+- **Frontend:** Playlists page shows smart playlists with expand/collapse, inline track preview
+- **Service:** `smartPlaylistService.js`
 
-- Migrate existing localStorage playlists to server on first load
-- Replace `usePlaylistStore` (localStorage) with API-backed store
-- Add optimistic updates for smooth UX
-- Keep localStorage as offline fallback/cache
+### 5.5 Playlist DnD Reorder
 
-#### 5.1.4 Playlist UI Improvements
+- Playlist detail page wraps tracks in `@dnd-kit` DnD context
+- Drag handle (`⠿`) on each row, `onDragEnd` calls `PUT /api/playlists/:id/reorder`
+- Uses `SortableContext` + `useSortable` (same pattern as FullPlayer queue)
 
-- Drag-and-drop reordering in playlist view
-- "Add to Playlist" context menu on SongRow, search results, album track lists
-- Playlist mosaic cover (auto-generate from first 4 track album arts)
-- Share playlist link (public read-only endpoint, optional)
+### Files created/modified
 
-### 5.2 Server-side Favourites
+| Action | File |
+|--------|------|
+| Create | `server/src/routes/playlistRoutes.js` |
+| Create | `server/src/routes/smartPlaylistRoutes.js` |
+| Create | `client/src/services/playlistService.js` |
+| Create | `client/src/services/favouriteService.js` |
+| Create | `client/src/services/smartPlaylistService.js` |
+| Modify | `server/src/db/database.js` (4 new tables + FTS5 + triggers) |
+| Modify | `server/src/services/metadataService.js` (playlist CRUD + favourites + FTS5 + smart playlists) |
+| Modify | `server/server.js` (register playlist + smart playlist routes) |
+| Modify | `server/src/routes/favoriteRoutes.js` (add artist/album endpoints) |
+| Modify | `server/src/routes/searchRoutes.js` (use FTS5) |
+| Modify | `client/src/store/playlistStore.js` (API-backed + auto-migration) |
+| Modify | `client/src/components/ArtistCard.js` (favourite toggle) |
+| Modify | `client/src/components/AlbumCard.js` (favourite toggle) |
+| Modify | `client/src/app/playlists/[id]/page.js` (DnD reorder) |
+| Modify | `client/src/app/playlists/page.js` (smart playlists section) |
 
-**Problem:** Favourites are provider-specific. Need a unified, provider-agnostic favourite system.
+---
 
-#### 5.2.1 Database Schema
+## Phase 6: Standalone Lyrics Page + Edge Case Hardening ✅
 
-```sql
-CREATE TABLE favourites (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT DEFAULT 'default',
-    track_id INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
-    UNIQUE(user_id, track_id)
-);
+> Implemented: 2026-07-15
 
-CREATE TABLE favourite_artists (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT DEFAULT 'default',
-    artist_id INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE,
-    UNIQUE(user_id, artist_id)
-);
+### 6A. Standalone `/lyrics` Page
 
-CREATE TABLE favourite_albums (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT DEFAULT 'default',
-    album_id INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE,
-    UNIQUE(user_id, album_id)
-);
-```
+- Full-screen lyrics view with blurred album cover background + dark overlay
+- Reads `currentTrack`, `currentTime`, `lyrics` from player store
+- Auto-fetches lyrics when a track is playing
+- Listens for `lyricsSeek` custom event for click-to-seek
+- Escape key to go back
+- Empty state when no track is playing
 
-#### 5.2.2 API Routes
+### 6B. Critical Bug Fixes (Tier 1)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/favourites` | Get all favourited tracks |
-| `POST` | `/api/favourites` | Add favourite `{ trackId }` |
-| `DELETE` | `/api/favourites/:trackId` | Remove favourite |
-| `GET` | `/api/favourites/artists` | Get favourited artists |
-| `POST` | `/api/favourites/artists` | Favourite artist `{ artistId }` |
-| `DELETE` | `/api/favourites/artists/:artistId` | Unfavourite artist |
-| `GET` | `/api/favourites/albums` | Get favourited albums |
-| `POST` | `/api/favourites/albums` | Favourite album `{ albumId }` |
-| `DELETE` | `/api/favourites/albums/:albumId` | Unfavourite album |
+- **`getFavouriteArtists()`** — Added missing `WHERE fa.user_id = ?` clause (was leaking all users' favorites)
+- **`getFavouriteAlbums()`** — Same fix
+- **`forgotten_gems` smart playlist** — Fixed table name `favourites` → `favorites`
 
-### 5.3 Improved Search
+### 6C. Crash Fixes (Tier 2)
 
-**Problem:** Current search uses basic SQL `LIKE %query%` which is slow and imprecise.
+- **`next()` empty queue** — Early return prevents `Math.random() * 0` crash
+- **`next()` end of queue** — Now explicitly sets `isPlaying: false` so UI reflects stopped state
+- **`removeFromQueue` last item** — When queue empties, sets `currentTrack: null`, pauses audio, resets state
+- **`setQueue` validation** — Guards against empty tracks array and clamps out-of-bounds startIndex
+- **`lyricsService` JSON.parse** — Wrapped corrupted cache reads in try/catch
+- **`lyricsService` HTTP timeout** — Added `AbortSignal.timeout(8000)` to all external fetches
+- **`play()` error** — Logs warning instead of silently swallowing
 
-#### 5.3.1 SQLite FTS5
+### 6D. Validation & Robustness (Tier 3)
 
-```sql
-CREATE VIRTUAL TABLE tracks_fts USING fts5(
-    title, artist_name, album_name,
-    content='tracks',
-    content_rowid='id'
-);
+- **Playlist create** — Validates name is non-empty, trimmed, max 200 chars
+- **Smart playlist create** — Clamps `ruleLimit` to 1–500
+- **Smart playlist delete** — Returns 404 if not found (was always 200)
+- **Favourite check endpoints** — Caps array size at 100 elements per request
+- **LIKE wildcard escaping** — Escapes `%` and `_` in search queries to prevent wildcard injection
+- **Search query length** — Caps at 200 chars, returns 400 if exceeded
+- **Error message leaks** — Lyrics and search routes now return generic error strings
+- **QueueItem null guard** — Returns null if track prop is undefined (moved after hooks)
+- **Playlist reorder** — Requires non-empty `trackIds` array
 
-CREATE VIRTUAL TABLE artists_fts USING fts5(
-    name,
-    content='artists',
-    content_rowid='id'
-);
+### 6E. Cleanup (Tier 4)
 
-CREATE VIRTUAL TABLE albums_fts USING fts5(
-    name,
-    content='artists',  -- for artist name search in albums
-    content_rowid='id'
-);
-```
+- **`deleteTrack`** — Now cleans up `favorites`, `playlist_tracks`, `track_artists`, and `lyrics_cache` rows before deleting the track
 
-#### 5.3.2 Search Improvements
+### Files modified
 
-- FTS5 for fast full-text search with ranking
-- Typo tolerance via trigram tokenizer (SQLite extension) or application-level fuzzy matching
-- Search results ranked by relevance (title match > artist match > album match)
-- Recent searches stored in localStorage
-- Search suggestions/autocomplete
-
-### 5.4 Smart Playlists (Stretch Goal)
-
-Auto-generated playlists based on rules:
-
-| Smart Playlist | Rule |
-|----------------|------|
-| Most Played | Top N tracks by play count |
-| Recently Added | Tracks added in last N days |
-| Top Rated | Tracks with most favourites |
-| Forgotten Gems | Tracks not played in 30+ days but favourited |
-| Genre Mix | Random tracks from a specific genre |
-
-**Implementation:**
-- Store smart playlist rules in a `smart_playlists` table
-- Evaluate rules on access (not cron — compute on demand)
-- Cache results for 5 minutes
-- UI: Special "Smart" section in Playlists page
+| Action | File |
+|--------|------|
+| Rewrite | `client/src/app/lyrics/page.js` (stub → full lyrics page) |
+| Modify | `server/src/services/metadataService.js` (3 critical SQL fixes, LIKE escaping, deleteTrack cleanup, deleteSmartPlaylist return) |
+| Modify | `server/src/routes/playlistRoutes.js` (name validation, empty trackIds) |
+| Modify | `server/src/routes/smartPlaylistRoutes.js` (ruleLimit validation, 404) |
+| Modify | `server/src/routes/favoriteRoutes.js` (array size cap) |
+| Modify | `server/src/routes/lyricsRoutes.js` (error message leak) |
+| Modify | `server/src/routes/searchRoutes.js` (query length, error message leak) |
+| Modify | `server/src/services/lyricsService.js` (JSON.parse safety, HTTP timeout) |
+| Modify | `client/src/store/playerStore.js` (empty queue fixes, isPlaying reset, setQueue guard, play error logging) |
+| Modify | `client/src/components/QueueItem.js` (null guard after hooks) |
 
 ---
 

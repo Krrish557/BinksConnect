@@ -1,16 +1,76 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import usePlaylistStore from "@/store/playlistStore";
 import { usePlayerStore } from "@/store/playerStore";
 import SongRow from "@/components/SongRow";
 import EmptyState from "@/components/ui/EmptyState";
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+function SortableTrackRow({ song, index, onPlay, onRemove }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: song.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 50 : "auto",
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} className="group relative">
+            <div className="flex items-center">
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="shrink-0 text-[#B3B3B3] hover:text-white cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity text-xs select-none px-2"
+                >
+                    ⠿
+                </div>
+                <div className="flex-1">
+                    <SongRow
+                        song={song}
+                        index={index}
+                        showIndex
+                        contextMenu={false}
+                        onPlay={onPlay}
+                    />
+                </div>
+                <button
+                    onClick={() => onRemove(song.id)}
+                    className="shrink-0 opacity-0 group-hover:opacity-100 text-[#B3B3B3] hover:text-red-400 text-xs px-2 py-1 rounded transition mr-3"
+                >
+                    Remove
+                </button>
+            </div>
+        </div>
+    );
+}
 
 export default function PlaylistDetailPage() {
     const { id } = useParams();
     const router = useRouter();
-    const { getPlaylist, removeTrack, renamePlaylist, deletePlaylist } =
+    const { getPlaylist, removeTrack, renamePlaylist, deletePlaylist, loadPlaylists, reorderTracks } =
         usePlaylistStore();
     const setQueue = usePlayerStore((s) => s.setQueue);
 
@@ -18,6 +78,26 @@ export default function PlaylistDetailPage() {
 
     const [editing, setEditing] = useState(false);
     const [nameInput, setNameInput] = useState("");
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    );
+
+    const handleDragEnd = useCallback(
+        (event) => {
+            const { active, over } = event;
+            if (!over || active.id === over.id || !playlist) return;
+            const oldIndex = playlist.tracks.findIndex((t) => t.id === active.id);
+            const newIndex = playlist.tracks.findIndex((t) => t.id === over.id);
+            if (oldIndex === -1 || newIndex === -1) return;
+
+            const newTrackIds = playlist.tracks.map((t) => t.id);
+            const [moved] = newTrackIds.splice(oldIndex, 1);
+            newTrackIds.splice(newIndex, 0, moved);
+            reorderTracks(id, newTrackIds);
+        },
+        [playlist, id, reorderTracks]
+    );
 
     if (!playlist) {
         return (
@@ -154,25 +234,28 @@ export default function PlaylistDetailPage() {
                         subtitle='Find songs and add them using the "⋯" menu'
                     />
                 ) : (
-                    <div className="space-y-1">
-                        {playlist.tracks.map((song, index) => (
-                            <div key={`${song.id}-${index}`} className="group relative">
-                                <SongRow
-                                    song={song}
-                                    index={index}
-                                    showIndex
-                                    contextMenu={false}
-                                    onPlay={() => setQueue(playlist.tracks, index)}
-                                />
-                                <button
-                                    onClick={() => removeTrack(id, song.id)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-[#B3B3B3] hover:text-red-400 text-xs px-2 py-1 rounded transition"
-                                >
-                                    Remove
-                                </button>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={playlist.tracks.map((t) => t.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="space-y-1">
+                                {playlist.tracks.map((song, index) => (
+                                    <SortableTrackRow
+                                        key={song.id}
+                                        song={song}
+                                        index={index}
+                                        onPlay={() => setQueue(playlist.tracks, index)}
+                                        onRemove={(trackId) => removeTrack(id, trackId)}
+                                    />
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        </SortableContext>
+                    </DndContext>
                 )}
             </div>
         </main>

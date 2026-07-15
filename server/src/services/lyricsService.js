@@ -6,7 +6,7 @@ const GENIUS_BASE = "https://genius.com/api";
 async function fetchWithRetry(url, options = {}, retries = 2) {
     for (let i = 0; i <= retries; i++) {
         try {
-            const res = await fetch(url, options);
+            const res = await fetch(url, { ...options, signal: AbortSignal.timeout(8000) });
             if (res.status === 429) {
                 const delay = Math.pow(2, i) * 1000;
                 await new Promise((r) => setTimeout(r, delay));
@@ -136,10 +136,18 @@ function getCachedLyrics(trackDbId) {
     const db = getDatabase();
     const row = db.prepare("SELECT * FROM lyrics_cache WHERE track_id = ?").get(trackDbId);
     if (!row) return null;
+    let syncedLines = [];
+    if (row.synced_json) {
+        try {
+            syncedLines = JSON.parse(row.synced_json);
+        } catch {
+            syncedLines = [];
+        }
+    }
     return {
         synced: !!row.synced,
         plain: row.plain || "",
-        syncedLines: row.synced_json ? JSON.parse(row.synced_json) : [],
+        syncedLines,
         provider: row.provider,
         instrumental: row.plain === "__instrumental__",
     };

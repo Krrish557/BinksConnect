@@ -38,7 +38,7 @@ router.get("/:trackInternalId", authMiddleware, async (req, res) => {
         return res.json(result);
     } catch (err) {
         console.error("Lyrics fetch error:", err);
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({ error: "Failed to fetch lyrics" });
     }
 });
 

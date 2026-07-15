@@ -47,14 +47,16 @@ export const usePlayerStore = create(
             },
 
             setQueue: (tracks, startIndex = 0) => {
+                if (!tracks || tracks.length === 0) return;
+                const safeIndex = Math.max(0, Math.min(startIndex, tracks.length - 1));
                 set({
                     queue: tracks,
-                    currentIndex: startIndex,
-                    currentTrack: tracks[startIndex] || null,
+                    currentIndex: safeIndex,
+                    currentTrack: tracks[safeIndex],
                 });
 
                 get().loadTrack();
-                get()._addToRecentlyPlayed(tracks[startIndex]);
+                get()._addToRecentlyPlayed(tracks[safeIndex]);
             },
 
             loadTrack: () => {
@@ -91,7 +93,9 @@ export const usePlayerStore = create(
                 try {
                     await audio.play();
                     set({ isPlaying: true });
-                } catch (e) {}
+                } catch (e) {
+                    console.warn("Playback failed:", e.message);
+                }
             },
 
             pause: () => {
@@ -107,12 +111,16 @@ export const usePlayerStore = create(
 
             next: () => {
                 const { currentIndex, queue, isShuffle } = get();
+                if (queue.length === 0) return;
 
                 let nextIndex;
                 if (isShuffle) {
                     nextIndex = Math.floor(Math.random() * queue.length);
                 } else {
-                    if (currentIndex + 1 >= queue.length) return;
+                    if (currentIndex + 1 >= queue.length) {
+                        set({ isPlaying: false });
+                        return;
+                    }
                     nextIndex = currentIndex + 1;
                 }
 
@@ -227,10 +235,15 @@ export const usePlayerStore = create(
             },
 
             removeFromQueue: (index) => {
-                const { queue, currentIndex, currentTrack } = get();
+                const { queue, currentIndex } = get();
                 if (index < 0 || index >= queue.length) return;
                 const newQueue = [...queue];
                 newQueue.splice(index, 1);
+                if (newQueue.length === 0) {
+                    if (audio) { audio.pause(); audio.src = ""; }
+                    set({ queue: [], currentIndex: -1, currentTrack: null, isPlaying: false });
+                    return;
+                }
                 let newIndex = currentIndex;
                 if (index < currentIndex) {
                     newIndex = currentIndex - 1;
@@ -240,9 +253,9 @@ export const usePlayerStore = create(
                 set({
                     queue: newQueue,
                     currentIndex: newIndex,
-                    currentTrack: newQueue[newIndex] || currentTrack,
+                    currentTrack: newQueue[newIndex],
                 });
-                if (newIndex !== currentIndex && newQueue.length > 0) {
+                if (newIndex !== currentIndex) {
                     get().loadTrack();
                 }
             },

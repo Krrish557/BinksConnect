@@ -1,19 +1,45 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/services/apiClient";
+import { favouriteService } from "@/services/favouriteService";
 
 export default function AlbumCard({ album, onClick }) {
     const router = useRouter();
-
     const handleClick = onClick || (() => router.push(`/albums/${album.id}`));
     const coverUrl = apiClient.resolveUrl(album.coverUrl);
+    const [isFavorited, setIsFavorited] = useState(false);
+
+    useEffect(() => {
+        favouriteService.checkFavoriteAlbums([album.id]).then((res) => {
+            setIsFavorited(!!res.favorited[album.id]);
+        }).catch(() => {});
+    }, [album.id]);
+
+    const handleToggleFavorite = async (e) => {
+        e.stopPropagation();
+        try {
+            const res = await favouriteService.toggleFavoriteAlbum(album.id);
+            setIsFavorited(res.isFavorited);
+        } catch (err) {
+            console.error("Toggle favourite album error:", err);
+        }
+    };
 
     return (
         <div
             onClick={handleClick}
-            className="bg-[#181818] hover:bg-[#282828] transition-colors rounded-xl p-4 cursor-pointer group shrink-0 w-44"
+            className="bg-[#181818] hover:bg-[#282828] transition-colors rounded-xl p-4 cursor-pointer group shrink-0 w-44 relative"
         >
+            <button
+                onClick={handleToggleFavorite}
+                className={`absolute top-5 right-5 z-10 text-lg transition-all opacity-0 group-hover:opacity-100 ${
+                    isFavorited ? "text-[#1db954] opacity-100" : "text-[#B3B3B3] hover:text-white"
+                }`}
+            >
+                {isFavorited ? "♥" : "♡"}
+            </button>
             <div className="relative">
                 <img
                     src={coverUrl}

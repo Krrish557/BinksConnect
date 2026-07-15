@@ -168,9 +168,162 @@ function initSchema() {
             fetched_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS playlists (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            internal_id TEXT UNIQUE NOT NULL,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS playlist_tracks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            playlist_id INTEGER NOT NULL,
+            track_id INTEGER NOT NULL,
+            position INTEGER NOT NULL DEFAULT 0,
+            added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+            FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
+            UNIQUE(playlist_id, track_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist ON playlist_tracks(playlist_id);
+
+        CREATE TABLE IF NOT EXISTS favourite_artists (
+            user_id INTEGER NOT NULL,
+            artist_id INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, artist_id),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS favourite_albums (
+            user_id INTEGER NOT NULL,
+            album_id INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, album_id),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS smart_playlists (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            internal_id TEXT UNIQUE NOT NULL,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            rule_type TEXT NOT NULL,
+            rule_limit INTEGER DEFAULT 50,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
     `);
 
+    initFTS5();
     runMigrations();
+}
+
+function initFTS5() {
+    try {
+        db.exec(`
+            CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
+                title, artist, album,
+                content='tracks',
+                content_rowid='id'
+            );
+
+            CREATE VIRTUAL TABLE IF NOT EXISTS artists_fts USING fts5(
+                name,
+                content='artists',
+                content_rowid='id'
+            );
+
+            CREATE VIRTUAL TABLE IF NOT EXISTS albums_fts USING fts5(
+                name,
+                content='albums',
+                content_rowid='id'
+            );
+        `);
+
+        const hasFtsMigration = db.prepare("SELECT 1 FROM schema_migrations WHERE name = ?").get("fts5_init");
+        if (!hasFtsMigration) {
+            db.exec(`
+                INSERT OR IGNORE INTO tracks_fts(rowid, title, artist, album)
+                SELECT t.id, t.title, COALESCE(ar.name, ''), COALESCE(a.name, '')
+                FROM tracks t
+                LEFT JOIN artists ar ON ar.id = t.artist_id
+                LEFT JOIN albums a ON a.id = t.album_id;
+
+                INSERT OR IGNORE INTO artists_fts(rowid, name)
+                SELECT id, name FROM artists;
+
+                INSERT OR IGNORE INTO albums_fts(rowid, name)
+                SELECT id, name FROM albums;
+            `);
+
+            db.exec(`
+                CREATE TRIGGER IF NOT EXISTS tracks_ai AFTER INSERT ON tracks BEGIN
+                    INSERT INTO tracks_fts(rowid, title, artist, album)
+                    VALUES (new.id, new.title,
+                        COALESCE((SELECT name FROM artists WHERE id = new.artist_id), ''),
+                        COALESCE((SELECT name FROM albums WHERE id = new.album_id), ''));
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS tracks_ad AFTER DELETE ON tracks BEGIN
+                    INSERT INTO tracks_fts(tracks_fts, rowid, title, artist, album)
+                    VALUES ('delete', old.id, old.title,
+                        COALESCE((SELECT name FROM artists WHERE id = old.artist_id), ''),
+                        COALESCE((SELECT name FROM albums WHERE id = old.album_id), ''));
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS tracks_au AFTER UPDATE ON tracks BEGIN
+                    INSERT INTO tracks_fts(tracks_fts, rowid, title, artist, album)
+                    VALUES ('delete', old.id, old.title,
+                        COALESCE((SELECT name FROM artists WHERE id = old.artist_id), ''),
+                        COALESCE((SELECT name FROM albums WHERE id = old.album_id), ''));
+                    INSERT INTO tracks_fts(rowid, title, artist, album)
+                    VALUES (new.id, new.title,
+                        COALESCE((SELECT name FROM artists WHERE id = new.artist_id), ''),
+                        COALESCE((SELECT name FROM albums WHERE id = new.album_id), ''));
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS artists_ai AFTER INSERT ON artists BEGIN
+                    INSERT INTO artists_fts(rowid, name) VALUES (new.id, new.name);
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS artists_ad AFTER DELETE ON artists BEGIN
+                    INSERT INTO artists_fts(artists_fts, rowid, name) VALUES ('delete', old.id, old.name);
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS artists_au AFTER UPDATE ON artists BEGIN
+                    INSERT INTO artists_fts(artists_fts, rowid, name) VALUES ('delete', old.id, old.name);
+                    INSERT INTO artists_fts(rowid, name) VALUES (new.id, new.name);
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS albums_ai AFTER INSERT ON albums BEGIN
+                    INSERT INTO albums_fts(rowid, name) VALUES (new.id, new.name);
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS albums_ad AFTER DELETE ON albums BEGIN
+                    INSERT INTO albums_fts(albums_fts, rowid, name) VALUES ('delete', old.id, old.name);
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS albums_au AFTER UPDATE ON albums BEGIN
+                    INSERT INTO albums_fts(albums_fts, rowid, name) VALUES ('delete', old.id, old.name);
+                    INSERT INTO albums_fts(rowid, name) VALUES (new.id, new.name);
+                END;
+            `);
+
+            db.prepare("INSERT INTO schema_migrations (name) VALUES (?)").run("fts5_init");
+            console.log("[DB] FTS5 initialized");
+        }
+    } catch (err) {
+        console.warn("[DB] FTS5 not available, falling back to LIKE:", err.message);
+    }
 }
 
 function runMigrations() {
