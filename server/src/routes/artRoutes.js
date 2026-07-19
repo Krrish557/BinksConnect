@@ -3,6 +3,7 @@ const { Readable } = require("stream");
 const { authMiddleware } = require("../middleware/auth");
 const providerManager = require("../providers/manager");
 const metadataService = require("../services/metadataService");
+const coverArtService = require("../services/coverArtService");
 
 const PLACEHOLDER_SVG = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
@@ -17,7 +18,11 @@ router.get("/:albumId", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
             const size = req.query.size === "thumb" ? "thumb" : "full";
-            const cover = await metadataService.getAlbumCover(req.params.albumId, size);
+            let cover = await metadataService.getAlbumCover(req.params.albumId, size);
+
+            if (!cover) {
+                cover = await coverArtService.fetchAndStoreAlbumCover(req.params.albumId);
+            }
 
             if (cover) {
                 res.set("Content-Type", cover.mimeType);
@@ -47,7 +52,11 @@ router.get("/artist/:artistId", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
             const size = req.query.size === "thumb" ? "thumb" : "full";
-            const cover = await metadataService.getArtistCover(req.params.artistId, size);
+            let cover = await metadataService.getArtistCover(req.params.artistId, size);
+
+            if (!cover) {
+                cover = await coverArtService.fetchAndStoreArtistCover(req.params.artistId);
+            }
 
             if (cover) {
                 res.set("Content-Type", cover.mimeType);
