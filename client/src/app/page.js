@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import useAuthStore from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
 import { albumService } from "@/services/albumService";
 import { trackService } from "@/services/trackService";
@@ -13,7 +12,6 @@ import SongRow from "@/components/SongRow";
 import LoadingState from "@/components/ui/LoadingState";
 
 export default function HomePage() {
-    const user = useAuthStore((s) => s.user);
     const { setQueue, recentlyPlayed } = usePlayerStore();
 
     const [recentAlbums, setRecentAlbums] = useState([]);
@@ -29,8 +27,6 @@ export default function HomePage() {
         hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
     useEffect(() => {
-        if (!user) return;
-
         async function load() {
             setLoading(true);
             try {
@@ -57,7 +53,7 @@ export default function HomePage() {
         }
 
         load();
-    }, [user]);
+    }, []);
 
     const playSong = (index) => setQueue(randomSongs, index);
 

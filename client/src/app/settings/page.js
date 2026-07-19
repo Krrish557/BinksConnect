@@ -1,52 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import useAuthStore from "@/store/authStore";
-import { apiClient } from "@/services/apiClient";
 
 export default function SettingsPage() {
-    const router = useRouter();
-    const { user, logout, checkAuth } = useAuthStore();
-    const [serverInfo, setServerInfo] = useState(null);
-    const [uploadStatus, setUploadStatus] = useState(null);
-
-    useEffect(() => {
-        async function load() {
-            try {
-                const data = await apiClient.get("/api/auth/me");
-                setServerInfo(data);
-            } catch {
-                // Not authenticated
-            }
-        }
-        load();
-    }, []);
-
-    useEffect(() => {
-        if (user?.provider === "telegram") {
-            async function loadStatus() {
-                try {
-                    const data = await apiClient.get("/api/upload/status");
-                    setUploadStatus(data);
-                } catch {
-                    // ignore
-                }
-            }
-            loadStatus();
-        }
-    }, [user]);
-
-    const handleLogout = async () => {
-        await logout();
-        router.push("/login");
-    };
+    const { user } = useAuthStore();
+    const [navUrl, setNavUrl] = useState("");
 
     const handleNavidromeLogin = () => {
-        const navUrl = serverInfo?.serverUrl || "";
-        if (navUrl) {
-            window.open(navUrl, "_blank", "noopener,noreferrer");
-        }
+        const url = navUrl.trim() || "http://localhost:4533";
+        window.open(url, "_blank", "noopener,noreferrer");
     };
 
     return (
@@ -54,40 +17,18 @@ export default function SettingsPage() {
             <h1 className="text-3xl font-bold text-white mb-8">Settings</h1>
 
             <section className="mb-8">
-                <h2 className="text-xl font-bold text-white mb-4">Provider</h2>
-                <div className="bg-[#181818] rounded-xl p-5">
-                    {serverInfo ? (
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[#B3B3B3] text-sm">Provider</span>
-                                <span className="text-white font-medium capitalize">
-                                    {serverInfo.providerId}
-                                </span>
-                            </div>
-                            {serverInfo.serverUrl && (
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[#B3B3B3] text-sm">Server</span>
-                                    <span className="text-white font-medium text-sm truncate max-w-[200px]">
-                                        {serverInfo.serverUrl}
-                                    </span>
-                                </div>
-                            )}
-                            <div className="flex items-center justify-between">
-                                <span className="text-[#B3B3B3] text-sm">Username</span>
-                                <span className="text-white font-medium">
-                                    {serverInfo.username}
-                                </span>
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="text-[#B3B3B3] text-sm">Not connected</p>
-                    )}
-                </div>
-            </section>
-
-            {user?.provider === "navidrome" && serverInfo?.serverUrl && (
-                <section className="mb-8">
-                    <h2 className="text-xl font-bold text-white mb-4">Navidrome</h2>
+                <h2 className="text-xl font-bold text-white mb-4">Navidrome</h2>
+                <div className="bg-[#181818] rounded-xl p-5 space-y-4">
+                    <p className="text-sm text-[#B3B3B3]">
+                        Enter your Navidrome server URL to open its login page.
+                    </p>
+                    <input
+                        type="text"
+                        value={navUrl}
+                        onChange={(e) => setNavUrl(e.target.value)}
+                        placeholder="http://localhost:4533"
+                        className="w-full px-4 py-3 bg-[#282828] text-white rounded-lg outline-none focus:ring-2 focus:ring-[#1db954] transition text-sm"
+                    />
                     <button
                         onClick={handleNavidromeLogin}
                         className="w-full text-left px-5 py-4 bg-[#181818] hover:bg-[#282828] rounded-xl transition-colors text-[#B3B3B3] hover:text-[#1db954] flex items-center justify-between"
@@ -95,57 +36,17 @@ export default function SettingsPage() {
                         <span>Open Navidrome login page</span>
                         <span className="text-sm">↗</span>
                     </button>
-                </section>
-            )}
+                </div>
+            </section>
 
-            {user?.provider === "telegram" && uploadStatus && (
+            {user?.provider === "telegram" && (
                 <section className="mb-8">
-                    <h2 className="text-xl font-bold text-white mb-4">Library Stats</h2>
+                    <h2 className="text-xl font-bold text-white mb-4">Telegram</h2>
                     <div className="bg-[#181818] rounded-xl p-5">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-2xl font-bold text-white">{uploadStatus.trackCount || 0}</p>
-                                <p className="text-[#B3B3B3] text-sm">Tracks</p>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-white">{uploadStatus.albumCount || 0}</p>
-                                <p className="text-[#B3B3B3] text-sm">Albums</p>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-white">{uploadStatus.artistCount || 0}</p>
-                                <p className="text-[#B3B3B3] text-sm">Artists</p>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-white">{uploadStatus.mappingCount || 0}</p>
-                                <p className="text-[#B3B3B3] text-sm">Files on Telegram</p>
-                            </div>
-                        </div>
-                        {uploadStatus.channels?.length > 0 && (
-                            <div className="mt-4 pt-4 border-t border-white/5">
-                                <p className="text-[#B3B3B3] text-sm mb-2">Storage Channels</p>
-                                {uploadStatus.channels.map((ch) => (
-                                    <div key={ch.channel_id} className="flex items-center gap-2 text-sm">
-                                        <span className={ch.is_active ? "text-green-400" : "text-red-400"}>●</span>
-                                        <span className="text-white">{ch.title || ch.channel_id}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        <p className="text-sm text-[#B3B3B3]">Connected via Telegram</p>
                     </div>
                 </section>
             )}
-
-            <section className="mb-8">
-                <h2 className="text-xl font-bold text-white mb-4">Account</h2>
-                <div className="space-y-3">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-5 py-4 bg-[#181818] hover:bg-red-900/30 rounded-xl transition-colors text-[#B3B3B3] hover:text-red-400"
-                    >
-                        Log out
-                    </button>
-                </div>
-            </section>
 
             <section>
                 <h2 className="text-xl font-bold text-white mb-4">About</h2>

@@ -1,6 +1,4 @@
 import "./globals.css";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import AppLayout from "@/components/AppLayout";
 import LoginLayoutWrapper from "@/components/LoginLayoutWrapper";
 
 export const metadata = {
@@ -12,11 +10,9 @@ export default function RootLayout({ children }) {
     return (
         <html lang="en">
             <body>
-                <ProtectedRoute>
-                    <LoginLayoutWrapper>
-                        {children}
-                    </LoginLayoutWrapper>
-                </ProtectedRoute>
+                <LoginLayoutWrapper>
+                    {children}
+                </LoginLayoutWrapper>
             </body>
         </html>
     );

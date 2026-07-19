@@ -17,7 +17,6 @@ const NAV = [
 
 export default function Sidebar() {
     const pathname = usePathname();
-    const logout = useAuthStore((s) => s.logout);
     const user = useAuthStore((s) => s.user);
 
     const navItems = NAV.filter((item) => !item.telegramOnly || user?.provider === "telegram");
@@ -58,16 +57,7 @@ export default function Sidebar() {
                 })}
             </nav>
 
-            {/* LOGOUT */}
-            <div className="px-3 py-4 border-t border-white/5">
-                <button
-                    onClick={logout}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#B3B3B3] hover:text-white hover:bg-[#1a1a1a] w-full transition-colors"
-                >
-                    <span className="text-lg">🚪</span>
-                    <span className="lg:block hidden">Logout</span>
-                </button>
-            </div>
+
         </aside>
     );
 }
