@@ -14,6 +14,15 @@ const PLACEHOLDER_SVG = Buffer.from(
 
 const router = express.Router();
 
+function sendImage(res, status, mimeType, cacheControl, data) {
+    res.writeHead(status, {
+        "Content-Type": mimeType,
+        "Cache-Control": cacheControl,
+        "Content-Length": data.length,
+    });
+    res.end(data);
+}
+
 router.get("/:albumId", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
@@ -21,22 +30,20 @@ router.get("/:albumId", authMiddleware, async (req, res) => {
             const size = req.query.size === "thumb" ? "thumb" : "full";
             console.log(`[Art] Request for albumId=${albumId} size=${size}`);
             let cover = await metadataService.getAlbumCover(albumId, size);
-            console.log(`[Art] getAlbumCover returned:`, cover ? `mimeType=${cover.mimeType} imageLen=${cover.image?.length}` : "null");
+            console.log(`[Art] getAlbumCover:`, cover ? `mimeType=${cover.mimeType} imageLen=${cover.image?.length}` : "null");
 
             if (!cover) {
                 cover = await coverArtService.fetchAndStoreAlbumCover(albumId);
-                console.log(`[Art] fetchAndStoreAlbumCover returned:`, cover ? `mimeType=${cover.mimeType} imageLen=${cover.image?.length}` : "null");
+                console.log(`[Art] fetchAndStoreAlbumCover:`, cover ? `mimeType=${cover.mimeType} imageLen=${cover.image?.length}` : "null");
             }
 
             if (cover) {
-                res.set("Content-Type", cover.mimeType);
-                res.set("Cache-Control", "public, max-age=86400");
-                return res.send(cover.image);
+                console.log(`[Art] Sending cover image: ${cover.mimeType} ${cover.image?.length} bytes`);
+                return sendImage(res, 200, cover.mimeType, "public, max-age=86400", cover.image);
             }
 
-            res.set("Content-Type", "image/svg+xml");
-            res.set("Cache-Control", "public, max-age=3600");
-            return res.send(PLACEHOLDER_SVG);
+            console.log(`[Art] No cover found, sending placeholder`);
+            return sendImage(res, 200, "image/svg+xml", "public, max-age=3600", PLACEHOLDER_SVG);
         }
 
         const provider = providerManager.getProvider(req.session);
@@ -55,27 +62,27 @@ router.get("/:albumId", authMiddleware, async (req, res) => {
 router.get("/artist/:artistId", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
+            const artistId = req.params.artistId;
             const size = req.query.size === "thumb" ? "thumb" : "full";
-            let cover = await metadataService.getArtistCover(req.params.artistId, size);
+            console.log(`[Art] Request for artistId=${artistId} size=${size}`);
+            let cover = await metadataService.getArtistCover(artistId, size);
+            console.log(`[Art] getArtistCover:`, cover ? `mimeType=${cover.mimeType} imageLen=${cover.image?.length}` : "null");
 
             if (!cover) {
-                cover = await coverArtService.fetchAndStoreArtistCover(req.params.artistId);
+                cover = await coverArtService.fetchAndStoreArtistCover(artistId);
+                console.log(`[Art] fetchAndStoreArtistCover:`, cover ? `mimeType=${cover.mimeType} imageLen=${cover.image?.length}` : "null");
             }
 
             if (cover) {
-                res.set("Content-Type", cover.mimeType);
-                res.set("Cache-Control", "public, max-age=86400");
-                return res.send(cover.image);
+                console.log(`[Art] Sending artist cover: ${cover.mimeType} ${cover.image?.length} bytes`);
+                return sendImage(res, 200, cover.mimeType, "public, max-age=86400", cover.image);
             }
 
-            res.set("Content-Type", "image/svg+xml");
-            res.set("Cache-Control", "public, max-age=3600");
-            return res.send(PLACEHOLDER_SVG);
+            console.log(`[Art] No artist cover found, sending placeholder`);
+            return sendImage(res, 200, "image/svg+xml", "public, max-age=3600", PLACEHOLDER_SVG);
         }
 
-        res.set("Content-Type", "image/svg+xml");
-        res.set("Cache-Control", "public, max-age=3600");
-        return res.send(PLACEHOLDER_SVG);
+        return sendImage(res, 200, "image/svg+xml", "public, max-age=3600", PLACEHOLDER_SVG);
     } catch (err) {
         console.error("Artist art error:", err);
         return res.status(500).json({ error: err.message });
