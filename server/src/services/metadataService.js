@@ -539,7 +539,8 @@ class MetadataService {
         if (!album) return null;
         const col = size === "thumb" ? "thumbnail" : "full_size";
         const row = await dbGet(`SELECT ${col} as image, mime_type FROM album_covers WHERE album_id = ?`, album.id);
-        return row && row.image ? { image: row.image, mimeType: row.mime_type } : null;
+        if (!row || !row.image || row.image.length < 100) return null;
+        return { image: row.image, mimeType: row.mime_type };
     }
 
     async getArtistCover(artistInternalId, size = "full") {
@@ -547,7 +548,8 @@ class MetadataService {
         if (!artist) return null;
         const col = size === "thumb" ? "thumbnail" : "full_size";
         const row = await dbGet(`SELECT ${col} as image, mime_type FROM artist_covers WHERE artist_id = ?`, artist.id);
-        return row && row.image ? { image: row.image, mimeType: row.mime_type } : null;
+        if (!row || !row.image || row.image.length < 100) return null;
+        return { image: row.image, mimeType: row.mime_type };
     }
 
     async searchTracks(query) {
