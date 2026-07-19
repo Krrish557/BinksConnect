@@ -301,6 +301,11 @@ function initSchemaSqlite(db) {
 function initFTS5Sqlite(db) {
     try {
         db.exec(FTS5_SQL);
+        try {
+            db.exec("INSERT INTO tracks_fts(tracks_fts) VALUES('rebuild')");
+            db.exec("INSERT INTO artists_fts(artists_fts) VALUES('rebuild')");
+            db.exec("INSERT INTO albums_fts(albums_fts) VALUES('rebuild')");
+        } catch {}
         const hasFtsMigration = db.prepare("SELECT 1 FROM schema_migrations WHERE name = ?").get("fts5_init");
         if (!hasFtsMigration) {
             db.exec(FTS5_SEED_SQL);
@@ -499,6 +504,11 @@ async function initSchemaTurso(client) {
 
     try {
         await client.executeMultiple(FTS5_SQL);
+        try {
+            await client.execute("INSERT INTO tracks_fts(tracks_fts) VALUES('rebuild')");
+            await client.execute("INSERT INTO artists_fts(artists_fts) VALUES('rebuild')");
+            await client.execute("INSERT INTO albums_fts(albums_fts) VALUES('rebuild')");
+        } catch {}
         const hasFtsMigration = await client.execute({
             sql: "SELECT 1 FROM schema_migrations WHERE name = ?",
             args: ["fts5_init"],
