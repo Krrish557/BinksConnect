@@ -6,6 +6,7 @@ const mm = require("music-metadata");
 const sharp = require("sharp");
 const { processChannelPost } = require("./channelScanner");
 const metadataService = require("../services/metadataService");
+const coverArtService = require("../services/coverArtService");
 const audioCache = require("../cache/audioCache");
 const { dbGet, dbAll, dbRun } = require("../db/dbHelpers");
 
@@ -180,6 +181,10 @@ function getBot() {
             let skipped = 0;
             let failed = 0;
             let notCached = 0;
+            let onlineFetched = 0;
+
+            const skippedAlbumIds = new Set();
+            const skippedArtistIds = new Set();
 
             for (const mapping of mappings) {
                 const cached = await audioCache.getCachedStream(mapping.checksum);
@@ -195,6 +200,11 @@ function getBot() {
                     const parsed = await mm.parseFile(cachePath);
                     const picture = parsed.common?.picture?.[0];
                     if (!picture || !picture.data) {
+                        const track = await dbGet("SELECT album_id, artist_id FROM tracks WHERE internal_id = ?", mapping.track_id);
+                        if (track) {
+                            if (track.album_id) skippedAlbumIds.add(track.album_id);
+                            if (track.artist_id) skippedArtistIds.add(track.artist_id);
+                        }
                         skipped++;
                         continue;
                     }
@@ -209,9 +219,11 @@ function getBot() {
 
                     if (track.album_id) {
                         await metadataService.storeAlbumCover(track.album_id, thumbnail, fullSize, mime);
+                        skippedAlbumIds.delete(track.album_id);
                     }
                     if (track.artist_id) {
                         await metadataService.storeArtistCover(track.artist_id, thumbnail, fullSize, mime);
+                        skippedArtistIds.delete(track.artist_id);
                     }
                     extracted++;
                 } catch {
@@ -219,10 +231,29 @@ function getBot() {
                 }
             }
 
+            for (const albumId of skippedAlbumIds) {
+                try {
+                    const internalId = await dbGet("SELECT internal_id FROM albums WHERE id = ?", albumId);
+                    if (!internalId) continue;
+                    const cover = await coverArtService.fetchAndStoreAlbumCover(internalId.internal_id);
+                    if (cover) onlineFetched++;
+                } catch {}
+            }
+
+            for (const artistId of skippedArtistIds) {
+                try {
+                    const internalId = await dbGet("SELECT internal_id FROM artists WHERE id = ?", artistId);
+                    if (!internalId) continue;
+                    const cover = await coverArtService.fetchAndStoreArtistCover(internalId.internal_id);
+                    if (cover) onlineFetched++;
+                } catch {}
+            }
+
             ctx.reply(
                 "Rescan complete\n\n" +
                 `Total tracks: ${mappings.length}\n` +
                 `Art extracted: ${extracted}\n` +
+                `Online fetched: ${onlineFetched}\n` +
                 `Skipped (no art): ${skipped}\n` +
                 `Not cached: ${notCached}\n` +
                 `Failed: ${failed}`
