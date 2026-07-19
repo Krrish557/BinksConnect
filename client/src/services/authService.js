@@ -22,6 +22,20 @@ export const authService = {
         return apiClient.get("/api/auth/me");
     },
 
+    async autoTelegramLogin() {
+        try {
+            const data = await apiClient.post("/api/auth/login", {
+                providerId: "telegram",
+            });
+            if (data.token) {
+                apiClient.setToken(data.token);
+            }
+            return data;
+        } catch {
+            return null;
+        }
+    },
+
     async logout() {
         try {
             await apiClient.post("/api/auth/logout");
