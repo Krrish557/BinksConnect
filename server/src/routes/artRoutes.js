@@ -25,6 +25,14 @@ router.get("/:albumId", authMiddleware, async (req, res) => {
             }
 
             if (cover) {
+                console.log({
+                    value: cover.image,
+                    type: typeof cover.image,
+                    constructor: cover.image?.constructor?.name,
+                    isBuffer: Buffer.isBuffer(cover.image),
+                    length: cover.image?.length,
+                    byteLength: cover.image?.byteLength
+                });
                 res.set("Content-Type", cover.mimeType);
                 res.set("Cache-Control", "public, max-age=86400");
                 return res.send(cover.image);
