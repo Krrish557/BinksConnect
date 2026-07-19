@@ -81,6 +81,30 @@ function startKeepAlive() {
     }, 300000);
 }
 
+function startHeartbeat() {
+    const sudoId = process.env.SUDO_USER_ID;
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!sudoId || !token) {
+        console.log("[Heartbeat] SUDO_USER_ID or TELEGRAM_BOT_TOKEN not set — skipping");
+        return;
+    }
+    console.log(`[Heartbeat] Sending alive message to sudo user every 5 minutes`);
+    const apiUrl = `https://api.telegram.org/bot${token}/sendMessage`;
+    setInterval(async () => {
+        try {
+            const now = new Date().toISOString().slice(11, 19);
+            await fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: sudoId,
+                    text: `[${now}] BinksConnect server is alive`,
+                }),
+            });
+        } catch {}
+    }, 300000);
+}
+
 if (require.main === module) {
     (async () => {
         try {
@@ -93,6 +117,7 @@ if (require.main === module) {
             initCache();
             startPolling();
             startKeepAlive();
+            startHeartbeat();
         });
     })();
 }
