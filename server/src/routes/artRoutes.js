@@ -17,22 +17,18 @@ const router = express.Router();
 router.get("/:albumId", authMiddleware, async (req, res) => {
     try {
         if (req.session.providerId === "telegram") {
+            const albumId = req.params.albumId;
             const size = req.query.size === "thumb" ? "thumb" : "full";
-            let cover = await metadataService.getAlbumCover(req.params.albumId, size);
+            console.log(`[Art] Request for albumId=${albumId} size=${size}`);
+            let cover = await metadataService.getAlbumCover(albumId, size);
+            console.log(`[Art] getAlbumCover returned:`, cover ? `mimeType=${cover.mimeType} imageLen=${cover.image?.length}` : "null");
 
             if (!cover) {
-                cover = await coverArtService.fetchAndStoreAlbumCover(req.params.albumId);
+                cover = await coverArtService.fetchAndStoreAlbumCover(albumId);
+                console.log(`[Art] fetchAndStoreAlbumCover returned:`, cover ? `mimeType=${cover.mimeType} imageLen=${cover.image?.length}` : "null");
             }
 
             if (cover) {
-                console.log({
-                    value: cover.image,
-                    type: typeof cover.image,
-                    constructor: cover.image?.constructor?.name,
-                    isBuffer: Buffer.isBuffer(cover.image),
-                    length: cover.image?.length,
-                    byteLength: cover.image?.byteLength
-                });
                 res.set("Content-Type", cover.mimeType);
                 res.set("Cache-Control", "public, max-age=86400");
                 return res.send(cover.image);
