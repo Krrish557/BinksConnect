@@ -39,7 +39,14 @@ export default function SettingsPage() {
 
     const handleLogout = async () => {
         await logout();
-        router.push("/onboarding");
+        router.push("/login");
+    };
+
+    const handleNavidromeLogin = () => {
+        const navUrl = serverInfo?.serverUrl || "";
+        if (navUrl) {
+            window.open(navUrl, "_blank", "noopener,noreferrer");
+        }
     };
 
     return (
@@ -77,6 +84,19 @@ export default function SettingsPage() {
                     )}
                 </div>
             </section>
+
+            {user?.provider === "navidrome" && serverInfo?.serverUrl && (
+                <section className="mb-8">
+                    <h2 className="text-xl font-bold text-white mb-4">Navidrome</h2>
+                    <button
+                        onClick={handleNavidromeLogin}
+                        className="w-full text-left px-5 py-4 bg-[#181818] hover:bg-[#282828] rounded-xl transition-colors text-[#B3B3B3] hover:text-[#1db954] flex items-center justify-between"
+                    >
+                        <span>Open Navidrome login page</span>
+                        <span className="text-sm">↗</span>
+                    </button>
+                </section>
+            )}
 
             {user?.provider === "telegram" && uploadStatus && (
                 <section className="mb-8">
@@ -118,12 +138,6 @@ export default function SettingsPage() {
             <section className="mb-8">
                 <h2 className="text-xl font-bold text-white mb-4">Account</h2>
                 <div className="space-y-3">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-5 py-4 bg-[#181818] hover:bg-[#282828] rounded-xl transition-colors text-[#B3B3B3] hover:text-white"
-                    >
-                        Switch provider
-                    </button>
                     <button
                         onClick={handleLogout}
                         className="w-full text-left px-5 py-4 bg-[#181818] hover:bg-red-900/30 rounded-xl transition-colors text-[#B3B3B3] hover:text-red-400"

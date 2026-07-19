@@ -11,8 +11,8 @@ export default function ProtectedRoute({ children }) {
 
     useEffect(() => {
         const token = apiClient.loadToken();
-        if (!token && pathname !== "/onboarding" && pathname !== "/login") {
-            router.replace("/onboarding");
+        if (!token && pathname !== "/login") {
+            router.replace("/login");
         }
         setChecked(true);
     }, [pathname, router]);
@@ -20,7 +20,7 @@ export default function ProtectedRoute({ children }) {
     if (!checked) return null;
 
     const token = apiClient.getToken();
-    if (!token && pathname !== "/onboarding" && pathname !== "/login") return null;
+    if (!token && pathname !== "/login") return null;
 
     return children;
 }
