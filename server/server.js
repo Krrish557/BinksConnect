@@ -64,6 +64,23 @@ const { startPolling } = require("./src/telegram/bot");
 const { initCache } = require("./src/cache/audioCache");
 const { initDatabase } = require("./src/db/database");
 
+function startKeepAlive() {
+    const url = process.env.RENDER_URL;
+    if (!url) {
+        console.log("[KeepAlive] RENDER_URL not set — skipping self-ping");
+        return;
+    }
+    console.log(`[KeepAlive] Pinging ${url} every 5 minutes to prevent idle spin-down`);
+    setInterval(async () => {
+        try {
+            const res = await fetch(url);
+            console.log(`[KeepAlive] ${url} -> ${res.status}`);
+        } catch (err) {
+            console.error(`[KeepAlive] Ping failed: ${err.message}`);
+        }
+    }, 300000);
+}
+
 if (require.main === module) {
     (async () => {
         try {
@@ -75,6 +92,7 @@ if (require.main === module) {
             console.log(`Server running on port ${PORT}`);
             initCache();
             startPolling();
+            startKeepAlive();
         });
     })();
 }

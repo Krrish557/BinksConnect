@@ -5,6 +5,7 @@
   "scripts": {
     "test": "node run-tests.js",
     "test:server": "cd server && npm test",
-    "test:client": "cd client && npm run lint && npm run build"
+    "test:client": "cd client && npm run lint && npm run build",
+    "keep-alive": "node keep-alive.js"
   }
 }
