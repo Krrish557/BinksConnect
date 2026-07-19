@@ -15,12 +15,13 @@ const PLACEHOLDER_SVG = Buffer.from(
 const router = express.Router();
 
 function sendImage(res, status, mimeType, cacheControl, data) {
+    const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
     res.writeHead(status, {
         "Content-Type": mimeType,
         "Cache-Control": cacheControl,
-        "Content-Length": data.length,
+        "Content-Length": buf.length,
     });
-    res.end(data);
+    res.end(buf);
 }
 
 router.get("/:albumId", authMiddleware, async (req, res) => {
