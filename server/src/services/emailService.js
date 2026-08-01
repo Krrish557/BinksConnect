@@ -1,9 +1,11 @@
 const nodemailer = require("nodemailer");
+const dns = require("dns").promises;
+const net = require("net");
 
 let transporter = null;
 let configured = null;
 
-function getTransporter() {
+async function getTransporter() {
     if (configured !== null) return transporter;
     configured = false;
 
@@ -12,11 +14,21 @@ function getTransporter() {
     const pass = process.env.SMTP_PASS;
     if (!host || !user || !pass) return null;
 
+    let connectHost = host;
+    if (!net.isIP(host)) {
+        try {
+            const { address } = await dns.lookup(host, { family: 4 });
+            connectHost = address;
+        } catch (e) {
+            console.warn("[Mail] IPv4 lookup failed, using hostname:", e.message);
+        }
+    }
+
     transporter = nodemailer.createTransport({
-        host,
+        host: connectHost,
+        servername: host,
         port: parseInt(process.env.SMTP_PORT || "465", 10),
         secure: (process.env.SMTP_PORT || "465") === "465",
-        family: 4,
         auth: { user, pass },
     });
     configured = true;
@@ -28,7 +40,7 @@ function getFromAddress() {
 }
 
 async function sendMail(to, subject, html) {
-    const t = getTransporter();
+    const t = await getTransporter();
     if (!t) {
         console.log(`[Mail] SMTP not configured — would send to ${to}: ${subject}`);
         return { skipped: true, to, subject };
