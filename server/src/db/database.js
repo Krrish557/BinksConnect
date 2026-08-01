@@ -6,8 +6,29 @@ const SCHEMA_SQL = `
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
+        email TEXT,
+        email_verified INTEGER DEFAULT 0,
         password_hash TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS otp_codes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        code_hash TEXT NOT NULL,
+        purpose TEXT NOT NULL,
+        expires_at DATETIME NOT NULL,
+        used INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS reset_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token_hash TEXT NOT NULL,
+        expires_at DATETIME NOT NULL,
+        used INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS sessions (
         id TEXT PRIMARY KEY,
@@ -318,7 +339,25 @@ function initFTS5Sqlite(db) {
     }
 }
 
+function runAuthMigrationsSqlite(db) {
+    const hasMigration = db.prepare("SELECT 1 FROM schema_migrations WHERE name = ?").get("user_auth_fields");
+    if (hasMigration) return;
+
+    const userColumns = db.prepare("PRAGMA table_info(users)").all();
+    if (!userColumns.some((c) => c.name === "email")) {
+        db.exec("ALTER TABLE users ADD COLUMN email TEXT");
+    }
+    if (!userColumns.some((c) => c.name === "email_verified")) {
+        db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0");
+    }
+    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)");
+
+    db.prepare("INSERT INTO schema_migrations (name) VALUES (?)").run("user_auth_fields");
+    console.log("[DB] user_auth_fields migration complete");
+}
+
 function runMigrationsSqlite(db) {
+    runAuthMigrationsSqlite(db);
     const hasMigration = db.prepare("SELECT 1 FROM schema_migrations WHERE name = ?").get("artist_normalization");
     if (hasMigration) return;
 
@@ -499,8 +538,33 @@ function runMigrationsSqlite(db) {
     console.log("[DB] artist_normalization migration complete");
 }
 
+async function runAuthMigrationsTurso(client) {
+    const hasMigration = await client.execute({
+        sql: "SELECT 1 FROM schema_migrations WHERE name = ?",
+        args: ["user_auth_fields"],
+    });
+    if (hasMigration.rows.length > 0) return;
+
+    const userColumnsResult = await client.execute("PRAGMA table_info(users)");
+    const userColumns = userColumnsResult.rows;
+    if (!userColumns.some((c) => c.name === "email")) {
+        await client.execute("ALTER TABLE users ADD COLUMN email TEXT");
+    }
+    if (!userColumns.some((c) => c.name === "email_verified")) {
+        await client.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0");
+    }
+    await client.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)");
+
+    await client.execute({
+        sql: "INSERT INTO schema_migrations (name) VALUES (?)",
+        args: ["user_auth_fields"],
+    });
+    console.log("[DB] user_auth_fields migration complete (Turso)");
+}
+
 async function initSchemaTurso(client) {
     await client.executeMultiple(SCHEMA_SQL);
+    await runAuthMigrationsTurso(client);
 
     try {
         await client.executeMultiple(FTS5_SQL);

@@ -11,8 +11,30 @@ const SCHEMA = `
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
+        email TEXT,
+        email_verified INTEGER DEFAULT 0,
         password_hash TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE TABLE IF NOT EXISTS otp_codes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        code_hash TEXT NOT NULL,
+        purpose TEXT NOT NULL,
+        expires_at DATETIME NOT NULL,
+        used INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS reset_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token_hash TEXT NOT NULL,
+        expires_at DATETIME NOT NULL,
+        used INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS sessions (
         id TEXT PRIMARY KEY,
@@ -204,7 +226,7 @@ const TABLES_TO_CLEAR = [
     "favourite_artists", "favourite_albums", "favorites",
     "lyrics_cache", "track_artists", "play_history",
     "provider_mappings", "tracks", "albums", "artists",
-    "album_covers", "artist_covers", "sessions", "users",
+    "album_covers", "artist_covers", "sessions", "reset_tokens", "otp_codes", "users",
 ];
 
 function createTestDb() {

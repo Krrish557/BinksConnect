@@ -1,39 +1,36 @@
 import { apiClient } from "./apiClient";
 
 export const authService = {
-    async login(serverUrl, username, password, providerId = "navidrome") {
-        let body;
-        if (providerId === "telegram") {
-            body = { providerId: "telegram" };
-        } else {
-            body = {
-                providerId: "navidrome",
-                config: { serverUrl, username, password },
-            };
-        }
-        const data = await apiClient.post("/api/auth/login", body);
+    async login(identifier, password) {
+        const data = await apiClient.post("/api/auth/login", { identifier, password });
         if (data.token) {
             apiClient.setToken(data.token);
         }
         return data;
     },
 
-    async me() {
-        return apiClient.get("/api/auth/me");
+    async register(username, email, password) {
+        return apiClient.post("/api/auth/register", { username, email, password });
     },
 
-    async autoTelegramLogin() {
-        try {
-            const data = await apiClient.post("/api/auth/login", {
-                providerId: "telegram",
-            });
-            if (data.token) {
-                apiClient.setToken(data.token);
-            }
-            return data;
-        } catch {
-            return null;
-        }
+    async verifyOtp(email, code) {
+        return apiClient.post("/api/auth/verify-otp", { email, code });
+    },
+
+    async resendOtp(email) {
+        return apiClient.post("/api/auth/resend-otp", { email });
+    },
+
+    async forgotPassword(email) {
+        return apiClient.post("/api/auth/forgot-password", { email });
+    },
+
+    async resetPassword(token, password) {
+        return apiClient.post("/api/auth/reset-password", { token, password });
+    },
+
+    async me() {
+        return apiClient.get("/api/auth/me");
     },
 
     async logout() {

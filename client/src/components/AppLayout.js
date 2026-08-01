@@ -1,15 +1,52 @@
 "use client";
 
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import BottomPlayer from "./BottomPlayer";
 import MobileNav from "./MobileNav";
 import FullPlayer from "./FullPlayer";
 import KeyboardShortcuts from "./KeyboardShortcuts";
 import { usePlayerStore } from "@/store/playerStore";
+import useAuthStore from "@/store/authStore";
+
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
 
 export default function AppLayout({ children }) {
+    const pathname = usePathname();
+    const router = useRouter();
     const isPlayerOpen = usePlayerStore((s) => s.isPlayerOpen);
     const currentTrack = usePlayerStore((s) => s.currentTrack);
+    const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+    const isInitializing = useAuthStore((s) => s.isInitializing);
+    const init = useAuthStore((s) => s.init);
+
+    const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+
+    useEffect(() => {
+        init();
+    }, [init]);
+
+    useEffect(() => {
+        if (isInitializing) return;
+        if (isAuthenticated && isPublic) {
+            router.replace("/");
+        } else if (!isAuthenticated && !isPublic) {
+            router.replace("/login");
+        }
+    }, [isInitializing, isAuthenticated, isPublic, router]);
+
+    if (isInitializing) {
+        return (
+            <div className="h-screen w-full bg-[#121212] text-white flex items-center justify-center">
+                <p className="text-sm text-[#B3B3B3]">Loading...</p>
+            </div>
+        );
+    }
+
+    if (isPublic) {
+        return <>{children}</>;
+    }
 
     return (
         <div className="h-screen w-full bg-[#121212] text-white flex flex-col overflow-hidden">

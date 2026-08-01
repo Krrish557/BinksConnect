@@ -2,38 +2,46 @@ import { create } from "zustand";
 import { authService } from "@/services/authService";
 import { apiClient } from "@/services/apiClient";
 
-const token = authService.loadSession();
 let _initialized = false;
 
 const useAuthStore = create((set) => ({
-    user: token ? { provider: "navidrome" } : null,
-    isAuthenticated: !!token,
-    isInitializing: !token,
+    user: null,
+    isAuthenticated: false,
+    isInitializing: true,
 
     init: async () => {
         if (_initialized) return;
         _initialized = true;
         const existingToken = apiClient.getToken();
-        if (existingToken) {
+        if (!existingToken) {
             set({ isInitializing: false });
             return;
         }
-        const data = await authService.autoTelegramLogin();
-        if (data) {
+        try {
+            const data = await authService.me();
             set({
-                user: { provider: data.providerId || "telegram" },
+                user: {
+                    username: data.username,
+                    email: data.email || null,
+                    provider: data.providerId || "telegram",
+                },
                 isAuthenticated: true,
                 isInitializing: false,
             });
-        } else {
-            set({ isInitializing: false });
+        } catch {
+            apiClient.setToken(null);
+            set({ user: null, isAuthenticated: false, isInitializing: false });
         }
     },
 
-    login: async (serverUrl, username, password, providerId = "navidrome") => {
-        const data = await authService.login(serverUrl, username, password, providerId);
+    login: async (identifier, password) => {
+        const data = await authService.login(identifier, password);
         set({
-            user: { provider: data.providerId || providerId },
+            user: {
+                username: data.username,
+                email: data.email || null,
+                provider: data.providerId || "telegram",
+            },
             isAuthenticated: true,
         });
         return data;
@@ -41,6 +49,10 @@ const useAuthStore = create((set) => ({
 
     logout: async () => {
         await authService.logout();
+        if (typeof window !== "undefined") {
+            localStorage.removeItem("binks_playlists");
+            localStorage.removeItem("binks_player");
+        }
         set({ user: null, isAuthenticated: false });
     },
 
@@ -53,7 +65,11 @@ const useAuthStore = create((set) => ({
             }
             const data = await authService.me();
             set({
-                user: { provider: data.providerId, username: data.username },
+                user: {
+                    username: data.username,
+                    email: data.email || null,
+                    provider: data.providerId || "telegram",
+                },
                 isAuthenticated: true,
             });
             return true;
