@@ -17,6 +17,15 @@ const SCHEMA = `
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE TABLE IF NOT EXISTS pending_registrations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        username TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        code_hash TEXT NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS otp_codes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
@@ -226,7 +235,7 @@ const TABLES_TO_CLEAR = [
     "favourite_artists", "favourite_albums", "favorites",
     "lyrics_cache", "track_artists", "play_history",
     "provider_mappings", "tracks", "albums", "artists",
-    "album_covers", "artist_covers", "sessions", "reset_tokens", "otp_codes", "users",
+    "album_covers", "artist_covers", "sessions", "reset_tokens", "otp_codes", "pending_registrations", "users",
 ];
 
 function createTestDb() {

@@ -16,6 +16,7 @@ function getTransporter() {
         host,
         port: parseInt(process.env.SMTP_PORT || "465", 10),
         secure: (process.env.SMTP_PORT || "465") === "465",
+        family: 4,
         auth: { user, pass },
     });
     configured = true;

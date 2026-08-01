@@ -37,17 +37,8 @@ function normalizeIdentifier(identifier) {
     return String(identifier || "").trim().toLowerCase();
 }
 
-async function issueOtp(userId, purpose) {
-    const code = generateOtp();
-    const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
-    await dbRun(
-        "INSERT INTO otp_codes (user_id, code_hash, purpose, expires_at) VALUES (?, ?, ?, ?)",
-        userId,
-        hashCode(code),
-        purpose,
-        expiresAt
-    );
-    return code;
+function getPendingByEmail(email) {
+    return dbGet("SELECT * FROM pending_registrations WHERE LOWER(email) = ?", email);
 }
 
 router.post("/register", async (req, res) => {
@@ -63,27 +54,47 @@ router.post("/register", async (req, res) => {
             return res.status(429).json({ error: "Too many signup attempts. Please try again later." });
         }
 
-        const existing = await dbGet(
+        const loweredUsername = String(username).toLowerCase();
+        const existingUser = await dbGet(
             "SELECT id, username, email FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?",
-            String(username).toLowerCase(),
+            loweredUsername,
             cleanedEmail
         );
-        if (existing) {
-            const isUsernameTaken = String(existing.username).toLowerCase() === String(username).toLowerCase();
+        if (existingUser) {
+            const isUsernameTaken = String(existingUser.username).toLowerCase() === loweredUsername;
             return res.status(409).json({
                 error: isUsernameTaken ? "Username already exists" : "Email already registered",
             });
         }
 
+        const pendingUsername = await dbGet(
+            "SELECT id FROM pending_registrations WHERE LOWER(username) = ?",
+            loweredUsername
+        );
+        if (pendingUsername) {
+            return res.status(409).json({ error: "Username already exists" });
+        }
+
         const hash = bcrypt.hashSync(password, 10);
-        const result = await dbRun(
-            "INSERT INTO users (username, email, email_verified, password_hash) VALUES (?, ?, 0, ?)",
-            username,
+        const code = generateOtp();
+        const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
+
+        await dbRun(
+            `INSERT INTO pending_registrations (email, username, password_hash, code_hash, expires_at)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(email) DO UPDATE SET
+                username = excluded.username,
+                password_hash = excluded.password_hash,
+                code_hash = excluded.code_hash,
+                expires_at = excluded.expires_at,
+                created_at = CURRENT_TIMESTAMP`,
             cleanedEmail,
-            hash
+            username,
+            hash,
+            hashCode(code),
+            expiresAt
         );
 
-        const code = await issueOtp(result.lastInsertRowid, "signup");
         await sendOtp(cleanedEmail, code);
 
         return res.status(201).json({ success: true, email: cleanedEmail });
@@ -101,29 +112,38 @@ router.post("/verify-otp", async (req, res) => {
             return res.status(400).json({ error: "Email and code are required" });
         }
 
-        const user = await dbGet("SELECT id, email FROM users WHERE LOWER(email) = ?", cleanedEmail);
-        if (!user) return res.status(400).json({ error: "No account found for that email" });
-
         const rate = consume(`verify:${cleanedEmail}`, 5, 60 * 60 * 1000);
         if (!rate.allowed) {
             return res.status(429).json({ error: "Too many verification attempts. Please try again later." });
         }
 
-        const otp = await dbGet(
-            "SELECT * FROM otp_codes WHERE user_id = ? AND purpose = 'signup' AND used = 0 ORDER BY id DESC LIMIT 1",
-            user.id
-        );
-        if (!otp) return res.status(400).json({ error: "No pending code. Request a new one." });
-
-        if (new Date(otp.expires_at).getTime() < Date.now()) {
-            return res.status(400).json({ error: "Code expired. Request a new one." });
+        const pending = await getPendingByEmail(cleanedEmail);
+        if (!pending) {
+            return res.status(400).json({ error: "No pending registration found for that email" });
         }
-        if (otp.code_hash !== hashCode(code)) {
+        if (new Date(pending.expires_at).getTime() < Date.now()) {
+            await dbRun("DELETE FROM pending_registrations WHERE id = ?", pending.id);
+            return res.status(400).json({ error: "Code expired. Register again to request a new one." });
+        }
+        if (pending.code_hash !== hashCode(code)) {
             return res.status(400).json({ error: "Invalid code" });
         }
 
-        await dbRun("UPDATE otp_codes SET used = 1 WHERE id = ?", otp.id);
-        await dbRun("UPDATE users SET email_verified = 1 WHERE id = ?", user.id);
+        try {
+            await dbRun(
+                "INSERT INTO users (username, email, email_verified, password_hash) VALUES (?, ?, 1, ?)",
+                pending.username,
+                pending.email,
+                pending.password_hash
+            );
+        } catch (err) {
+            if (err.code === "SQLITE_CONSTRAINT" || err.message?.includes("UNIQUE")) {
+                return res.status(409).json({ error: "Username or email already taken. Register again." });
+            }
+            throw err;
+        }
+
+        await dbRun("DELETE FROM pending_registrations WHERE id = ?", pending.id);
 
         return res.json({ success: true });
     } catch (err) {
@@ -137,8 +157,8 @@ router.post("/resend-otp", async (req, res) => {
         const cleanedEmail = normalizeEmail(req.body?.email);
         if (!cleanedEmail) return res.status(400).json({ error: "Email is required" });
 
-        const user = await dbGet("SELECT id, email FROM users WHERE LOWER(email) = ?", cleanedEmail);
-        if (!user) return res.json({ success: true });
+        const pending = await getPendingByEmail(cleanedEmail);
+        if (!pending) return res.json({ success: true });
 
         const rate = consume(`register:${cleanedEmail}`, 5, 60 * 60 * 1000);
         if (!rate.allowed) {
@@ -148,8 +168,14 @@ router.post("/resend-otp", async (req, res) => {
             return res.status(429).json({ error: "Please wait a minute before requesting another code." });
         }
 
-        await dbRun("UPDATE otp_codes SET used = 1 WHERE user_id = ? AND purpose = 'signup' AND used = 0", user.id);
-        const code = await issueOtp(user.id, "signup");
+        const code = generateOtp();
+        const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
+        await dbRun(
+            "UPDATE pending_registrations SET code_hash = ?, expires_at = ? WHERE id = ?",
+            hashCode(code),
+            expiresAt,
+            pending.id
+        );
         await sendOtp(cleanedEmail, code);
 
         return res.json({ success: true });

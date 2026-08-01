@@ -73,15 +73,20 @@ async function registerAndVerify() {
 }
 
 describe("Auth / Register", () => {
-    test("POST /api/auth/register — creates pending user and emails OTP", async () => {
+    test("POST /api/auth/register — creates pending registration, no user row yet", async () => {
         const email = uniqueEmail();
         const res = await register(email);
         expect(res.status).toBe(201);
         expect(res.body.success).toBe(true);
         expect(global.__lastOtp).toMatch(/^\d{6}$/);
 
-        const user = testDb.prepare("SELECT email_verified FROM users WHERE email = ?").get(email);
-        expect(user.email_verified).toBe(0);
+        const user = testDb.prepare("SELECT id FROM users WHERE email = ?").get(email);
+        expect(user).toBeUndefined();
+
+        const pending = testDb.prepare("SELECT code_hash, expires_at FROM pending_registrations WHERE email = ?").get(email);
+        expect(pending).toBeTruthy();
+        expect(pending.code_hash).toBeTruthy();
+        expect(new Date(pending.expires_at).getTime()).toBeGreaterThan(Date.now());
     });
 
     test("POST /api/auth/register — rejects duplicate username", async () => {
@@ -102,8 +107,7 @@ describe("Auth / Register", () => {
     });
 
     test("POST /api/auth/register — rejects duplicate email", async () => {
-        const email = uniqueEmail();
-        await register(email);
+        const email = await registerAndVerify();
         const res = await request(app).post("/api/auth/register").send({
             username: "otheruser",
             email,
@@ -132,14 +136,27 @@ describe("Auth / Register", () => {
 });
 
 describe("Auth / OTP", () => {
-    test("POST /api/auth/verify-otp — marks email verified", async () => {
+    test("POST /api/auth/verify-otp — creates the user and marks email verified", async () => {
         const email = uniqueEmail();
         await register(email);
+        expect(testDb.prepare("SELECT id FROM users WHERE email = ?").get(email)).toBeUndefined();
+
         const res = await request(app).post("/api/auth/verify-otp").send({ email, code: global.__lastOtp });
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
+
         const user = testDb.prepare("SELECT email_verified FROM users WHERE email = ?").get(email);
+        expect(user).toBeTruthy();
         expect(user.email_verified).toBe(1);
+        expect(testDb.prepare("SELECT id FROM pending_registrations WHERE email = ?").get(email)).toBeUndefined();
+    });
+
+    test("POST /api/auth/verify-otp — does not create a user for a wrong code", async () => {
+        const email = uniqueEmail();
+        await register(email);
+        const res = await request(app).post("/api/auth/verify-otp").send({ email, code: "000000" });
+        expect(res.status).toBe(400);
+        expect(testDb.prepare("SELECT id FROM users WHERE email = ?").get(email)).toBeUndefined();
     });
 
     test("POST /api/auth/verify-otp — rejects wrong code", async () => {
@@ -183,11 +200,11 @@ describe("Auth / Login", () => {
         expect(res.status).toBe(401);
     });
 
-    test("POST /api/auth/login — rejects unverified email", async () => {
+    test("POST /api/auth/login — rejects account before email is verified", async () => {
         const email = uniqueEmail();
         await register(email);
         const res = await request(app).post("/api/auth/login").send({ identifier: email, password: "password123" });
-        expect(res.status).toBe(403);
+        expect(res.status).toBe(401);
     });
 });
 
