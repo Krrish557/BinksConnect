@@ -1,67 +1,40 @@
-const nodemailer = require("nodemailer");
-const dns = require("dns").promises;
-const net = require("net");
+const RESEND_API_URL = "https://api.resend.com/emails";
 
-let transporter = null;
-let configured = null;
-
-async function getTransporter() {
-    if (configured !== null) return transporter;
-    configured = false;
-
-    const host = process.env.SMTP_HOST;
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-    if (!host || !user || !pass) {
-        console.log(`[Mail] SMTP not configured (SMTP_HOST=${host ? "set" : "missing"}, SMTP_USER=${user ? "set" : "missing"}, SMTP_PASS=${pass ? "set" : "missing"})`);
-        return null;
-    }
-
-    let connectHost = host;
-    if (!net.isIP(host)) {
-        try {
-            const { address } = await dns.lookup(host, { family: 4 });
-            connectHost = address;
-            console.log(`[Mail] Resolved ${host} -> IPv4 ${address} (port ${process.env.SMTP_PORT || "465"})`);
-        } catch (e) {
-            console.warn("[Mail] IPv4 lookup failed, using hostname:", e.message);
-        }
-    }
-
-    transporter = nodemailer.createTransport({
-        host: connectHost,
-        servername: host,
-        port: parseInt(process.env.SMTP_PORT || "465", 10),
-        secure: (process.env.SMTP_PORT || "465") === "465",
-        auth: { user, pass },
-        logger: process.env.SMTP_DEBUG === "true",
-        debug: process.env.SMTP_DEBUG === "true",
-    });
-    configured = true;
-    console.log(`[Mail] SMTP transport ready: connect ${connectHost}:${process.env.SMTP_PORT || "465"} (host=${host}, secure=${(process.env.SMTP_PORT || "465") === "465"})`);
-    return transporter;
+function getApiKey() {
+    return process.env.RESEND_API_KEY;
 }
 
 function getFromAddress() {
-    return process.env.SMTP_FROM || (process.env.SMTP_USER ? `BinksConnect <${process.env.SMTP_USER}>` : "BinksConnect <no-reply@binksconnect.app>");
+    return process.env.RESEND_FROM || "BinksConnect <onboarding@resend.dev>";
 }
 
 async function sendMail(to, subject, html) {
-    const t = await getTransporter();
-    if (!t) {
-        console.log(`[Mail] SMTP not configured — would send to ${to}: ${subject}`);
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        console.log(`[Mail] Resend not configured (RESEND_API_KEY missing) — would send to ${to}: ${subject}`);
         return { skipped: true, to, subject };
     }
-    console.log(`[Mail] Sending "${subject}" to ${to} via ${process.env.SMTP_HOST}`);
+    console.log(`[Mail] Sending "${subject}" to ${to} via Resend`);
     try {
-        const info = await t.sendMail({
-            from: getFromAddress(),
-            to,
-            subject,
-            html,
+        const res = await fetch(RESEND_API_URL, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                from: getFromAddress(),
+                to,
+                subject,
+                html,
+            }),
         });
-        console.log(`[Mail] Sent OK messageId=${info.messageId} to ${to}`);
-        return info;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            throw new Error(`Resend API ${res.status}: ${data.message || JSON.stringify(data)}`);
+        }
+        console.log(`[Mail] Sent OK id=${data.id} to ${to}`);
+        return data;
     } catch (err) {
         console.error(`[Mail] Send FAILED to ${to}:`, err);
         throw err;
