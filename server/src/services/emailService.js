@@ -12,13 +12,17 @@ async function getTransporter() {
     const host = process.env.SMTP_HOST;
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
-    if (!host || !user || !pass) return null;
+    if (!host || !user || !pass) {
+        console.log(`[Mail] SMTP not configured (SMTP_HOST=${host ? "set" : "missing"}, SMTP_USER=${user ? "set" : "missing"}, SMTP_PASS=${pass ? "set" : "missing"})`);
+        return null;
+    }
 
     let connectHost = host;
     if (!net.isIP(host)) {
         try {
             const { address } = await dns.lookup(host, { family: 4 });
             connectHost = address;
+            console.log(`[Mail] Resolved ${host} -> IPv4 ${address} (port ${process.env.SMTP_PORT || "465"})`);
         } catch (e) {
             console.warn("[Mail] IPv4 lookup failed, using hostname:", e.message);
         }
@@ -30,8 +34,11 @@ async function getTransporter() {
         port: parseInt(process.env.SMTP_PORT || "465", 10),
         secure: (process.env.SMTP_PORT || "465") === "465",
         auth: { user, pass },
+        logger: process.env.SMTP_DEBUG === "true",
+        debug: process.env.SMTP_DEBUG === "true",
     });
     configured = true;
+    console.log(`[Mail] SMTP transport ready: connect ${connectHost}:${process.env.SMTP_PORT || "465"} (host=${host}, secure=${(process.env.SMTP_PORT || "465") === "465"})`);
     return transporter;
 }
 
@@ -45,12 +52,20 @@ async function sendMail(to, subject, html) {
         console.log(`[Mail] SMTP not configured — would send to ${to}: ${subject}`);
         return { skipped: true, to, subject };
     }
-    return t.sendMail({
-        from: getFromAddress(),
-        to,
-        subject,
-        html,
-    });
+    console.log(`[Mail] Sending "${subject}" to ${to} via ${process.env.SMTP_HOST}`);
+    try {
+        const info = await t.sendMail({
+            from: getFromAddress(),
+            to,
+            subject,
+            html,
+        });
+        console.log(`[Mail] Sent OK messageId=${info.messageId} to ${to}`);
+        return info;
+    } catch (err) {
+        console.error(`[Mail] Send FAILED to ${to}:`, err);
+        throw err;
+    }
 }
 
 async function sendOtp(to, code) {
