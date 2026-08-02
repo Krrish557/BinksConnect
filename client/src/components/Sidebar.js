@@ -11,7 +11,7 @@ const NAV = [
     { label: "Albums",    path: "/albums",      icon: "💿" },
     { label: "Artists",   path: "/artists",     icon: "🎤" },
     { label: "Playlists", path: "/playlists",   icon: "📁" },
-    { label: "Upload",    path: "/upload",      icon: "📤", telegramOnly: true },
+    { label: "Upload",    path: "/upload",      icon: "📤" },
     { label: "Settings",  path: "/settings",    icon: "⚙️" },
 ];
 
@@ -19,7 +19,7 @@ export default function Sidebar() {
     const pathname = usePathname();
     const user = useAuthStore((s) => s.user);
 
-    const navItems = NAV.filter((item) => !item.telegramOnly || user?.provider === "telegram");
+    const navItems = NAV;
 
     return (
         <aside className="hidden md:flex flex-col w-20 lg:w-64 shrink-0 p-2 select-none">
@@ -79,7 +79,7 @@ export default function Sidebar() {
                                     {user.username || "User"}
                                 </p>
                                 <p className="text-[10px] text-[#B3B3B3] truncate uppercase font-semibold">
-                                    {user.provider || "Local"} Mode
+                                    Cloud Music Sync
                                 </p>
                             </div>
                         </Link>

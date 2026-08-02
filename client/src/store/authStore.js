@@ -25,7 +25,7 @@ const useAuthStore = create((set, get) => ({
                 user: {
                     username: data.username,
                     email: data.email || null,
-                    provider: data.providerId || "telegram",
+                    provider: data.providerId || "cloud",
                     currentDevice: data.currentDevice || null,
                 },
                 isAuthenticated: true,
@@ -43,7 +43,7 @@ const useAuthStore = create((set, get) => ({
             user: {
                 username: data.username,
                 email: data.email || null,
-                provider: data.providerId || "telegram",
+                provider: data.providerId || "cloud",
                 currentDevice: {
                     deviceId: data.deviceId,
                     deviceName: data.deviceName,
@@ -109,7 +109,7 @@ const useAuthStore = create((set, get) => ({
                 user: {
                     username: data.username,
                     email: data.email || null,
-                    provider: data.providerId || "telegram",
+                    provider: data.providerId || "cloud",
                     currentDevice: data.currentDevice || null,
                 },
                 isAuthenticated: true,

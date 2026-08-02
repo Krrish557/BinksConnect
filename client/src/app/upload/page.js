@@ -84,7 +84,7 @@ export default function UploadPage() {
         <main className="px-6 pt-8 pb-10 max-w-3xl">
             <h1 className="text-3xl font-bold text-white mb-2">Upload Music</h1>
             <p className="text-[#B3B3B3] text-sm mb-8">
-                Upload audio files to your Telegram storage. Metadata is extracted automatically from ID3 tags.
+                Upload audio files to your cloud music storage. Metadata is extracted automatically from ID3 tags.
             </p>
 
             <div

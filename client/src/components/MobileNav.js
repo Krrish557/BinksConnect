@@ -7,16 +7,15 @@ const NAV = [
     { name: "Home",      path: "/",          icon: "🏠" },
     { name: "Search",    path: "/search",    icon: "🔍" },
     { name: "Library",   path: "/library",   icon: "🎵" },
-    { name: "Upload",    path: "/upload",    icon: "📤", telegramOnly: true },
+    { name: "Upload",    path: "/upload",    icon: "📤" },
     { name: "Playlists", path: "/playlists", icon: "📁" },
 ];
 
 export default function MobileNav() {
     const router = useRouter();
     const pathname = usePathname();
-    const user = useAuthStore((s) => s.user);
 
-    const navItems = NAV.filter((item) => !item.telegramOnly || user?.provider === "telegram");
+    const navItems = NAV;
 
     return (
         <nav className="md:hidden shrink-0 bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-white/10 sticky bottom-0 z-40 safe-area-pb">
