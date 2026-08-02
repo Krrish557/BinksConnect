@@ -5,14 +5,14 @@ import { usePathname } from "next/navigation";
 import useAuthStore from "@/store/authStore";
 
 const NAV = [
-    { label: "Home",      path: "/",           icon: "🏠" },
-    { label: "Search",    path: "/search",      icon: "🔍" },
-    { label: "Library",   path: "/library",     icon: "🎵" },
-    { label: "Albums",    path: "/albums",      icon: "💿" },
-    { label: "Artists",   path: "/artists",     icon: "🎤" },
-    { label: "Playlists", path: "/playlists",   icon: "📁" },
-    { label: "Upload",    path: "/upload",      icon: "📤" },
-    { label: "Settings",  path: "/settings",    icon: "⚙️" },
+    { label: "Home", path: "/", icon: "🏠" },
+    { label: "Search", path: "/search", icon: "🔍" },
+    { label: "Library", path: "/library", icon: "🎵" },
+    { label: "Albums", path: "/albums", icon: "💿" },
+    { label: "Artists", path: "/artists", icon: "🎤" },
+    { label: "Playlists", path: "/playlists", icon: "📁" },
+    { label: "Upload", path: "/upload", icon: "📤" },
+    { label: "Settings", path: "/settings", icon: "⚙️" },
 ];
 
 export default function Sidebar() {
@@ -33,7 +33,6 @@ export default function Sidebar() {
                         <h1 className="text-base font-extrabold text-white tracking-tight truncate">
                             BinksConnect
                         </h1>
-                        <p className="text-[10px] text-[#B3B3B3] font-medium truncate">Hi-Fi Music Suite</p>
                     </div>
                 </div>
 
@@ -49,11 +48,10 @@ export default function Sidebar() {
                             <Link
                                 key={item.path}
                                 href={item.path}
-                                className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl transition-all duration-200 text-sm font-semibold group ${
-                                    isActive
-                                        ? "bg-gradient-to-r from-[#1db954]/20 to-[#1db954]/5 text-[#1db954] border-l-4 border-[#1db954] shadow-sm"
-                                        : "text-[#B3B3B3] hover:text-white hover:bg-white/5"
-                                }`}
+                                className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl transition-all duration-200 text-sm font-semibold group ${isActive
+                                    ? "bg-gradient-to-r from-[#1db954]/20 to-[#1db954]/5 text-[#1db954] border-l-4 border-[#1db954] shadow-sm"
+                                    : "text-[#B3B3B3] hover:text-white hover:bg-white/5"
+                                    }`}
                             >
                                 <span className={`text-xl transition-transform group-hover:scale-110 ${isActive ? "text-[#1db954]" : ""}`}>
                                     {item.icon}
@@ -78,9 +76,7 @@ export default function Sidebar() {
                                 <p className="text-xs font-bold text-white truncate group-hover:text-[#1db954] transition">
                                     {user.username || "User"}
                                 </p>
-                                <p className="text-[10px] text-[#B3B3B3] truncate uppercase font-semibold">
-                                    Cloud Music Sync
-                                </p>
+
                             </div>
                         </Link>
                     </div>

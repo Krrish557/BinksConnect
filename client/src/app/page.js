@@ -26,10 +26,6 @@ export default function HomePage() {
     const [loading, setLoading] = useState(() => !cacheService.get("albums_recent_12")?.data);
     const [refreshingRecs, setRefreshingRecs] = useState(false);
 
-    const hour = new Date().getHours();
-    const greeting =
-        hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-
     useEffect(() => {
         init();
     }, [init]);
@@ -90,8 +86,6 @@ export default function HomePage() {
 
     return (
         <main className="px-6 pt-8 pb-10">
-            <h1 className="text-3xl font-bold text-white mb-8">{greeting}</h1>
-
             {/* SHUFFLE RECOMMENDATION HERO */}
             <section className="mb-10 bg-gradient-to-r from-emerald-950/70 via-stone-900/90 to-indigo-950/70 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-md relative overflow-hidden shadow-2xl">
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-[#1db954]/10 rounded-full blur-3xl pointer-events-none" />
