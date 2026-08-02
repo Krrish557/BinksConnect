@@ -3,6 +3,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://binksconnect.onrend
 class ApiClient {
     constructor() {
         this._token = null;
+        if (typeof window !== "undefined") {
+            this.loadToken();
+        }
     }
 
     setToken(token) {
@@ -24,11 +27,26 @@ class ApiClient {
     }
 
     getToken() {
+        if (!this._token && typeof window !== "undefined") {
+            this._token = localStorage.getItem("binks_token");
+        }
         return this._token;
     }
 
+    getDeviceId() {
+        if (typeof window === "undefined") return "dev_server";
+        let id = localStorage.getItem("binks_device_id");
+        if (!id) {
+            id = `dev_${Math.random().toString(36).substring(2, 15)}`;
+            localStorage.setItem("binks_device_id", id);
+        }
+        return id;
+    }
+
     async request(method, path, body) {
-        const headers = {};
+        const headers = {
+            "X-Device-Id": this.getDeviceId(),
+        };
         if (this._token) {
             headers.Authorization = `Bearer ${this._token}`;
         }

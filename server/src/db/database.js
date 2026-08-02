@@ -44,6 +44,12 @@ const SCHEMA_SQL = `
         user_id INTEGER NOT NULL,
         provider_id TEXT NOT NULL,
         provider_config TEXT NOT NULL,
+        device_name TEXT,
+        device_id TEXT,
+        user_agent TEXT,
+        ip_address TEXT,
+        last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
+        remember_device INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
@@ -349,20 +355,39 @@ function initFTS5Sqlite(db) {
 }
 
 function runAuthMigrationsSqlite(db) {
-    const hasMigration = db.prepare("SELECT 1 FROM schema_migrations WHERE name = ?").get("user_auth_fields");
-    if (hasMigration) return;
-
-    const userColumns = db.prepare("PRAGMA table_info(users)").all();
-    if (!userColumns.some((c) => c.name === "email")) {
-        db.exec("ALTER TABLE users ADD COLUMN email TEXT");
+    const hasUserMigration = db.prepare("SELECT 1 FROM schema_migrations WHERE name = ?").get("user_auth_fields");
+    if (!hasUserMigration) {
+        const userColumns = db.prepare("PRAGMA table_info(users)").all();
+        if (!userColumns.some((c) => c.name === "email")) {
+            db.exec("ALTER TABLE users ADD COLUMN email TEXT");
+        }
+        if (!userColumns.some((c) => c.name === "email_verified")) {
+            db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0");
+        }
+        db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)");
+        db.prepare("INSERT INTO schema_migrations (name) VALUES (?)").run("user_auth_fields");
+        console.log("[DB] user_auth_fields migration complete");
     }
-    if (!userColumns.some((c) => c.name === "email_verified")) {
-        db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0");
-    }
-    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)");
 
-    db.prepare("INSERT INTO schema_migrations (name) VALUES (?)").run("user_auth_fields");
-    console.log("[DB] user_auth_fields migration complete");
+    const sessionColumns = db.prepare("PRAGMA table_info(sessions)").all();
+    if (!sessionColumns.some((c) => c.name === "device_name")) {
+        db.exec("ALTER TABLE sessions ADD COLUMN device_name TEXT");
+    }
+    if (!sessionColumns.some((c) => c.name === "device_id")) {
+        db.exec("ALTER TABLE sessions ADD COLUMN device_id TEXT");
+    }
+    if (!sessionColumns.some((c) => c.name === "user_agent")) {
+        db.exec("ALTER TABLE sessions ADD COLUMN user_agent TEXT");
+    }
+    if (!sessionColumns.some((c) => c.name === "ip_address")) {
+        db.exec("ALTER TABLE sessions ADD COLUMN ip_address TEXT");
+    }
+    if (!sessionColumns.some((c) => c.name === "last_active")) {
+        db.exec("ALTER TABLE sessions ADD COLUMN last_active DATETIME");
+    }
+    if (!sessionColumns.some((c) => c.name === "remember_device")) {
+        db.exec("ALTER TABLE sessions ADD COLUMN remember_device INTEGER DEFAULT 1");
+    }
 }
 
 function runMigrationsSqlite(db) {

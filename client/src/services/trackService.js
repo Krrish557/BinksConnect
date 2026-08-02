@@ -21,6 +21,10 @@ export const trackService = {
         return apiClient.post("/api/favorites/check", { trackIds });
     },
 
+    async getSimilar(trackId) {
+        return apiClient.get(`/api/tracks/similar/${trackId}`);
+    },
+
     getStreamUrl(trackId) {
         return apiClient.getStreamUrl(trackId);
     },

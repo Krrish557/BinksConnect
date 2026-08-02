@@ -50,6 +50,12 @@ const SCHEMA = `
         user_id INTEGER NOT NULL,
         provider_id TEXT NOT NULL,
         provider_config TEXT NOT NULL,
+        device_name TEXT,
+        device_id TEXT,
+        user_agent TEXT,
+        ip_address TEXT,
+        last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
+        remember_device INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );

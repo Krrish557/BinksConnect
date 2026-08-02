@@ -185,9 +185,28 @@ router.post("/resend-otp", async (req, res) => {
     }
 });
 
+function parseUserAgent(ua = "") {
+    if (!ua) return "Unknown Device";
+    let browser = "Browser";
+    if (ua.includes("Firefox/")) browser = "Firefox";
+    else if (ua.includes("Edg/")) browser = "Edge";
+    else if (ua.includes("Chrome/")) browser = "Chrome";
+    else if (ua.includes("Safari/")) browser = "Safari";
+    else if (ua.includes("Postman")) browser = "Postman";
+
+    let os = "Unknown OS";
+    if (ua.includes("Windows")) os = "Windows";
+    else if (ua.includes("Mac OS") || ua.includes("Macintosh")) os = "macOS";
+    else if (ua.includes("Android")) os = "Android";
+    else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+    else if (ua.includes("Linux")) os = "Linux";
+
+    return `${browser} on ${os}`;
+}
+
 router.post("/login", async (req, res) => {
     try {
-        const { identifier, password } = req.body;
+        const { identifier, password, rememberDevice = true, deviceId: clientDeviceId, deviceName: clientDeviceName } = req.body;
         const cleanedIdentifier = normalizeIdentifier(identifier);
 
         if (req.body.providerId || req.body.serverUrl || req.body.config) {
@@ -222,15 +241,28 @@ router.post("/login", async (req, res) => {
             email: user.email,
         };
 
+        const userAgent = req.headers["user-agent"] || "";
+        const deviceName = clientDeviceName || parseUserAgent(userAgent);
+        const deviceId = clientDeviceId || `dev_${crypto.randomUUID().substring(0, 12)}`;
+        const ipAddress = (req.headers["x-forwarded-for"] || req.ip || req.socket?.remoteAddress || "127.0.0.1").split(",")[0].trim();
+
+        const isRemember = rememberDevice !== false;
+
         await dbRun(
-            "INSERT INTO sessions (id, user_id, provider_id, provider_config) VALUES (?, ?, ?, ?)",
+            `INSERT INTO sessions (id, user_id, provider_id, provider_config, device_name, device_id, user_agent, ip_address, last_active, remember_device)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
             sessionId,
             user.id,
             "telegram",
-            JSON.stringify(providerConfig)
+            JSON.stringify(providerConfig),
+            deviceName,
+            deviceId,
+            userAgent,
+            ipAddress,
+            isRemember ? 1 : 0
         );
 
-        const jwtToken = generateToken(sessionId, user.id);
+        const jwtToken = generateToken(sessionId, user.id, isRemember);
 
         return res.json({
             success: true,
@@ -239,6 +271,9 @@ router.post("/login", async (req, res) => {
             displayName: user.username,
             username: user.username,
             email: user.email,
+            deviceId,
+            deviceName,
+            rememberDevice: isRemember,
         });
     } catch (err) {
         console.error("Login error:", err);
@@ -310,6 +345,13 @@ router.get("/me", require("../middleware/auth").authMiddleware, (req, res) => {
         success: true,
         providerId: req.session.providerId,
         username: req.session.providerConfig.username || "telegram_user",
+        currentDevice: {
+            sessionId: req.session.sessionId,
+            deviceName: req.session.deviceName || "Current Device",
+            deviceId: req.session.deviceId,
+            rememberDevice: req.session.rememberDevice,
+            lastActive: req.session.lastActive,
+        },
     };
     if (req.session.providerConfig.local) {
         data.local = true;
@@ -319,6 +361,52 @@ router.get("/me", require("../middleware/auth").authMiddleware, (req, res) => {
         data.serverUrl = req.session.providerConfig.serverUrl;
     }
     return res.json(data);
+});
+
+router.get("/devices", require("../middleware/auth").authMiddleware, async (req, res) => {
+    try {
+        const { dbAll } = require("../db/dbHelpers");
+        const rows = await dbAll(
+            `SELECT id as sessionId, device_name as deviceName, device_id as deviceId, user_agent as userAgent,
+                    ip_address as ipAddress, last_active as lastActive, remember_device as rememberDevice, created_at as createdAt
+             FROM sessions
+             WHERE user_id = ?
+             ORDER BY last_active DESC`,
+            req.session.userId
+        );
+
+        const devices = rows.map((r) => ({
+            ...r,
+            rememberDevice: r.rememberDevice === 1,
+            isCurrent: r.sessionId === req.session.sessionId,
+        }));
+
+        return res.json({ devices });
+    } catch (err) {
+        console.error("Get devices error:", err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+router.delete("/devices/:sessionId", require("../middleware/auth").authMiddleware, async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        await dbRun("DELETE FROM sessions WHERE id = ? AND user_id = ?", sessionId, req.session.userId);
+        return res.json({ success: true });
+    } catch (err) {
+        console.error("Delete device session error:", err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+router.post("/devices/revoke-others", require("../middleware/auth").authMiddleware, async (req, res) => {
+    try {
+        await dbRun("DELETE FROM sessions WHERE user_id = ? AND id != ?", req.session.userId, req.session.sessionId);
+        return res.json({ success: true });
+    } catch (err) {
+        console.error("Revoke other devices error:", err);
+        return res.status(500).json({ error: err.message });
+    }
 });
 
 router.post("/logout", require("../middleware/auth").authMiddleware, async (req, res) => {

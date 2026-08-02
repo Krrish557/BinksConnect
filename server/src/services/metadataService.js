@@ -347,6 +347,116 @@ class MetadataService {
         }));
     }
 
+    async getSimilarTracks(trackInternalId, limit = 12) {
+        const target = await dbGet(`
+            SELECT t.id, t.internal_id, t.title, t.artist_id, t.album_id, t.genre, t.year,
+                   ar.name as artist, a.name as album
+            FROM tracks t
+            LEFT JOIN artists ar ON ar.id = t.artist_id
+            LEFT JOIN albums a ON a.id = t.album_id
+            WHERE t.internal_id = ?
+        `, trackInternalId);
+
+        if (!target) return [];
+
+        let sameAlbum = [];
+        if (target.album_id) {
+            sameAlbum = await dbAll(`
+                SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
+                       ar.name as artist, ar.internal_id as artistId,
+                       a.name as album, a.internal_id as albumId,
+                       'Same Album' as similarityReason
+                FROM tracks t
+                LEFT JOIN artists ar ON ar.id = t.artist_id
+                LEFT JOIN albums a ON a.id = t.album_id
+                WHERE t.album_id = ? AND t.internal_id != ?
+                LIMIT 6
+            `, target.album_id, trackInternalId);
+        }
+
+        let sameArtist = [];
+        if (target.artist_id) {
+            sameArtist = await dbAll(`
+                SELECT DISTINCT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
+                       ar.name as artist, ar.internal_id as artistId,
+                       a.name as album, a.internal_id as albumId,
+                       'Same Artist' as similarityReason
+                FROM tracks t
+                LEFT JOIN artists ar ON ar.id = t.artist_id
+                LEFT JOIN albums a ON a.id = t.album_id
+                WHERE (t.artist_id = ? OR t.album_artist_id = ?) AND t.internal_id != ?
+                LIMIT 6
+            `, target.artist_id, target.artist_id, trackInternalId);
+        }
+
+        let sameGenre = [];
+        if (target.genre) {
+            sameGenre = await dbAll(`
+                SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
+                       ar.name as artist, ar.internal_id as artistId,
+                       a.name as album, a.internal_id as albumId,
+                       'Similar Vibe' as similarityReason
+                FROM tracks t
+                LEFT JOIN artists ar ON ar.id = t.artist_id
+                LEFT JOIN albums a ON a.id = t.album_id
+                WHERE LOWER(t.genre) = LOWER(?) AND t.internal_id != ?
+                LIMIT 6
+            `, target.genre, trackInternalId);
+        }
+
+        const firstWord = (target.title || "").split(" ")[0].replace(/[^a-zA-Z0-9]/g, "");
+        let similarTitle = [];
+        if (firstWord && firstWord.length > 2) {
+            similarTitle = await dbAll(`
+                SELECT t.internal_id as id, t.title, t.duration, t.track_number as track, t.genre, t.year,
+                       ar.name as artist, ar.internal_id as artistId,
+                       a.name as album, a.internal_id as albumId,
+                       'Similar Title' as similarityReason
+                FROM tracks t
+                LEFT JOIN artists ar ON ar.id = t.artist_id
+                LEFT JOIN albums a ON a.id = t.album_id
+                WHERE t.title LIKE ? AND t.internal_id != ?
+                LIMIT 6
+            `, `%${firstWord}%`, trackInternalId);
+        }
+
+        const combined = [...sameAlbum, ...sameArtist, ...sameGenre, ...similarTitle];
+        const seen = new Set();
+        const unique = [];
+
+        for (const s of combined) {
+            if (!seen.has(s.id)) {
+                seen.add(s.id);
+                unique.push({
+                    id: s.id,
+                    title: s.title,
+                    artist: s.artist || "Unknown",
+                    artistId: s.artistId || null,
+                    album: s.album,
+                    albumId: s.albumId,
+                    duration: s.duration || 0,
+                    track: s.track || 0,
+                    cover: `/api/art/${s.albumId}`,
+                    url: `/api/stream/${s.id}`,
+                    provider: "telegram",
+                    similarityReason: s.similarityReason,
+                });
+            }
+        }
+
+        if (unique.length < limit) {
+            const randomExtra = await this.getRandomSongs(limit - unique.length);
+            for (const r of randomExtra) {
+                if (!seen.has(r.id) && r.id !== trackInternalId) {
+                    seen.add(r.id);
+                    unique.push({ ...r, similarityReason: "Recommended Vibe" });
+                }
+            }
+        }
+
+        return unique.slice(0, limit);
+    }
+
     async getArtists() {
         const rows = await dbAll(`
             SELECT ar.internal_id as id, ar.name,

@@ -12,6 +12,7 @@ export default function LoginPage() {
 
     const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
+    const [rememberDevice, setRememberDevice] = useState(true);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -24,7 +25,7 @@ export default function LoginPage() {
         }
         setLoading(true);
         try {
-            await login(identifier.trim(), password);
+            await login(identifier.trim(), password, rememberDevice);
             router.replace("/");
         } catch (err) {
             setError(err.message || "Login failed. Please try again.");
@@ -75,6 +76,19 @@ export default function LoginPage() {
                     />
                 </div>
 
+                <div className="flex items-center gap-2 pt-1">
+                    <input
+                        type="checkbox"
+                        id="rememberDevice"
+                        checked={rememberDevice}
+                        onChange={(e) => setRememberDevice(e.target.checked)}
+                        className="w-4 h-4 rounded accent-[#1db954] bg-[#282828] border-white/10 cursor-pointer"
+                    />
+                    <label htmlFor="rememberDevice" className="text-xs text-[#B3B3B3] cursor-pointer select-none">
+                        Remember this device & stay logged in
+                    </label>
+                </div>
+
                 {error && (
                     <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
                         {error}
@@ -84,7 +98,7 @@ export default function LoginPage() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 rounded-full bg-[#1db954] text-black font-bold text-sm hover:bg-[#1ed760] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 rounded-full bg-[#1db954] text-black font-bold text-sm hover:bg-[#1ed760] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                     {loading ? "Logging in..." : "Log in"}
                 </button>

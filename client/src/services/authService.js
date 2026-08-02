@@ -1,8 +1,14 @@
 import { apiClient } from "./apiClient";
 
 export const authService = {
-    async login(identifier, password) {
-        const data = await apiClient.post("/api/auth/login", { identifier, password });
+    async login(identifier, password, rememberDevice = true) {
+        const deviceId = apiClient.getDeviceId();
+        const data = await apiClient.post("/api/auth/login", {
+            identifier,
+            password,
+            rememberDevice,
+            deviceId,
+        });
         if (data.token) {
             apiClient.setToken(data.token);
         }
@@ -31,6 +37,18 @@ export const authService = {
 
     async me() {
         return apiClient.get("/api/auth/me");
+    },
+
+    async getDevices() {
+        return apiClient.get("/api/auth/devices");
+    },
+
+    async revokeDevice(sessionId) {
+        return apiClient.request("DELETE", `/api/auth/devices/${sessionId}`);
+    },
+
+    async revokeOtherDevices() {
+        return apiClient.post("/api/auth/devices/revoke-others");
     },
 
     async logout() {

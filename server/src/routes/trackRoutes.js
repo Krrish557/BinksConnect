@@ -54,4 +54,15 @@ router.get("/starred", authMiddleware, async (req, res) => {
     }
 });
 
+router.get("/similar/:id", authMiddleware, async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 12;
+        const songs = await metadataService.getSimilarTracks(req.params.id, limit);
+        return res.json(songs);
+    } catch (err) {
+        console.error("Get similar songs error:", err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

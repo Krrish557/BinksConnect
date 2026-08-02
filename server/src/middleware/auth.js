@@ -29,8 +29,16 @@ async function authMiddleware(req, res, next) {
             sessionId: session.id,
             userId: session.user_id,
             providerId: session.provider_id,
-            providerConfig: JSON.parse(session.provider_config),
+            providerConfig: JSON.parse(session.provider_config || "{}"),
+            deviceName: session.device_name,
+            deviceId: session.device_id,
+            rememberDevice: session.remember_device === 1,
+            lastActive: session.last_active,
         };
+
+        // Update last_active timestamp asynchronously
+        const { dbRun } = require("../db/dbHelpers");
+        dbRun("UPDATE sessions SET last_active = CURRENT_TIMESTAMP WHERE id = ?", session.id).catch(() => {});
 
         next();
     } catch (err) {
@@ -38,8 +46,9 @@ async function authMiddleware(req, res, next) {
     }
 }
 
-function generateToken(sessionId, userId) {
-    return jwt.sign({ sessionId, userId }, JWT_SECRET, { expiresIn: "30d" });
+function generateToken(sessionId, userId, rememberDevice = true) {
+    const expiresIn = rememberDevice ? "365d" : "7d";
+    return jwt.sign({ sessionId, userId }, JWT_SECRET, { expiresIn });
 }
 
 module.exports = { authMiddleware, generateToken, JWT_SECRET };
