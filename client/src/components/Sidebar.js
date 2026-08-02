@@ -22,42 +22,70 @@ export default function Sidebar() {
     const navItems = NAV.filter((item) => !item.telegramOnly || user?.provider === "telegram");
 
     return (
-        <aside className="hidden md:flex flex-col w-20 lg:w-64 shrink-0 bg-[#111] border-r border-white/5 overflow-hidden">
-            {/* LOGO */}
-            <div className="px-3 lg:px-6 py-6 border-b border-white/5">
-                <h1 className="text-xl font-bold text-white lg:block hidden">
-                    🎵 BinksConnect
-                </h1>
-                <h1 className="text-xl font-bold text-white lg:hidden">🎵</h1>
-            </div>
+        <aside className="hidden md:flex flex-col w-20 lg:w-64 shrink-0 p-2 select-none">
+            <div className="flex flex-col h-full bg-[#181818]/90 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                {/* LOGO */}
+                <div className="px-4 lg:px-6 py-5 border-b border-white/5 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#1db954] to-emerald-400 flex items-center justify-center text-xl shadow-lg shadow-[#1db954]/20 shrink-0">
+                        🎵
+                    </div>
+                    <div className="lg:block hidden min-w-0">
+                        <h1 className="text-base font-extrabold text-white tracking-tight truncate">
+                            BinksConnect
+                        </h1>
+                        <p className="text-[10px] text-[#B3B3B3] font-medium truncate">Hi-Fi Music Suite</p>
+                    </div>
+                </div>
 
-            {/* NAV */}
-            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                {navItems.map((item) => {
-                    const isActive =
-                        item.path === "/"
-                            ? pathname === "/"
-                            : pathname.startsWith(item.path);
+                {/* NAV */}
+                <nav className="flex-1 px-2.5 py-4 space-y-1.5 overflow-y-auto scrollbar-hide">
+                    {navItems.map((item) => {
+                        const isActive =
+                            item.path === "/"
+                                ? pathname === "/"
+                                : pathname.startsWith(item.path);
 
-                    return (
-                        <Link
-                            key={item.path}
-                            href={item.path}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium
-                                ${
+                        return (
+                            <Link
+                                key={item.path}
+                                href={item.path}
+                                className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl transition-all duration-200 text-sm font-semibold group ${
                                     isActive
-                                        ? "bg-[#282828] text-white"
-                                        : "text-[#B3B3B3] hover:text-white hover:bg-[#1a1a1a]"
+                                        ? "bg-gradient-to-r from-[#1db954]/20 to-[#1db954]/5 text-[#1db954] border-l-4 border-[#1db954] shadow-sm"
+                                        : "text-[#B3B3B3] hover:text-white hover:bg-white/5"
                                 }`}
+                            >
+                                <span className={`text-xl transition-transform group-hover:scale-110 ${isActive ? "text-[#1db954]" : ""}`}>
+                                    {item.icon}
+                                </span>
+                                <span className="lg:block hidden truncate">{item.label}</span>
+                            </Link>
+                        );
+                    })}
+                </nav>
+
+                {/* USER PROFILE MINICARD */}
+                {user && (
+                    <div className="p-3 border-t border-white/5 bg-black/20">
+                        <Link
+                            href="/settings"
+                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition group"
                         >
-                            <span className="text-lg">{item.icon}</span>
-                            <span className="lg:block hidden">{item.label}</span>
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow">
+                                {user.username ? user.username[0].toUpperCase() : "U"}
+                            </div>
+                            <div className="lg:block hidden min-w-0">
+                                <p className="text-xs font-bold text-white truncate group-hover:text-[#1db954] transition">
+                                    {user.username || "User"}
+                                </p>
+                                <p className="text-[10px] text-[#B3B3B3] truncate uppercase font-semibold">
+                                    {user.provider || "Local"} Mode
+                                </p>
+                            </div>
                         </Link>
-                    );
-                })}
-            </nav>
-
-
+                    </div>
+                )}
+            </div>
         </aside>
     );
 }

@@ -91,7 +91,7 @@ export default function BottomPlayer() {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={toggleShuffle}
-                        className={`text-sm transition-colors hidden md:block ${
+                        className={`text-base transition-colors hidden md:block cursor-pointer ${
                             isShuffle ? "text-[#1db954]" : "text-[#B3B3B3] hover:text-white"
                         }`}
                         title="Shuffle"
@@ -101,28 +101,28 @@ export default function BottomPlayer() {
 
                     <button
                         onClick={previous}
-                        className="text-[#B3B3B3] hover:text-white transition-colors"
+                        className="text-[#B3B3B3] hover:text-white transition-colors text-base cursor-pointer"
                     >
                         ⏮
                     </button>
 
                     <button
                         onClick={togglePlay}
-                        className="bg-white text-black rounded-full w-9 h-9 flex items-center justify-center hover:scale-105 transition-transform shadow"
+                        className="bg-[#1db954] hover:bg-[#1ed760] text-black rounded-full w-10 h-10 flex items-center justify-center hover:scale-105 transition-transform shadow-lg shadow-[#1db954]/20 cursor-pointer font-bold"
                     >
                         {isPlaying ? "⏸" : "▶"}
                     </button>
 
                     <button
                         onClick={next}
-                        className="text-[#B3B3B3] hover:text-white transition-colors"
+                        className="text-[#B3B3B3] hover:text-white transition-colors text-base cursor-pointer"
                     >
                         ⏭
                     </button>
 
                     <button
                         onClick={toggleRepeat}
-                        className={`text-sm transition-colors hidden md:block ${
+                        className={`text-base transition-colors hidden md:block cursor-pointer ${
                             isRepeat ? "text-[#1db954]" : "text-[#B3B3B3] hover:text-white"
                         }`}
                         title="Repeat"
