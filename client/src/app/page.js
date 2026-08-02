@@ -13,7 +13,7 @@ import SongRow from "@/components/SongRow";
 import LoadingState from "@/components/ui/LoadingState";
 
 export default function HomePage() {
-    const { setQueue, recentlyPlayed } = usePlayerStore();
+    const { setQueue, recentlyPlayed, setShuffle } = usePlayerStore();
     const { isInitializing, init } = useAuthStore();
 
     const [recentAlbums, setRecentAlbums] = useState([]);
@@ -23,6 +23,7 @@ export default function HomePage() {
     const [starredArtists, setStarredArtists] = useState([]);
     const [randomSongs, setRandomSongs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshingRecs, setRefreshingRecs] = useState(false);
 
     const hour = new Date().getHours();
     const greeting =
@@ -44,7 +45,7 @@ export default function HomePage() {
                         albumService.getNewest(12),
                         albumService.getFrequent(12),
                         trackService.getStarred(),
-                        trackService.getRandom(10),
+                        trackService.getRandom(12),
                     ]);
 
                 setRecentAlbums(recent);
@@ -65,11 +66,97 @@ export default function HomePage() {
 
     const playSong = (index) => setQueue(randomSongs, index);
 
+    const handleShuffleRecommendation = () => {
+        if (!randomSongs || randomSongs.length === 0) return;
+        const shuffled = [...randomSongs].sort(() => Math.random() - 0.5);
+        setShuffle(true);
+        setQueue(shuffled, 0);
+    };
+
+    const handleRefreshRecommendations = async () => {
+        setRefreshingRecs(true);
+        try {
+            const fresh = await trackService.getRandom(12);
+            setRandomSongs(fresh);
+        } catch (err) {
+            console.error("Failed to refresh recommendations:", err);
+        } finally {
+            setRefreshingRecs(false);
+        }
+    };
+
     if (loading) return <LoadingState message="Loading your music..." />;
 
     return (
         <main className="px-6 pt-8 pb-10">
             <h1 className="text-3xl font-bold text-white mb-8">{greeting}</h1>
+
+            {/* SHUFFLE RECOMMENDATION HERO */}
+            <section className="mb-10 bg-gradient-to-r from-emerald-950/70 via-stone-900/90 to-indigo-950/70 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-md relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-[#1db954]/10 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div className="space-y-2 max-w-xl">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1db954]/15 border border-[#1db954]/30 text-[#1db954] text-xs font-semibold uppercase tracking-wider">
+                            <span>🔀 Quick Mix</span>
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                            Shuffle Recommendations
+                        </h2>
+                        <p className="text-sm text-[#B3B3B3]">
+                            Discover an instant, randomized mix of tracks recommended directly from your library.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 shrink-0">
+                        <button
+                            onClick={handleShuffleRecommendation}
+                            disabled={randomSongs.length === 0}
+                            className="bg-[#1db954] hover:bg-[#1ed760] disabled:opacity-50 text-black font-bold px-6 py-3 rounded-full flex items-center gap-2.5 shadow-lg hover:scale-105 transition-all cursor-pointer"
+                        >
+                            <span className="text-lg">🔀</span>
+                            <span>Shuffle & Play</span>
+                        </button>
+                        <button
+                            onClick={handleRefreshRecommendations}
+                            disabled={refreshingRecs}
+                            className="bg-white/10 hover:bg-white/20 text-white font-semibold px-4 py-3 rounded-full flex items-center gap-2 border border-white/10 transition-all cursor-pointer"
+                            title="Get new recommendations"
+                        >
+                            <span className={`text-sm ${refreshingRecs ? "animate-spin" : ""}`}>🔄</span>
+                            <span className="hidden sm:inline">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                {randomSongs.length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-white/10 flex items-center gap-3 overflow-x-auto scrollbar-hide">
+                        <span className="text-xs font-semibold text-[#B3B3B3] uppercase tracking-wider shrink-0 mr-2">
+                            Includes:
+                        </span>
+                        {randomSongs.slice(0, 6).map((song, i) => (
+                            <div
+                                key={`rec-preview-${song.id}-${i}`}
+                                onClick={() => {
+                                    const shuffled = [song, ...randomSongs.filter((s) => s.id !== song.id)];
+                                    setShuffle(true);
+                                    setQueue(shuffled, 0);
+                                }}
+                                className="flex items-center gap-2 bg-black/40 hover:bg-black/70 border border-white/5 hover:border-white/20 rounded-lg px-2.5 py-1.5 shrink-0 transition cursor-pointer group"
+                            >
+                                <img
+                                    src={apiClient.resolveUrl(song.cover)}
+                                    alt={song.title}
+                                    className="w-7 h-7 rounded object-cover"
+                                />
+                                <span className="text-xs text-white font-medium truncate max-w-[120px]">
+                                    {song.title}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
 
             {recentlyPlayed.length > 0 && (
                 <section className="mb-10">
@@ -99,22 +186,28 @@ export default function HomePage() {
                 </section>
             )}
 
-            {recentAlbums.length > 0 && (
-                <HorizontalScroller title="Recently Played" seeAllHref="/albums">
-                    {recentAlbums.map((album) => (
-                        <AlbumCard
-                            key={album.id}
-                            album={album}
-                        />
-                    ))}
-                </HorizontalScroller>
-            )}
-
             {randomSongs.length > 0 && (
                 <section className="mb-10">
-                    <h2 className="text-xl font-bold text-white mb-4">
-                        Discover
-                    </h2>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-bold text-white">
+                            Recommended For You
+                        </h2>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleShuffleRecommendation}
+                                className="text-xs bg-[#282828] hover:bg-[#383838] text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 transition font-semibold"
+                            >
+                                <span>🔀</span> Shuffle Play
+                            </button>
+                            <button
+                                onClick={handleRefreshRecommendations}
+                                disabled={refreshingRecs}
+                                className="text-xs bg-[#282828] hover:bg-[#383838] text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 transition font-semibold"
+                            >
+                                <span className={refreshingRecs ? "animate-spin" : ""}>🔄</span> Refresh
+                            </button>
+                        </div>
+                    </div>
                     <div className="space-y-1">
                         {randomSongs.map((song, i) => (
                             <SongRow
@@ -127,6 +220,17 @@ export default function HomePage() {
                         ))}
                     </div>
                 </section>
+            )}
+
+            {recentAlbums.length > 0 && (
+                <HorizontalScroller title="Recently Played" seeAllHref="/albums">
+                    {recentAlbums.map((album) => (
+                        <AlbumCard
+                            key={album.id}
+                            album={album}
+                        />
+                    ))}
+                </HorizontalScroller>
             )}
 
             {newestAlbums.length > 0 && (

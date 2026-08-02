@@ -257,6 +257,7 @@ export const usePlayerStore = create(
             },
 
             toggleShuffle: () => set((s) => ({ isShuffle: !s.isShuffle })),
+            setShuffle: (val) => set({ isShuffle: !!val }),
 
             toggleRepeat: () => set((s) => ({ isRepeat: !s.isRepeat })),
 
