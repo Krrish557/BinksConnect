@@ -72,18 +72,30 @@ function SortableTrackRow({ song, index, onPlay, onRemove }) {
 
 function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
     const [query, setQuery] = useState("");
+    const [activeTab, setActiveTab] = useState("all"); // "all" | "starred" | "random"
     const [songs, setSongs] = useState([]);
+    const [starredSongs, setStarredSongs] = useState([]);
+    const [randomSongs, setRandomSongs] = useState([]);
     const [loading, setLoading] = useState(false);
     const [lastAddedTrack, setLastAddedTrack] = useState(null);
     const [similarTracks, setSimilarTracks] = useState([]);
     const [loadingSimilar, setLoadingSimilar] = useState(false);
+    const [addingAll, setAddingAll] = useState(false);
+
+    const setQueue = usePlayerStore((s) => s.setQueue);
 
     useEffect(() => {
         let isMounted = true;
         setLoading(true);
-        trackService.getTracks(0).then((res) => {
+        Promise.all([
+            trackService.getTracks(0),
+            trackService.getStarred().catch(() => ({ songs: [] })),
+            trackService.getRandom(12).catch(() => []),
+        ]).then(([tracksRes, starredRes, randomRes]) => {
             if (isMounted) {
-                setSongs(Array.isArray(res) ? res : res.songs || []);
+                setSongs(Array.isArray(tracksRes) ? tracksRes : tracksRes.songs || []);
+                setStarredSongs(starredRes.songs || []);
+                setRandomSongs(randomRes || []);
                 setLoading(false);
             }
         }).catch(() => {
@@ -95,9 +107,11 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
     useEffect(() => {
         let isMounted = true;
         if (!query.trim()) {
-            trackService.getTracks(0).then((res) => {
-                if (isMounted) setSongs(Array.isArray(res) ? res : res.songs || []);
-            }).catch(() => {});
+            if (activeTab === "all") {
+                trackService.getTracks(0).then((res) => {
+                    if (isMounted) setSongs(Array.isArray(res) ? res : res.songs || []);
+                }).catch(() => {});
+            }
             return;
         }
 
@@ -117,7 +131,7 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
             isMounted = false;
             clearTimeout(timer);
         };
-    }, [query]);
+    }, [query, activeTab]);
 
     const handleToggleTrack = async (song) => {
         const inPlaylist = playlist.tracks.some((t) => t.id === song.id);
@@ -139,80 +153,182 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
         }
     };
 
+    const handleAddAllSimilar = async () => {
+        setAddingAll(true);
+        try {
+            const unadded = similarTracks.filter((s) => !isInPlaylist(s.id));
+            for (const simSong of unadded) {
+                await onAddTrack(playlist.id, simSong);
+            }
+        } catch (err) {
+            console.error("Failed to add all similar tracks:", err);
+        } finally {
+            setAddingAll(false);
+        }
+    };
+
     const isInPlaylist = (songId) => playlist.tracks.some((t) => t.id === songId);
 
+    const getDisplayedSongs = () => {
+        if (query.trim()) return songs;
+        if (activeTab === "starred") return starredSongs;
+        if (activeTab === "random") return randomSongs;
+        return songs;
+    };
+
+    const displayedSongs = getDisplayedSongs();
+    const unaddedSimilarCount = similarTracks.filter((s) => !isInPlaylist(s.id)).length;
+
     return (
-        <div className="mt-8 bg-[#181818] border border-white/10 rounded-2xl p-6 shadow-2xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="mt-6 bg-[#181818]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl animate-fade-in">
+            {/* BUILDER HEADER */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/5">
                 <div>
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <span>✨ Playlist Builder</span>
-                    </h2>
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                            <span>✨ Playlist Builder</span>
+                        </h2>
+                        <span className="text-xs bg-[#1db954]/20 text-[#1db954] border border-[#1db954]/30 px-3 py-1 rounded-full font-bold">
+                            {playlist.tracks.length} {playlist.tracks.length === 1 ? "song" : "songs"} in playlist
+                        </span>
+                    </div>
                     <p className="text-xs text-[#B3B3B3] mt-1">
-                        Search and click <span className="text-[#1db954] font-bold">➕ Add</span> to build your playlist. Similar songs, same artist, album & vibe will pop up automatically!
+                        Build your playlist seamlessly. Search or filter below, click <span className="text-[#1db954] font-bold">➕ Add</span>, and recommended similar songs & vibes will pop up instantly!
                     </p>
                 </div>
             </div>
 
-            {/* SEARCH BAR */}
-            <div className="relative mb-6">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-[#B3B3B3]">🔍</span>
-                <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search songs to add by title, artist, album or vibe..."
-                    className="w-full pl-12 pr-10 py-3.5 bg-[#282828] text-white rounded-xl outline-none focus:ring-2 focus:ring-[#1db954] transition text-sm placeholder-[#7a7a7a]"
-                />
-                {query && (
-                    <button
-                        onClick={() => setQuery("")}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#B3B3B3] hover:text-white"
-                    >
-                        ✕
-                    </button>
+            {/* CONTROLS & FILTER PILLS */}
+            <div className="space-y-4 mb-6">
+                {/* SEARCH INPUT */}
+                <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-[#B3B3B3]">🔍</span>
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search tracks by title, artist, album or genre..."
+                        className="w-full pl-12 pr-10 py-3.5 bg-[#242424] text-white rounded-xl outline-none focus:ring-2 focus:ring-[#1db954] transition text-sm placeholder-[#7a7a7a]"
+                    />
+                    {query && (
+                        <button
+                            onClick={() => setQuery("")}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#B3B3B3] hover:text-white"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+
+                {/* FILTER TABS */}
+                {!query && (
+                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+                        <button
+                            onClick={() => setActiveTab("all")}
+                            className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                                activeTab === "all"
+                                    ? "bg-white text-black shadow-md"
+                                    : "bg-[#282828] hover:bg-[#383838] text-[#B3B3B3] hover:text-white"
+                            }`}
+                        >
+                            🔥 All Library ({songs.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("starred")}
+                            className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                                activeTab === "starred"
+                                    ? "bg-white text-black shadow-md"
+                                    : "bg-[#282828] hover:bg-[#383838] text-[#B3B3B3] hover:text-white"
+                            }`}
+                        >
+                            ⭐ Favorites ({starredSongs.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("random")}
+                            className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                                activeTab === "random"
+                                    ? "bg-white text-black shadow-md"
+                                    : "bg-[#282828] hover:bg-[#383838] text-[#B3B3B3] hover:text-white"
+                            }`}
+                        >
+                            🔀 Recommended Mix ({randomSongs.length})
+                        </button>
+                    </div>
                 )}
             </div>
 
-            {/* SIMILAR SONGS POPUP CONTAINER */}
+            {/* SIMILAR SONGS RECOMMENDATION POPUP DOCK */}
             {lastAddedTrack && (
-                <div className="mb-8 bg-gradient-to-r from-emerald-950/60 via-stone-900/90 to-purple-950/60 border border-[#1db954]/40 rounded-xl p-5 shadow-2xl animate-fade-in">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                            <span className="text-base">⚡</span>
-                            <h3 className="text-sm font-bold text-white">
-                                Recommended Additions (Similar to <span className="text-[#1db954]">&quot;{lastAddedTrack.title}&quot;</span>)
-                            </h3>
+                <div className="mb-8 bg-gradient-to-r from-emerald-950/70 via-stone-900/95 to-purple-950/70 border border-[#1db954]/50 rounded-2xl p-5 shadow-2xl animate-fade-in relative overflow-hidden">
+                    <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 bg-[#1db954]/10 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-2.5">
+                            <span className="text-lg">⚡</span>
+                            <div>
+                                <h3 className="text-sm font-extrabold text-white">
+                                    Recommended Additions (Similar to <span className="text-[#1db954]">&quot;{lastAddedTrack.title}&quot;</span>)
+                                </h3>
+                                <p className="text-[11px] text-[#B3B3B3]">
+                                    Handpicked tracks from the same album, same artist, and matching vibes.
+                                </p>
+                            </div>
                         </div>
-                        <button
-                            onClick={() => { setLastAddedTrack(null); setSimilarTracks([]); }}
-                            className="text-xs text-[#B3B3B3] hover:text-white cursor-pointer"
-                        >
-                            Dismiss
-                        </button>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                            {unaddedSimilarCount > 0 && (
+                                <button
+                                    onClick={handleAddAllSimilar}
+                                    disabled={addingAll}
+                                    className="bg-[#1db954] hover:bg-[#1ed760] text-black text-xs font-extrabold px-3.5 py-1.5 rounded-full shadow-lg transition hover:scale-105 cursor-pointer disabled:opacity-50"
+                                >
+                                    {addingAll ? "Adding..." : `➕ Add All (${unaddedSimilarCount})`}
+                                </button>
+                            )}
+                            <button
+                                onClick={() => { setLastAddedTrack(null); setSimilarTracks([]); }}
+                                className="text-xs text-[#B3B3B3] hover:text-white px-2 py-1 cursor-pointer"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
                     </div>
 
                     {loadingSimilar ? (
-                        <p className="text-xs text-[#B3B3B3]">Finding similar songs, artists & vibes...</p>
+                        <p className="text-xs text-[#B3B3B3] py-2">Finding similar songs, artists & vibes...</p>
                     ) : similarTracks.length === 0 ? (
-                        <p className="text-xs text-[#B3B3B3]">No additional recommendations found for this track.</p>
+                        <p className="text-xs text-[#B3B3B3] py-2">No additional recommendations found for this track.</p>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 relative z-10">
                             {similarTracks.map((simSong) => {
                                 const added = isInPlaylist(simSong.id);
                                 return (
                                     <div
                                         key={`sim-${simSong.id}`}
-                                        className="flex items-center justify-between p-2.5 bg-black/50 hover:bg-black/80 rounded-lg border border-white/5 transition group"
+                                        className={`flex items-center justify-between p-2.5 rounded-xl border transition group ${
+                                            added
+                                                ? "bg-[#1a3a27]/60 border-[#1db954]/40"
+                                                : "bg-black/60 hover:bg-black/90 border-white/10"
+                                        }`}
                                     >
                                         <div className="flex items-center gap-3 min-w-0 pr-2">
-                                            <img
-                                                src={apiClient.resolveUrl(simSong.cover)}
-                                                alt={simSong.title}
-                                                className="w-10 h-10 rounded object-cover shrink-0"
-                                            />
+                                            <div className="relative shrink-0 group/cover">
+                                                <img
+                                                    src={apiClient.resolveUrl(simSong.cover)}
+                                                    alt={simSong.title}
+                                                    className="w-10 h-10 rounded-lg object-cover shadow"
+                                                />
+                                                <button
+                                                    onClick={() => setQueue([simSong], 0)}
+                                                    className="absolute inset-0 bg-black/60 rounded-lg opacity-0 group-hover/cover:opacity-100 flex items-center justify-center text-white text-xs transition"
+                                                    title="Preview song"
+                                                >
+                                                    ▶
+                                                </button>
+                                            </div>
+
                                             <div className="min-w-0">
-                                                <p className="text-xs font-semibold text-white truncate">
+                                                <p className="text-xs font-bold text-white truncate">
                                                     {simSong.title}
                                                 </p>
                                                 <div className="flex items-center gap-2 mt-0.5">
@@ -220,7 +336,7 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                                                         {simSong.artist}
                                                     </p>
                                                     {simSong.similarityReason && (
-                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#1db954]/20 text-[#1db954] border border-[#1db954]/30 font-medium shrink-0">
+                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#1db954]/20 text-[#1db954] border border-[#1db954]/30 font-semibold shrink-0">
                                                             {simSong.similarityReason}
                                                         </span>
                                                     )}
@@ -230,14 +346,15 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
 
                                         <button
                                             onClick={() => handleToggleTrack(simSong)}
-                                            className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition cursor-pointer ${
+                                            className={`shrink-0 px-3 py-1 rounded-full text-xs font-extrabold transition cursor-pointer flex items-center gap-1 ${
                                                 added
                                                     ? "bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30"
                                                     : "bg-[#1db954] hover:bg-[#1ed760] text-black shadow-md hover:scale-105"
                                             }`}
                                             title={added ? "Remove from playlist" : "Add to playlist"}
                                         >
-                                            {added ? "➖" : "➕"}
+                                            <span>{added ? "➖" : "➕"}</span>
+                                            <span>{added ? "Added" : "Add"}</span>
                                         </button>
                                     </div>
                                 );
@@ -249,36 +366,59 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
 
             {/* SONG LIST */}
             <div className="space-y-2">
-                <h3 className="text-xs font-bold uppercase text-[#B3B3B3] mb-3 tracking-wider">
-                    {query ? `Search Results for "${query}"` : "Available Songs"}
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xs font-extrabold uppercase text-[#B3B3B3] tracking-wider">
+                        {query ? `Search Results for "${query}"` : activeTab === "starred" ? "Favorite Songs" : activeTab === "random" ? "Recommended Discovery Mix" : "All Library Songs"}
+                    </h3>
+                    <span className="text-xs text-[#B3B3B3]">Showing {displayedSongs.length} tracks</span>
+                </div>
 
                 {loading ? (
-                    <p className="text-sm text-[#B3B3B3] py-4">Loading songs...</p>
-                ) : songs.length === 0 ? (
-                    <p className="text-sm text-[#B3B3B3] py-4">No songs found.</p>
+                    <div className="py-8 text-center text-sm text-[#B3B3B3]">
+                        <p className="animate-pulse">Loading tracks...</p>
+                    </div>
+                ) : displayedSongs.length === 0 ? (
+                    <div className="py-8 text-center text-sm text-[#B3B3B3] bg-[#202020] rounded-xl border border-white/5">
+                        <p>No songs found for this selection.</p>
+                    </div>
                 ) : (
-                    songs.map((song) => {
+                    displayedSongs.map((song) => {
                         const added = isInPlaylist(song.id);
                         return (
                             <div
                                 key={song.id}
-                                className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition group ${
+                                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition group ${
                                     added
-                                        ? "bg-[#1a3a27]/40 border-[#1db954]/30"
+                                        ? "bg-[#1a3a27]/50 border-[#1db954]/40 shadow-sm"
                                         : "bg-[#202020] hover:bg-[#282828] border-white/5"
                                 }`}
                             >
                                 <div className="flex items-center gap-3.5 min-w-0 pr-4">
-                                    <img
-                                        src={apiClient.resolveUrl(song.cover)}
-                                        alt={song.title}
-                                        className="w-11 h-11 rounded-lg object-cover shrink-0 shadow-md"
-                                    />
+                                    <div className="relative shrink-0 group/cover">
+                                        <img
+                                            src={apiClient.resolveUrl(song.cover)}
+                                            alt={song.title}
+                                            className="w-11 h-11 rounded-lg object-cover shrink-0 shadow-md"
+                                        />
+                                        <button
+                                            onClick={() => setQueue([song], 0)}
+                                            className="absolute inset-0 bg-black/60 rounded-lg opacity-0 group-hover/cover:opacity-100 flex items-center justify-center text-white text-xs transition"
+                                            title="Preview song"
+                                        >
+                                            ▶
+                                        </button>
+                                    </div>
                                     <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-white truncate">
-                                            {song.title}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm font-bold text-white truncate">
+                                                {song.title}
+                                            </p>
+                                            {added && (
+                                                <span className="text-[10px] bg-[#1db954]/20 text-[#1db954] px-1.5 py-0.5 rounded font-bold">
+                                                    In Playlist
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className="text-xs text-[#B3B3B3] truncate mt-0.5">
                                             {song.artist} &bull; {song.album || "Single"}
                                         </p>
@@ -287,7 +427,7 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
 
                                 <button
                                     onClick={() => handleToggleTrack(song)}
-                                    className={`shrink-0 px-3.5 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold transition cursor-pointer ${
+                                    className={`shrink-0 px-4 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold transition cursor-pointer ${
                                         added
                                             ? "bg-red-500/15 hover:bg-red-500/30 text-red-400 border border-red-500/30"
                                             : "bg-[#1db954] hover:bg-[#1ed760] text-black shadow-md hover:scale-105"
@@ -295,7 +435,7 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                                     title={added ? "Remove from playlist" : "Add to playlist"}
                                 >
                                     <span>{added ? "➖" : "➕"}</span>
-                                    <span>{added ? "Added" : "Add"}</span>
+                                    <span>{added ? "Remove" : "Add"}</span>
                                 </button>
                             </div>
                         );

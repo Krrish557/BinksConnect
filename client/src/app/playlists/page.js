@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import usePlaylistStore from "@/store/playlistStore";
 import { smartPlaylistService } from "@/services/smartPlaylistService";
+import { cacheService } from "@/services/cacheService";
 import { usePlayerStore } from "@/store/playerStore";
 import EmptyState from "@/components/ui/EmptyState";
 import LoadingState from "@/components/ui/LoadingState";
@@ -24,7 +25,7 @@ export default function PlaylistsPage() {
 
     const [creating, setCreating] = useState(false);
     const [newName, setNewName] = useState("");
-    const [smartPlaylists, setSmartPlaylists] = useState([]);
+    const [smartPlaylists, setSmartPlaylists] = useState(() => cacheService.get("smart_playlists")?.data || []);
     const [creatingSmart, setCreatingSmart] = useState(false);
     const [smartName, setSmartName] = useState("");
     const [smartType, setSmartType] = useState("most_played");
@@ -33,10 +34,10 @@ export default function PlaylistsPage() {
 
     useEffect(() => {
         loadPlaylists();
-        smartPlaylistService.getSmartPlaylists()
+        cacheService.fetchCached("smart_playlists", () => smartPlaylistService.getSmartPlaylists())
             .then((sp) => setSmartPlaylists(sp))
             .catch((err) => console.error("Load smart playlists error:", err));
-    }, []);
+    }, [loadPlaylists]);
 
     const handleCreate = async () => {
         const name = newName.trim() || "New Playlist";
@@ -52,6 +53,7 @@ export default function PlaylistsPage() {
             await smartPlaylistService.createSmartPlaylist(name, smartType, 50);
             setSmartName("");
             setCreatingSmart(false);
+            cacheService.invalidate("smart_playlists");
             smartPlaylistService.getSmartPlaylists()
                 .then((sp) => setSmartPlaylists(sp))
                 .catch(() => {});
@@ -79,6 +81,7 @@ export default function PlaylistsPage() {
         e.stopPropagation();
         if (confirm(`Delete "${sp.name}"?`)) {
             await smartPlaylistService.deleteSmartPlaylist(sp.id);
+            cacheService.invalidate("smart_playlists");
             smartPlaylistService.getSmartPlaylists()
                 .then((sp) => setSmartPlaylists(sp))
                 .catch(() => {});
@@ -89,23 +92,26 @@ export default function PlaylistsPage() {
         }
     };
 
-    if (!_loaded) return <LoadingState message="Loading playlists..." />;
+    if (!_loaded && playlists.length === 0) return <LoadingState message="Loading playlists..." />;
 
     return (
-        <main className="px-6 pt-8 pb-10">
+        <main className="px-4 sm:px-6 pt-6 sm:pt-8 pb-24 sm:pb-10">
             {/* HEADER */}
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold text-white">Your Playlists</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Your Playlists</h1>
+                    <p className="text-xs text-[#B3B3B3] mt-0.5">Manage and build custom music mixes</p>
+                </div>
                 <div className="flex gap-2">
                     <button
                         onClick={() => { setCreatingSmart(true); setCreating(false); }}
-                        className="bg-white/10 hover:bg-white/20 text-white font-bold px-5 py-2.5 rounded-full text-sm transition-colors"
+                        className="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2 rounded-full text-xs sm:text-sm transition-colors cursor-pointer border border-white/10"
                     >
                         + Smart Playlist
                     </button>
                     <button
                         onClick={() => { setCreating(true); setCreatingSmart(false); }}
-                        className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-5 py-2.5 rounded-full text-sm transition-colors"
+                        className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-4 py-2 rounded-full text-xs sm:text-sm transition-colors cursor-pointer shadow-md"
                     >
                         + New Playlist
                     </button>
@@ -114,7 +120,7 @@ export default function PlaylistsPage() {
 
             {/* CREATE FORM */}
             {creating && (
-                <div className="bg-[#282828] rounded-xl p-5 mb-6 flex gap-3 items-center">
+                <div className="bg-[#242424] border border-white/10 rounded-2xl p-5 mb-6 flex gap-3 items-center shadow-xl animate-fade-in">
                     <input
                         type="text"
                         autoFocus
@@ -125,17 +131,17 @@ export default function PlaylistsPage() {
                             if (e.key === "Escape") setCreating(false);
                         }}
                         placeholder="Playlist name..."
-                        className="flex-1 bg-[#383838] text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#1db954] transition"
+                        className="flex-1 bg-[#333] text-white px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1db954] transition"
                     />
                     <button
                         onClick={handleCreate}
-                        className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-5 py-2.5 rounded-lg text-sm transition"
+                        className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-5 py-2.5 rounded-xl text-sm transition cursor-pointer"
                     >
                         Create
                     </button>
                     <button
                         onClick={() => setCreating(false)}
-                        className="text-[#B3B3B3] hover:text-white px-3 py-2.5 text-sm transition"
+                        className="text-[#B3B3B3] hover:text-white px-3 py-2.5 text-sm transition cursor-pointer"
                     >
                         Cancel
                     </button>
@@ -144,8 +150,8 @@ export default function PlaylistsPage() {
 
             {/* SMART PLAYLIST CREATE FORM */}
             {creatingSmart && (
-                <div className="bg-[#282828] rounded-xl p-5 mb-6 space-y-3">
-                    <div className="flex gap-3 items-center">
+                <div className="bg-[#242424] border border-white/10 rounded-2xl p-5 mb-6 space-y-3 shadow-xl animate-fade-in">
+                    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                         <input
                             type="text"
                             autoFocus
@@ -156,29 +162,31 @@ export default function PlaylistsPage() {
                                 if (e.key === "Escape") setCreatingSmart(false);
                             }}
                             placeholder="Smart playlist name..."
-                            className="flex-1 bg-[#383838] text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#1db954] transition"
+                            className="flex-1 bg-[#333] text-white px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1db954] transition"
                         />
                         <select
                             value={smartType}
                             onChange={(e) => setSmartType(e.target.value)}
-                            className="bg-[#383838] text-white px-4 py-2.5 rounded-lg text-sm outline-none"
+                            className="bg-[#333] text-white px-4 py-2.5 rounded-xl text-sm outline-none border border-white/5"
                         >
                             {SMART_PLAYLIST_TYPES.map((t) => (
                                 <option key={t.value} value={t.value}>{t.label}</option>
                             ))}
                         </select>
-                        <button
-                            onClick={handleCreateSmart}
-                            className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-5 py-2.5 rounded-lg text-sm transition"
-                        >
-                            Create
-                        </button>
-                        <button
-                            onClick={() => setCreatingSmart(false)}
-                            className="text-[#B3B3B3] hover:text-white px-3 py-2.5 text-sm transition"
-                        >
-                            Cancel
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleCreateSmart}
+                                className="flex-1 sm:flex-none bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-5 py-2.5 rounded-xl text-sm transition cursor-pointer"
+                            >
+                                Create
+                            </button>
+                            <button
+                                onClick={() => setCreatingSmart(false)}
+                                className="text-[#B3B3B3] hover:text-white px-3 py-2.5 text-sm transition cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -192,7 +200,7 @@ export default function PlaylistsPage() {
                             <div key={sp.id}>
                                 <div
                                     onClick={() => handleExpandSmart(sp)}
-                                    className="flex items-center gap-4 p-4 bg-[#181818] hover:bg-[#282828] rounded-xl cursor-pointer transition-colors group"
+                                    className="flex items-center gap-4 p-4 bg-[#181818] hover:bg-[#282828] rounded-xl cursor-pointer transition-colors group border border-white/5"
                                 >
                                     <div className="w-14 h-14 rounded-lg bg-[#282828] flex items-center justify-center text-2xl shrink-0">
                                         ⚡
@@ -257,7 +265,7 @@ export default function PlaylistsPage() {
                             <div
                                 key={playlist.id}
                                 onClick={() => router.push(`/playlists/${playlist.id}`)}
-                                className="flex items-center gap-4 p-4 bg-[#181818] hover:bg-[#282828] rounded-xl cursor-pointer transition-colors group"
+                                className="flex items-center gap-4 p-4 bg-[#181818] hover:bg-[#282828] rounded-xl cursor-pointer transition-colors group border border-white/5"
                                 >
                                 {/* PLACEHOLDER COVER */}
                                 <div className="w-14 h-14 rounded-lg bg-[#282828] flex items-center justify-center text-2xl shrink-0">

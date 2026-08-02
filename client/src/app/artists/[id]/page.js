@@ -6,6 +6,7 @@ import useAuthStore from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
 import { artistService } from "@/services/artistService";
 import { albumService } from "@/services/albumService";
+import { cacheService } from "@/services/cacheService";
 import { apiClient } from "@/services/apiClient";
 import AlbumCard from "@/components/AlbumCard";
 import SongRow from "@/components/SongRow";
@@ -17,14 +18,17 @@ export default function ArtistPage() {
     const user = useAuthStore((s) => s.user);
     const setQueue = usePlayerStore((s) => s.setQueue);
 
-    const [artist, setArtist] = useState(null);
+    const rawId = id ? (id.includes(":") ? id.split(":").pop() : id) : "";
+    const initialCached = cacheService.get(`artist_detail_${rawId}`)?.data;
+
+    const [artist, setArtist] = useState(() => initialCached || null);
     const [topSongs, setTopSongs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(() => !initialCached);
 
     useEffect(() => {
         async function load() {
             if (!user || !id) return;
-            setLoading(true);
+            if (!artist) setLoading(true);
             try {
                 const data = await artistService.getArtist(id);
                 setArtist(data);
@@ -46,13 +50,13 @@ export default function ArtistPage() {
         load();
     }, [user, id]);
 
-    if (loading) return <LoadingState message="Loading artist..." />;
-    if (!artist) return null;
+    if (loading && !artist) return <LoadingState message="Loading artist..." />;
+    if (!artist && !loading) return null;
 
     const hasFeaturedTracks = artist.featuredTracks && artist.featuredTracks.length > 0;
 
     return (
-        <main className="pb-10">
+        <main className="pb-24 sm:pb-10">
             <div
                 className="px-6 pt-10 pb-6"
                 style={{

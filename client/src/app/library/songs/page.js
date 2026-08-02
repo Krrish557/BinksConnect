@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import useAuthStore from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
 import { trackService } from "@/services/trackService";
+import { cacheService } from "@/services/cacheService";
 import SongRow from "@/components/SongRow";
 import LoadingState from "@/components/ui/LoadingState";
 import EmptyState from "@/components/ui/EmptyState";
@@ -12,9 +13,9 @@ export default function SongsPage() {
     const user = useAuthStore((s) => s.user);
     const setQueue = usePlayerStore((s) => s.setQueue);
 
-    const [songs, setSongs] = useState([]);
+    const [songs, setSongs] = useState(() => cacheService.get("tracks_0")?.data || []);
     const [offset, setOffset] = useState(0);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(() => !cacheService.get("tracks_0")?.data);
     const [hasMore, setHasMore] = useState(true);
 
     const loaderRef = useRef(null);
@@ -24,13 +25,17 @@ export default function SongsPage() {
         async function load() {
             if (!user || isFetchingRef.current || !hasMore) return;
             isFetchingRef.current = true;
-            setLoading(true);
+            if (songs.length === 0) setLoading(true);
 
             try {
                 const data = await trackService.getTracks(offset);
 
                 if (data.length < 50) setHasMore(false);
-                setSongs((prev) => [...prev, ...data]);
+                if (offset === 0) {
+                    setSongs(data);
+                } else {
+                    setSongs((prev) => [...prev, ...data]);
+                }
             } catch (err) {
                 console.error(err);
             } finally {
@@ -57,11 +62,16 @@ export default function SongsPage() {
     }, [loading, hasMore]);
 
     return (
-        <main className="px-6 pt-8 pb-10">
+        <main className="px-4 sm:px-6 pt-6 sm:pt-8 pb-24 sm:pb-10">
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold text-white">All Songs</h1>
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">All Songs</h1>
+                    <p className="text-xs text-[#B3B3B3] mt-0.5">Your complete track library</p>
+                </div>
                 {songs.length > 0 && (
-                    <p className="text-sm text-[#B3B3B3]">{songs.length} songs</p>
+                    <span className="text-xs font-semibold bg-[#282828] text-[#B3B3B3] px-3 py-1 rounded-full border border-white/5">
+                        {songs.length} songs
+                    </span>
                 )}
             </div>
 
@@ -69,21 +79,25 @@ export default function SongsPage() {
                 <EmptyState icon="🎵" title="No songs found" />
             )}
 
-            <div className="space-y-1">
-                {songs.map((song, index) => (
-                    <SongRow
-                        key={`${song.id}-${index}`}
-                        song={song}
-                        index={index}
-                        showIndex
-                        showAlbum
-                        onPlay={() => setQueue(songs, index)}
-                    />
-                ))}
-            </div>
+            {loading && songs.length === 0 ? (
+                <LoadingState message="Loading your song library..." />
+            ) : (
+                <div className="space-y-1 animate-fade-in">
+                    {songs.map((song, index) => (
+                        <SongRow
+                            key={`${song.id}-${index}`}
+                            song={song}
+                            index={index}
+                            showIndex
+                            showAlbum
+                            onPlay={() => setQueue(songs, index)}
+                        />
+                    ))}
+                </div>
+            )}
 
-            <div ref={loaderRef} className="h-16 flex items-center justify-center">
-                {loading && <LoadingState message="Loading more songs..." />}
+            <div ref={loaderRef} className="h-16 flex items-center justify-center mt-2">
+                {loading && songs.length > 0 && <LoadingState message="Loading more songs..." />}
                 {!hasMore && songs.length > 0 && (
                     <p className="text-xs text-[#B3B3B3]">
                         All {songs.length} songs loaded

@@ -59,7 +59,7 @@ export default function SearchPage() {
             results.artists.length > 0);
 
     return (
-        <main className="px-6 pt-8 pb-10">
+        <main className="px-4 sm:px-6 pt-6 sm:pt-8 pb-24 sm:pb-10">
             <h1 className="text-3xl font-bold text-white mb-6">Search</h1>
 
             <div className="relative mb-8">

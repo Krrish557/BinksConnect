@@ -5,6 +5,7 @@ import { usePlayerStore } from "@/store/playerStore";
 import useAuthStore from "@/store/authStore";
 import { albumService } from "@/services/albumService";
 import { trackService } from "@/services/trackService";
+import { cacheService } from "@/services/cacheService";
 import { apiClient } from "@/services/apiClient";
 import HorizontalScroller from "@/components/HorizontalScroller";
 import AlbumCard from "@/components/AlbumCard";
@@ -16,13 +17,13 @@ export default function HomePage() {
     const { setQueue, recentlyPlayed, setShuffle } = usePlayerStore();
     const { isInitializing, init } = useAuthStore();
 
-    const [recentAlbums, setRecentAlbums] = useState([]);
-    const [newestAlbums, setNewestAlbums] = useState([]);
-    const [frequentAlbums, setFrequentAlbums] = useState([]);
-    const [starredAlbums, setStarredAlbums] = useState([]);
-    const [starredArtists, setStarredArtists] = useState([]);
-    const [randomSongs, setRandomSongs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [recentAlbums, setRecentAlbums] = useState(() => cacheService.get("albums_recent_12")?.data || []);
+    const [newestAlbums, setNewestAlbums] = useState(() => cacheService.get("albums_newest_12")?.data || []);
+    const [frequentAlbums, setFrequentAlbums] = useState(() => cacheService.get("albums_frequent_12")?.data || []);
+    const [starredAlbums, setStarredAlbums] = useState(() => cacheService.get("tracks_starred")?.data?.albums || []);
+    const [starredArtists, setStarredArtists] = useState(() => cacheService.get("tracks_starred")?.data?.artists || []);
+    const [randomSongs, setRandomSongs] = useState(() => cacheService.get("tracks_random_12")?.data || []);
+    const [loading, setLoading] = useState(() => !cacheService.get("albums_recent_12")?.data);
     const [refreshingRecs, setRefreshingRecs] = useState(false);
 
     const hour = new Date().getHours();
@@ -31,13 +32,13 @@ export default function HomePage() {
 
     useEffect(() => {
         init();
-    }, []);
+    }, [init]);
 
     useEffect(() => {
         if (isInitializing) return;
 
         async function load() {
-            setLoading(true);
+            if (recentAlbums.length === 0) setLoading(true);
             try {
                 const [recent, newest, frequent, starred, random] =
                     await Promise.all([

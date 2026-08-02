@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import useAuthStore from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
 import { albumService } from "@/services/albumService";
+import { cacheService } from "@/services/cacheService";
 import { apiClient } from "@/services/apiClient";
 import SongRow from "@/components/SongRow";
 import LoadingState from "@/components/ui/LoadingState";
@@ -15,14 +16,17 @@ export default function AlbumDetailPage() {
     const user = useAuthStore((s) => s.user);
     const setQueue = usePlayerStore((s) => s.setQueue);
 
-    const [album, setAlbum] = useState(null);
-    const [songs, setSongs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const rawId = id ? (id.includes(":") ? id.split(":").pop() : id) : "";
+    const initialCached = cacheService.get(`album_detail_${rawId}`)?.data;
+
+    const [album, setAlbum] = useState(() => initialCached?.album || null);
+    const [songs, setSongs] = useState(() => initialCached?.songs || []);
+    const [loading, setLoading] = useState(() => !initialCached);
 
     useEffect(() => {
         async function load() {
             if (!user || !id) return;
-            setLoading(true);
+            if (!album) setLoading(true);
             try {
                 const data = await albumService.getAlbum(id);
                 if (!data) return;
@@ -37,13 +41,13 @@ export default function AlbumDetailPage() {
         load();
     }, [user, id]);
 
-    if (loading) return <LoadingState message="Loading album..." />;
-    if (!album) return null;
+    if (loading && !album) return <LoadingState message="Loading album..." />;
+    if (!album && !loading) return null;
 
     const totalDuration = songs.reduce((acc, s) => acc + (s.duration || 0), 0);
 
     return (
-        <main className="pb-10">
+        <main className="pb-24 sm:pb-10">
             <div
                 className="relative px-6 pt-10 pb-6"
                 style={{
