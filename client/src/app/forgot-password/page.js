@@ -12,7 +12,7 @@ export default function ForgotPasswordPage() {
     const [loading, setLoading] = useState(false);
 
     const inputClass =
-        "w-full px-4 py-3 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-md outline-none focus:border-[#dfb872] focus:ring-1 focus:ring-[#dfb872] transition text-sm placeholder-[#8b7a5c]";
+        "w-full px-5 py-4 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-lg outline-none focus:border-[#dfb872] focus:ring-2 focus:ring-[#dfb872]/40 transition-all text-base placeholder-[#8b7a5c]";
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
                     </Link>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     <p className="text-xs text-[#a39478] mb-3 text-center">
                         We&apos;ll email you a link to reset your password.
                     </p>

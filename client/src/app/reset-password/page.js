@@ -7,7 +7,7 @@ import { authService } from "@/services/authService";
 import AuthLayout from "@/components/AuthLayout";
 
 const inputClass =
-    "w-full px-4 py-3 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-md outline-none focus:border-[#dfb872] focus:ring-1 focus:ring-[#dfb872] transition text-sm placeholder-[#8b7a5c]";
+    "w-full px-5 py-4 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-lg outline-none focus:border-[#dfb872] focus:ring-2 focus:ring-[#dfb872]/40 transition-all text-base placeholder-[#8b7a5c]";
 
 function ResetPasswordForm() {
     const searchParams = useSearchParams();
@@ -63,7 +63,7 @@ function ResetPasswordForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
             <h3 className="text-[#dfb872] font-serif text-lg font-bold mb-2 text-center">
                 New Password
             </h3>

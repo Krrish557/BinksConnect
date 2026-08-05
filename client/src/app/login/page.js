@@ -115,101 +115,117 @@ export default function LoginPage() {
             {/* Two-panel layout */}
             <div className="relative z-10 grid h-full min-h-[520px] grid-cols-12">
                 {/* ── LEFT: Login card (30%) ─────────────────────── */}
-                <section className="relative z-20 col-span-12 lg:col-span-4 flex items-center justify-center px-5 py-8 lg:py-0 lg:justify-start lg:pl-[clamp(28px,4vw,80px)]">
+                <section className="relative z-20 col-span-12 lg:col-span-4 flex items-stretch justify-center lg:justify-start lg:pl-[clamp(28px,4vw,80px)]">
                     <motion.aside
-                        className="login-card w-full max-w-[400px] p-6 sm:p-8"
+                        className="login-card w-full max-w-[400px] lg:h-full min-h-[100vh] lg:min-h-0 p-8 sm:p-10 flex flex-col"
                         {...cardEnter}
                         transition={{ duration: 0.9, ease: EASE, delay: 0.05 }}
                     >
                         {/* Logo */}
-                        <header className="flex items-center gap-3 mb-6">
+                        <header className="flex items-center gap-3 mb-8 lg:mb-10 shrink-0">
                             <LogoMark />
                             <h1 className="text-2xl sm:text-[1.7rem] font-bold tracking-tight gold-text-gradient">
                                 BinksConnect
                             </h1>
                         </header>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label htmlFor="login-identifier" className="sr-only">
-                                    Username or Email
-                                </label>
-                                <input
-                                    id="login-identifier"
-                                    type="text"
-                                    className="vintage-input"
-                                    placeholder="Username or Email"
-                                    value={identifier}
-                                    onChange={(e) => setIdentifier(e.target.value)}
-                                    autoComplete="username"
-                                    aria-required="true"
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="login-password" className="sr-only">
-                                    Password
-                                </label>
-                                <input
-                                    id="login-password"
-                                    type="password"
-                                    className="vintage-input"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    autoComplete="current-password"
-                                    aria-required="true"
-                                />
-                                <div className="flex justify-end mt-2">
-                                    <Link href="/forgot-password" className="gold-link text-xs tracking-wide">
-                                        Forgot Password?
-                                    </Link>
+                        {/* Form (vertically centered in the full-height card) */}
+                        <div className="flex-1 flex flex-col justify-center py-4 min-h-0">
+                            <form onSubmit={handleSubmit} className="space-y-5">
+                                <div>
+                                    <label htmlFor="login-identifier" className="sr-only">
+                                        Username or Email
+                                    </label>
+                                    <input
+                                        id="login-identifier"
+                                        type="text"
+                                        className="vintage-input"
+                                        placeholder="Username or Email"
+                                        value={identifier}
+                                        onChange={(e) => setIdentifier(e.target.value)}
+                                        autoComplete="username"
+                                        aria-required="true"
+                                    />
                                 </div>
-                            </div>
 
-                            <div className="flex items-center gap-2.5 pt-0.5">
-                                <input
-                                    type="checkbox"
-                                    id="rememberDevice"
-                                    className="vintage-check"
-                                    checked={rememberDevice}
-                                    onChange={(e) => setRememberDevice(e.target.checked)}
-                                />
-                                <label
-                                    htmlFor="rememberDevice"
-                                    className="text-xs text-[var(--v-beige-muted)] cursor-pointer select-none tracking-wide"
+                                <div>
+                                    <label htmlFor="login-password" className="sr-only">
+                                        Password
+                                    </label>
+                                    <input
+                                        id="login-password"
+                                        type="password"
+                                        className="vintage-input"
+                                        placeholder="Password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        autoComplete="current-password"
+                                        aria-required="true"
+                                    />
+                                    <div className="flex justify-end mt-2">
+                                        <Link href="/forgot-password" className="gold-link text-xs tracking-wide">
+                                            Forgot Password?
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2.5 pt-1">
+                                    <input
+                                        type="checkbox"
+                                        id="rememberDevice"
+                                        className="vintage-check"
+                                        checked={rememberDevice}
+                                        onChange={(e) => setRememberDevice(e.target.checked)}
+                                    />
+                                    <label
+                                        htmlFor="rememberDevice"
+                                        className="text-xs text-[var(--v-beige-muted)] cursor-pointer select-none tracking-wide"
+                                    >
+                                        Remember this device
+                                    </label>
+                                </div>
+
+                                {error && (
+                                    <p
+                                        role="alert"
+                                        className="text-xs text-[#e0a489] bg-[#3a2220]/60 border border-[#8a4b3c]/40 rounded-md px-3.5 py-2.5"
+                                    >
+                                        {error}
+                                    </p>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    className="vintage-btn text-sm"
+                                    disabled={loading}
                                 >
-                                    Remember this device
-                                </label>
-                            </div>
+                                    {loading ? "Logging in…" : "Log In"}
+                                </button>
+                            </form>
 
-                            {error && (
-                                <p
-                                    role="alert"
-                                    className="text-xs text-[#e0a489] bg-[#3a2220]/60 border border-[#8a4b3c]/40 rounded-md px-3.5 py-2.5"
+                            <p className="text-xs mt-8 text-center text-[var(--v-beige-muted)] tracking-wide">
+                                Don&apos;t have an account?{" "}
+                                <Link
+                                    href="/register"
+                                    className="gold-link gold-link-strong font-semibold"
                                 >
-                                    {error}
-                                </p>
-                            )}
+                                    Create one.
+                                </Link>
+                            </p>
+                        </div>
 
-                            <button
-                                type="submit"
-                                className="vintage-btn text-sm"
-                                disabled={loading}
-                            >
-                                {loading ? "Logging in…" : "Log In"}
-                            </button>
-                        </form>
-
-                        <p className="text-xs mt-6 text-center text-[var(--v-beige-muted)] tracking-wide">
-                            Don&apos;t have an account?{" "}
-                            <Link
-                                href="/register"
-                                className="gold-link gold-link-strong font-semibold"
-                            >
-                                Create one.
-                            </Link>
-                        </p>
+                        {/* Mobile decorative strip (kept below the form, never over buttons) */}
+                        <div className="relative h-32 mt-6 lg:hidden shrink-0 pointer-events-none select-none">
+                            <div className="absolute left-1 -bottom-1 opacity-90">
+                                <VinylRecord color="blue" size={118} spinSpeed={20} isInteractive={false} />
+                            </div>
+                            <div className="absolute left-[118px] bottom-4 w-32 h-10 opacity-60">
+                                <Waveform className="w-full h-full" />
+                            </div>
+                            <div className="absolute right-0 bottom-2 opacity-80">
+                                <VinylRecord color="gold" size={64} spinSpeed={16} isInteractive={false} />
+                            </div>
+                        </div>
                     </motion.aside>
                 </section>
 

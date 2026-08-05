@@ -22,6 +22,8 @@ export default function RegisterPage() {
     const inputClass =
         "w-full px-5 py-4 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-lg outline-none focus:border-[#dfb872] focus:ring-2 focus:ring-[#dfb872]/40 transition-all text-base placeholder-[#8b7a5c]";
 
+    const labelClass = "block text-sm font-medium text-[#b8aa8f] mb-2";
+
     const handleSignup = async (e) => {
         e.preventDefault();
         setError("");
@@ -83,13 +85,13 @@ export default function RegisterPage() {
     return (
         <AuthLayout>
             {step === 1 ? (
-                <form onSubmit={handleSignup} className="space-y-5">
+                <form onSubmit={handleSignup} className="space-y-6">
                     <h3 className="text-[#dfb872] font-serif text-xl font-bold mb-4 text-center tracking-wide">
                         Create Your Account
                     </h3>
 
                     <div>
-                        <label className="block text-sm font-medium text-[#b8aa8f] mb-1.5">Username</label>
+                        <label className="block text-sm font-medium text-[#b8aa8f] mb-2">Username</label>
                         <input
                             type="text"
                             value={username}
@@ -101,7 +103,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-[#b8aa8f] mb-1.5">Email</label>
+                        <label className="block text-sm font-medium text-[#b8aa8f] mb-2">Email</label>
                         <input
                             type="email"
                             value={email}
@@ -113,7 +115,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-[#b8aa8f] mb-1.5">Password</label>
+                        <label className="block text-sm font-medium text-[#b8aa8f] mb-2">Password</label>
                         <input
                             type="password"
                             value={password}
@@ -125,7 +127,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-[#b8aa8f] mb-1.5">Confirm Password</label>
+                        <label className="block text-sm font-medium text-[#b8aa8f] mb-2">Confirm Password</label>
                         <input
                             type="password"
                             value={confirm}
@@ -151,7 +153,7 @@ export default function RegisterPage() {
                     </button>
                 </form>
             ) : (
-                <form onSubmit={handleVerify} className="space-y-5">
+                <form onSubmit={handleVerify} className="space-y-6">
                     <h3 className="text-[#dfb872] font-serif text-xl font-bold mb-2 text-center tracking-wide">
                         Verify Email
                     </h3>
