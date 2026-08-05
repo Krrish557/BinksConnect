@@ -5,9 +5,9 @@ import useAuthStore from "@/store/authStore";
 
 const NAV = [
     { name: "Home",      path: "/",          icon: "🏠" },
-    { name: "Market",    path: "/market",    icon: "📊" },
     { name: "Search",    path: "/search",    icon: "🔍" },
     { name: "Library",   path: "/library",   icon: "🎵" },
+    { name: "Upload",    path: "/upload",    icon: "📤" },
     { name: "Playlists", path: "/playlists", icon: "📁" },
 ];
 
