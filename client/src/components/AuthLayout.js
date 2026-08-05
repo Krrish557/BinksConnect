@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import VinylRecord from "./theme/VinylRecord";
 import SoundWaves from "./theme/SoundWaves";
 import FramedMediaStack from "./theme/FramedMediaStack";
@@ -42,12 +43,13 @@ export default function AuthLayout({ children }) {
                             {/* Mobile Top Header (Android View: Name & Tagline above form) */}
                             <div className="block lg:hidden text-center">
                                 <div className="flex items-center justify-center gap-2 mb-1">
-                                    <div className="flex gap-1 items-end h-7">
-                                        <div className="w-1.5 h-6 bg-[#dfb872] rounded-full animate-pulse" />
-                                        <div className="w-1.5 h-4 bg-[#dfb872] rounded-full animate-pulse" style={{ animationDelay: "0.2s" }} />
-                                        <div className="w-1.5 h-7 bg-[#dfb872] rounded-full animate-pulse" style={{ animationDelay: "0.4s" }} />
-                                        <div className="w-1.5 h-5 bg-[#dfb872] rounded-full animate-pulse" style={{ animationDelay: "0.15s" }} />
-                                    </div>
+                                    <Image
+                                        src="/logo.png"
+                                        alt="BinksConnect logo"
+                                        width={1024}
+                                        height={1024}
+                                        className="h-8 w-8 rounded-full object-contain"
+                                    />
                                     <h1 className="text-2xl font-bold font-serif tracking-tight gold-text-gradient">
                                         BinksConnect
                                     </h1>
@@ -59,12 +61,13 @@ export default function AuthLayout({ children }) {
 
                             {/* Card Header (Desktop Logo inside card) */}
                             <div className="hidden lg:flex items-center gap-3">
-                                <div className="flex gap-1 items-end h-8">
-                                    <div className="w-1.5 h-7 bg-gradient-to-t from-[#c5a059] to-[#f4e2b8] rounded-full animate-pulse" />
-                                    <div className="w-1.5 h-5 bg-gradient-to-t from-[#c5a059] to-[#f4e2b8] rounded-full animate-pulse" style={{ animationDelay: "0.2s" }} />
-                                    <div className="w-1.5 h-8 bg-gradient-to-t from-[#c5a059] to-[#f4e2b8] rounded-full animate-pulse" style={{ animationDelay: "0.4s" }} />
-                                    <div className="w-1.5 h-6 bg-gradient-to-t from-[#c5a059] to-[#f4e2b8] rounded-full animate-pulse" style={{ animationDelay: "0.15s" }} />
-                                </div>
+                                <Image
+                                    src="/logo.png"
+                                    alt="BinksConnect logo"
+                                    width={1024}
+                                    height={1024}
+                                    className="h-10 w-10 rounded-full object-contain"
+                                />
                                 <h1 className="text-3xl font-bold font-serif tracking-tight gold-text-gradient">
                                     BinksConnect
                                 </h1>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import useAuthStore from "@/store/authStore";
 
@@ -26,9 +27,13 @@ export default function Sidebar() {
             <div className="flex flex-col h-full bg-[#181818]/90 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                 {/* LOGO */}
                 <div className="px-4 lg:px-6 py-5 border-b border-white/5 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#1db954] to-emerald-400 flex items-center justify-center text-xl shadow-lg shadow-[#1db954]/20 shrink-0">
-                        🎵
-                    </div>
+                    <Image
+                        src="/logo.png"
+                        alt="BinksConnect logo"
+                        width={1024}
+                        height={1024}
+                        className="w-10 h-10 rounded-xl object-cover shrink-0"
+                    />
                     <div className="lg:block hidden min-w-0">
                         <h1 className="text-base font-extrabold text-white tracking-tight truncate">
                             BinksConnect

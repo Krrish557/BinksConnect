@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
@@ -23,31 +24,6 @@ const VintageCollage = dynamic(() => import("@/components/theme/VintageCollage")
 });
 
 const EASE = [0.22, 1, 0.36, 1];
-
-function LogoMark() {
-    return (
-        <svg
-            width="22"
-            height="34"
-            viewBox="0 0 22 34"
-            fill="none"
-            aria-hidden="true"
-            className="shimmer-slow"
-        >
-            <rect x="0" y="14" width="4" height="20" rx="2" fill="url(#logoGold)" />
-            <rect x="6" y="6" width="4" height="28" rx="2" fill="url(#logoGold)" opacity="0.85" />
-            <rect x="12" y="0" width="4" height="34" rx="2" fill="url(#logoGold)" />
-            <rect x="18" y="9" width="4" height="25" rx="2" fill="url(#logoGold)" opacity="0.75" />
-            <defs>
-                <linearGradient id="logoGold" x1="2" y1="0" x2="2" y2="34" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#E4C98F" />
-                    <stop offset="0.5" stopColor="#B89A5B" />
-                    <stop offset="1" stopColor="#8F7038" />
-                </linearGradient>
-            </defs>
-        </svg>
-    );
-}
 
 export default function LoginPage() {
     const router = useRouter();
@@ -123,7 +99,14 @@ export default function LoginPage() {
                     >
                         {/* Logo */}
                         <header className="flex items-center gap-3 mb-8 lg:mb-10 shrink-0">
-                            <LogoMark />
+                            <Image
+                                src="/logo.png"
+                                alt="BinksConnect logo"
+                                width={1024}
+                                height={1024}
+                                priority
+                                className="h-10 w-10 rounded-full object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+                            />
                             <h1 className="text-2xl sm:text-[1.7rem] font-bold tracking-tight gold-text-gradient">
                                 BinksConnect
                             </h1>
