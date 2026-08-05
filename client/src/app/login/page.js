@@ -1,14 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import {
+    motion,
+    useMotionValue,
+    useReducedMotion,
+    useSpring,
+    useTransform,
+} from "framer-motion";
 import useAuthStore from "@/store/authStore";
-import AuthLayout from "@/components/AuthLayout";
+import VinylRecord from "@/components/theme/VinylRecord";
+import Waveform from "@/components/theme/Waveform";
+import BackgroundScene from "@/components/theme/BackgroundScene";
+
+const AudioAmbience = dynamic(() => import("@/components/theme/AudioAmbience"), { ssr: false });
+const VintageCollage = dynamic(() => import("@/components/theme/VintageCollage"), {
+    ssr: false,
+    loading: () => null,
+});
+
+const EASE = [0.22, 1, 0.36, 1];
+
+function LogoMark() {
+    return (
+        <svg
+            width="22"
+            height="34"
+            viewBox="0 0 22 34"
+            fill="none"
+            aria-hidden="true"
+            className="shimmer-slow"
+        >
+            <rect x="0" y="14" width="4" height="20" rx="2" fill="url(#logoGold)" />
+            <rect x="6" y="6" width="4" height="28" rx="2" fill="url(#logoGold)" opacity="0.85" />
+            <rect x="12" y="0" width="4" height="34" rx="2" fill="url(#logoGold)" />
+            <rect x="18" y="9" width="4" height="25" rx="2" fill="url(#logoGold)" opacity="0.75" />
+            <defs>
+                <linearGradient id="logoGold" x1="2" y1="0" x2="2" y2="34" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#E4C98F" />
+                    <stop offset="0.5" stopColor="#B89A5B" />
+                    <stop offset="1" stopColor="#8F7038" />
+                </linearGradient>
+            </defs>
+        </svg>
+    );
+}
 
 export default function LoginPage() {
     const router = useRouter();
     const login = useAuthStore((s) => s.login);
+    const reduced = useReducedMotion();
 
     const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
@@ -34,76 +78,193 @@ export default function LoginPage() {
         }
     };
 
-    const inputClass =
-        "w-full px-4 py-3 sm:px-5 sm:py-3.5 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-md outline-none focus:border-[#dfb872] focus:ring-1 focus:ring-[#dfb872]/50 transition-all text-sm sm:text-base placeholder-[#8b7a5c]";
+    // ── Mouse parallax (GPU transforms) ─────────────────────
+    const mx = useMotionValue(0);
+    const my = useMotionValue(0);
+    const sx = useSpring(mx, { stiffness: 45, damping: 18, mass: 0.8 });
+    const sy = useSpring(my, { stiffness: 45, damping: 18, mass: 0.8 });
+
+    const k = reduced ? 0 : 1;
+    const bgX = useTransform(sx, (v) => v * 0.2 * k); // ~2px
+    const bgY = useTransform(sy, (v) => v * 0.2 * k);
+    const vinylX = useTransform(sx, (v) => v * 0.1 * k); // ~1px
+    const vinylY = useTransform(sy, (v) => v * 0.1 * k);
+    const waveX = useTransform(sx, (v) => v * 0.3 * k);
+    const waveY = useTransform(sy, (v) => v * 0.3 * k);
+    const collageX = useTransform(sx, (v) => v * 0.4 * k); // ~4px
+    const collageY = useTransform(sy, (v) => v * 0.4 * k);
+
+    const handleMouseMove = useCallback((e) => {
+        if (e.pointerType === "touch") return;
+        mx.set((e.clientX / window.innerWidth - 0.5) * 20);
+        my.set((e.clientY / window.innerHeight - 0.5) * 20);
+    }, [mx, my]);
+
+    const cardEnter = reduced ? {} : { initial: { opacity: 0, y: 26 }, animate: { opacity: 1, y: 0 } };
+    const heroEnter = () =>
+        reduced ? {} : { initial: { opacity: 0 }, animate: { opacity: 1 } };
 
     return (
-        <AuthLayout>
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-                <div>
-                    <input
-                        type="text"
-                        value={identifier}
-                        onChange={(e) => setIdentifier(e.target.value)}
-                        placeholder="Username or Email"
-                        autoComplete="username"
-                        className={inputClass}
-                    />
-                </div>
+        <main
+            className="premium-login relative h-screen w-full overflow-x-hidden overflow-y-auto lg:overflow-hidden text-[#eae2d0]"
+            onMouseMove={handleMouseMove}
+        >
+            {/* Ambient background */}
+            <BackgroundScene bgX={bgX} bgY={bgY} />
 
-                <div>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Password"
-                        autoComplete="current-password"
-                        className={inputClass}
-                    />
-                    <div className="flex justify-end mt-1.5">
-                        <Link
-                            href="/forgot-password"
-                            className="text-xs sm:text-sm text-[#c5a059] hover:text-[#f4e2b8] transition hover:underline"
+            {/* Two-panel layout */}
+            <div className="relative z-10 grid h-full min-h-[520px] grid-cols-12">
+                {/* ── LEFT: Login card (30%) ─────────────────────── */}
+                <section className="relative z-20 col-span-12 lg:col-span-4 flex items-center justify-center px-5 py-8 lg:py-0 lg:justify-start lg:pl-[clamp(28px,4vw,80px)]">
+                    <motion.aside
+                        className="login-card w-full max-w-[400px] p-6 sm:p-8"
+                        {...cardEnter}
+                        transition={{ duration: 0.9, ease: EASE, delay: 0.05 }}
+                    >
+                        {/* Logo */}
+                        <header className="flex items-center gap-3 mb-6">
+                            <LogoMark />
+                            <h1 className="text-2xl sm:text-[1.7rem] font-bold tracking-tight gold-text-gradient">
+                                BinksConnect
+                            </h1>
+                        </header>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label htmlFor="login-identifier" className="sr-only">
+                                    Username or Email
+                                </label>
+                                <input
+                                    id="login-identifier"
+                                    type="text"
+                                    className="vintage-input"
+                                    placeholder="Username or Email"
+                                    value={identifier}
+                                    onChange={(e) => setIdentifier(e.target.value)}
+                                    autoComplete="username"
+                                    aria-required="true"
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="login-password" className="sr-only">
+                                    Password
+                                </label>
+                                <input
+                                    id="login-password"
+                                    type="password"
+                                    className="vintage-input"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    autoComplete="current-password"
+                                    aria-required="true"
+                                />
+                                <div className="flex justify-end mt-2">
+                                    <Link href="/forgot-password" className="gold-link text-xs tracking-wide">
+                                        Forgot Password?
+                                    </Link>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2.5 pt-0.5">
+                                <input
+                                    type="checkbox"
+                                    id="rememberDevice"
+                                    className="vintage-check"
+                                    checked={rememberDevice}
+                                    onChange={(e) => setRememberDevice(e.target.checked)}
+                                />
+                                <label
+                                    htmlFor="rememberDevice"
+                                    className="text-xs text-[var(--v-beige-muted)] cursor-pointer select-none tracking-wide"
+                                >
+                                    Remember this device
+                                </label>
+                            </div>
+
+                            {error && (
+                                <p
+                                    role="alert"
+                                    className="text-xs text-[#e0a489] bg-[#3a2220]/60 border border-[#8a4b3c]/40 rounded-md px-3.5 py-2.5"
+                                >
+                                    {error}
+                                </p>
+                            )}
+
+                            <button
+                                type="submit"
+                                className="vintage-btn text-sm"
+                                disabled={loading}
+                            >
+                                {loading ? "Logging in…" : "Log In"}
+                            </button>
+                        </form>
+
+                        <p className="text-xs mt-6 text-center text-[var(--v-beige-muted)] tracking-wide">
+                            Don&apos;t have an account?{" "}
+                            <Link
+                                href="/register"
+                                className="gold-link gold-link-strong font-semibold"
+                            >
+                                Create one.
+                            </Link>
+                        </p>
+                    </motion.aside>
+                </section>
+
+                {/* ── RIGHT: Hero (70%) ─────────────────────────── */}
+                <section className="relative z-10 col-span-8 hidden lg:block">
+                    {/* Headline */}
+                    <motion.h2
+                        className="absolute top-[9vh] left-0 right-0 text-center font-light tracking-[0.35em] text-2xl xl:text-[2.1rem] text-[var(--v-gold)]"
+                        {...heroEnter()}
+                        transition={{ duration: 1, ease: EASE, delay: 0.25 }}
+                        style={{ textShadow: "0 2px 18px rgba(184, 154, 91, 0.25)" }}
+                    >
+                        Drop the needle and dive back in.
+                    </motion.h2>
+
+                    {/* Main vinyl record (tucks ~40% behind the card) */}
+                    <div className="absolute top-1/2 -translate-y-1/2" style={{ left: "-128px" }}>
+                        <motion.div
+                            style={{ x: vinylX, y: vinylY, willChange: "transform" }}
+                            {...heroEnter()}
+                            transition={{ duration: 1.1, ease: EASE, delay: 0.5 }}
                         >
-                            Forgot Password?
-                        </Link>
+                            <VinylRecord color="blue" size={320} spinSpeed={20} isInteractive={false} />
+                        </motion.div>
                     </div>
-                </div>
 
-                <div className="flex items-center gap-2.5 pt-0.5">
-                    <input
-                        type="checkbox"
-                        id="rememberDevice"
-                        checked={rememberDevice}
-                        onChange={(e) => setRememberDevice(e.target.checked)}
-                        className="w-4 h-4 rounded accent-[#c5a059] bg-[#1b272b] border-[#5a482c] cursor-pointer"
-                    />
-                    <label htmlFor="rememberDevice" className="text-xs sm:text-sm text-[#b8aa8f] cursor-pointer select-none">
-                        Remember this device
-                    </label>
-                </div>
+                    {/* Horizontal waveform to the right of the vinyl */}
+                    <div
+                        className="absolute top-1/2 -translate-y-1/2"
+                        style={{ left: "260px", width: "min(22vw, 340px)" }}
+                    >
+                        <motion.div
+                            style={{ x: waveX, y: waveY, willChange: "transform" }}
+                            {...heroEnter()}
+                            transition={{ duration: 1, ease: EASE, delay: 0.8 }}
+                        >
+                            <Waveform className="w-full h-[76px]" />
+                        </motion.div>
+                    </div>
 
-                {error && (
-                    <p className="text-xs sm:text-sm text-red-300 bg-red-950/50 border border-red-500/30 rounded-md px-3.5 py-2.5">
-                        {error}
-                    </p>
-                )}
+                    {/* Right-side floating framed collage */}
+                    <div className="absolute top-1/2 -translate-y-1/2" style={{ right: "2.5vw" }}>
+                        <motion.div
+                            style={{ x: collageX, y: collageY, willChange: "transform" }}
+                            {...heroEnter()}
+                            transition={{ duration: 1, ease: EASE, delay: 1.05 }}
+                        >
+                            <VintageCollage />
+                        </motion.div>
+                    </div>
+                </section>
+            </div>
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-3.5 rounded-md bg-[#233034] text-[#dfb872] font-bold text-sm sm:text-base tracking-wide border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                    {loading ? "Logging in..." : "Log In"}
-                </button>
-            </form>
-
-            <p className="text-xs sm:text-sm text-[#a39478] mt-5 sm:mt-6 text-center tracking-wide">
-                Don&apos;t have an account?{" "}
-                <Link href="/register" className="text-[#dfb872] hover:text-[#fff0cf] hover:underline font-semibold ml-1">
-                    Create one.
-                </Link>
-            </p>
-        </AuthLayout>
+            {/* Ambient audio + mute toggle */}
+            <AudioAmbience />
+        </main>
     );
 }
