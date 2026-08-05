@@ -107,30 +107,30 @@ input[type="range"]:hover::-moz-range-thumb {
 @keyframes waveGrowShrink {
     0%, 100% {
         transform: scale(0.92);
-        opacity: 0.45;
+        opacity: 0.4;
     }
     50% {
-        transform: scale(1.1);
-        opacity: 0.95;
+        transform: scale(1.08);
+        opacity: 0.85;
     }
 }
 
 @keyframes barEqualize {
     0%, 100% {
-        transform: scaleY(0.25);
+        transform: scaleY(0.3);
     }
     50% {
-        transform: scaleY(1.15);
+        transform: scaleY(1.05);
     }
 }
 
 @keyframes ringExpand {
     0% {
         transform: scale(0.85);
-        opacity: 0.2;
+        opacity: 0.15;
     }
     50% {
-        opacity: 0.6;
+        opacity: 0.5;
     }
     100% {
         transform: scale(1.2);
@@ -141,8 +141,8 @@ input[type="range"]:hover::-moz-range-thumb {
 .animate-fade-in    { animation: fadeIn 0.2s ease both; }
 .animate-slide-up   { animation: slideUp 0.3s ease both; }
 .animate-scale-in   { animation: scaleIn 0.2s ease both; }
-.animate-spin-vinyl { animation: spinVinyl 16s linear infinite; }
-.animate-wave-pulse { animation: waveGrowShrink 3s ease-in-out infinite; }
+.animate-spin-vinyl { animation: spinVinyl 24s linear infinite; }
+.animate-wave-pulse { animation: waveGrowShrink 7s ease-in-out infinite; }
 
 /* ── Vintage Gold & Slate Theme Styles ────────── */
 .bg-vintage-slate {
@@ -164,6 +164,18 @@ input[type="range"]:hover::-moz-range-thumb {
     -webkit-text-fill-color: transparent;
 }
 
+/* ── Autofill Dark Gold Theme Fix ───────────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #1b272b inset !important;
+    -webkit-text-fill-color: #eae2d0 !important;
+    caret-color: #eae2d0;
+    border-color: #5a482c !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 /* ── Focus ring override ─────────────────────── */
 :focus-visible {
     outline: 2px solid var(--accent);
@@ -174,5 +186,6 @@ input[type="range"]:hover::-moz-range-thumb {
 .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
 
 

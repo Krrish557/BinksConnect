@@ -20,7 +20,7 @@ export default function RegisterPage() {
     const [resendCooldown, setResendCooldown] = useState(0);
 
     const inputClass =
-        "w-full px-4 py-3 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-md outline-none focus:border-[#dfb872] focus:ring-1 focus:ring-[#dfb872] transition text-sm placeholder-[#8b7a5c]";
+        "w-full px-5 py-4 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-lg outline-none focus:border-[#dfb872] focus:ring-2 focus:ring-[#dfb872]/40 transition-all text-base placeholder-[#8b7a5c]";
 
     const handleSignup = async (e) => {
         e.preventDefault();
@@ -83,57 +83,61 @@ export default function RegisterPage() {
     return (
         <AuthLayout>
             {step === 1 ? (
-                <form onSubmit={handleSignup} className="space-y-4">
-                    <h3 className="text-[#dfb872] font-serif text-lg font-bold mb-2 text-center">
+                <form onSubmit={handleSignup} className="space-y-5">
+                    <h3 className="text-[#dfb872] font-serif text-xl font-bold mb-4 text-center tracking-wide">
                         Create Your Account
                     </h3>
 
                     <div>
+                        <label className="block text-sm font-medium text-[#b8aa8f] mb-1.5">Username</label>
                         <input
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Username (letters, numbers)"
+                            placeholder="Unique username"
                             autoComplete="username"
                             className={inputClass}
                         />
                     </div>
 
                     <div>
+                        <label className="block text-sm font-medium text-[#b8aa8f] mb-1.5">Email</label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Email address"
+                            placeholder="you@example.com"
                             autoComplete="email"
                             className={inputClass}
                         />
                     </div>
 
                     <div>
+                        <label className="block text-sm font-medium text-[#b8aa8f] mb-1.5">Password</label>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Password (min 8 chars)"
+                            placeholder="At least 8 characters"
                             autoComplete="new-password"
                             className={inputClass}
                         />
                     </div>
 
                     <div>
+                        <label className="block text-sm font-medium text-[#b8aa8f] mb-1.5">Confirm Password</label>
                         <input
                             type="password"
                             value={confirm}
                             onChange={(e) => setConfirm(e.target.value)}
-                            placeholder="Confirm Password"
+                            placeholder="Repeat password"
                             autoComplete="new-password"
                             className={inputClass}
                         />
                     </div>
 
                     {error && (
-                        <p className="text-xs text-red-300 bg-red-950/40 border border-red-500/30 rounded-md px-3 py-2">
+                        <p className="text-sm text-red-300 bg-red-950/50 border border-red-500/30 rounded-lg px-4 py-3">
                             {error}
                         </p>
                     )}
@@ -141,18 +145,18 @@ export default function RegisterPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 rounded-md bg-[#233034] text-[#dfb872] font-semibold text-sm border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        className="w-full py-4 rounded-lg bg-[#233034] text-[#dfb872] font-bold text-base tracking-wide border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         {loading ? "Creating Account..." : "Create Account"}
                     </button>
                 </form>
             ) : (
-                <form onSubmit={handleVerify} className="space-y-4">
-                    <h3 className="text-[#dfb872] font-serif text-lg font-bold mb-1 text-center">
+                <form onSubmit={handleVerify} className="space-y-5">
+                    <h3 className="text-[#dfb872] font-serif text-xl font-bold mb-2 text-center tracking-wide">
                         Verify Email
                     </h3>
-                    <p className="text-xs text-[#a39478] text-center mb-4">
-                        Code sent to <span className="text-[#eae2d0]">{email.trim()}</span>
+                    <p className="text-sm text-[#a39478] text-center mb-4">
+                        Code sent to <span className="text-[#eae2d0] font-medium">{email.trim()}</span>
                     </p>
 
                     <div>
@@ -163,13 +167,13 @@ export default function RegisterPage() {
                             placeholder="000000"
                             inputMode="numeric"
                             maxLength={6}
-                            className={`${inputClass} text-center tracking-[0.5em] text-lg font-mono`}
+                            className={`${inputClass} text-center tracking-[0.5em] text-xl font-mono`}
                             autoFocus
                         />
                     </div>
 
                     {error && (
-                        <p className="text-xs text-red-300 bg-red-950/40 border border-red-500/30 rounded-md px-3 py-2">
+                        <p className="text-sm text-red-300 bg-red-950/50 border border-red-500/30 rounded-lg px-4 py-3">
                             {error}
                         </p>
                     )}
@@ -177,12 +181,12 @@ export default function RegisterPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 rounded-md bg-[#233034] text-[#dfb872] font-semibold text-sm border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-4 rounded-lg bg-[#233034] text-[#dfb872] font-bold text-base tracking-wide border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? "Verifying..." : "Verify Code"}
                     </button>
 
-                    <div className="flex items-center justify-between text-xs pt-2">
+                    <div className="flex items-center justify-between text-sm pt-2">
                         <button
                             type="button"
                             onClick={() => setStep(1)}
@@ -202,9 +206,9 @@ export default function RegisterPage() {
                 </form>
             )}
 
-            <p className="text-xs text-[#a39478] mt-6 text-center">
+            <p className="text-sm text-[#a39478] mt-8 text-center tracking-wide">
                 Already have an account?{" "}
-                <Link href="/login" className="text-[#dfb872] hover:text-[#fff0cf] hover:underline font-medium">
+                <Link href="/login" className="text-[#dfb872] hover:text-[#fff0cf] hover:underline font-semibold ml-1">
                     Log in
                 </Link>
             </p>

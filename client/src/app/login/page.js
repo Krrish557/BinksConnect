@@ -35,42 +35,48 @@ export default function LoginPage() {
     };
 
     const inputClass =
-        "w-full px-4 py-3 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-md outline-none focus:border-[#dfb872] focus:ring-1 focus:ring-[#dfb872] transition text-sm placeholder-[#8b7a5c]";
+        "w-full px-5 py-4 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-lg outline-none focus:border-[#dfb872] focus:ring-2 focus:ring-[#dfb872]/40 transition-all text-base placeholder-[#8b7a5c]";
 
     return (
         <AuthLayout>
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
+                    <label className="block text-sm font-medium text-[#b8aa8f] mb-2 tracking-wide">
+                        Username or Email
+                    </label>
                     <input
                         type="text"
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
-                        placeholder="Username or Email"
+                        placeholder="Enter your username or email"
                         autoComplete="username"
                         className={inputClass}
                     />
                 </div>
 
                 <div>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Password"
-                        autoComplete="current-password"
-                        className={inputClass}
-                    />
-                    <div className="flex justify-end mt-1.5">
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-[#b8aa8f] tracking-wide">
+                            Password
+                        </label>
                         <Link
                             href="/forgot-password"
-                            className="text-xs text-[#c5a059] hover:text-[#f4e2b8] transition"
+                            className="text-xs sm:text-sm text-[#c5a059] hover:text-[#f4e2b8] transition hover:underline"
                         >
                             Forgot Password?
                         </Link>
                     </div>
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        autoComplete="current-password"
+                        className={inputClass}
+                    />
                 </div>
 
-                <div className="flex items-center gap-2 pt-0.5">
+                <div className="flex items-center gap-3 pt-1">
                     <input
                         type="checkbox"
                         id="rememberDevice"
@@ -78,13 +84,13 @@ export default function LoginPage() {
                         onChange={(e) => setRememberDevice(e.target.checked)}
                         className="w-4 h-4 rounded accent-[#c5a059] bg-[#1b272b] border-[#5a482c] cursor-pointer"
                     />
-                    <label htmlFor="rememberDevice" className="text-xs text-[#b8aa8f] cursor-pointer select-none">
+                    <label htmlFor="rememberDevice" className="text-sm text-[#b8aa8f] cursor-pointer select-none">
                         Remember this device
                     </label>
                 </div>
 
                 {error && (
-                    <p className="text-xs text-red-300 bg-red-950/40 border border-red-500/30 rounded-md px-3 py-2">
+                    <p className="text-sm text-red-300 bg-red-950/50 border border-red-500/30 rounded-lg px-4 py-3">
                         {error}
                     </p>
                 )}
@@ -92,15 +98,15 @@ export default function LoginPage() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 rounded-md bg-[#233034] text-[#dfb872] font-semibold text-sm border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full py-4 rounded-lg bg-[#233034] text-[#dfb872] font-bold text-base tracking-wide border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                     {loading ? "Logging in..." : "Log In"}
                 </button>
             </form>
 
-            <p className="text-xs text-[#a39478] mt-6 text-center">
+            <p className="text-sm text-[#a39478] mt-8 text-center tracking-wide">
                 Don&apos;t have an account?{" "}
-                <Link href="/register" className="text-[#dfb872] hover:text-[#fff0cf] hover:underline font-medium">
+                <Link href="/register" className="text-[#dfb872] hover:text-[#fff0cf] hover:underline font-semibold ml-1">
                     Create one.
                 </Link>
             </p>
