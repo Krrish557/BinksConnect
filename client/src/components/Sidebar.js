@@ -6,6 +6,7 @@ import useAuthStore from "@/store/authStore";
 
 const NAV = [
     { label: "Home", path: "/", icon: "🏠" },
+    { label: "Market", path: "/market", icon: "📊" },
     { label: "Search", path: "/search", icon: "🔍" },
     { label: "Library", path: "/library", icon: "🎵" },
     { label: "Albums", path: "/albums", icon: "💿" },

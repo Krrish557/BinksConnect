@@ -12,6 +12,7 @@ import AlbumCard from "@/components/AlbumCard";
 import ArtistCard from "@/components/ArtistCard";
 import SongRow from "@/components/SongRow";
 import LoadingState from "@/components/ui/LoadingState";
+import MarketOverview from "@/components/MarketOverview";
 
 export default function HomePage() {
     const { setQueue, recentlyPlayed, setShuffle } = usePlayerStore();
@@ -152,6 +153,9 @@ export default function HomePage() {
                     </div>
                 )}
             </section>
+
+            {/* MARKET OVERVIEW SECTION */}
+            <MarketOverview />
 
             {recentlyPlayed.length > 0 && (
                 <section className="mb-10">
