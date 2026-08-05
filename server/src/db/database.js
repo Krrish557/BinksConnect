@@ -379,7 +379,7 @@ function runAuthMigrationsSqlite(db) {
         { name: "device_id", type: "TEXT" },
         { name: "user_agent", type: "TEXT" },
         { name: "ip_address", type: "TEXT" },
-        { name: "last_active", type: "DATETIME DEFAULT CURRENT_TIMESTAMP" },
+        { name: "last_active", type: "DATETIME" },
         { name: "remember_device", type: "INTEGER DEFAULT 1" },
     ];
 
@@ -391,6 +391,15 @@ function runAuthMigrationsSqlite(db) {
             } catch (err) {
                 console.warn(`[DB] Note adding ${col.name} to sessions:`, err.message);
             }
+        }
+    }
+
+    const hasLastActive = sessionColumns.some((c) => c.name === "last_active");
+    if (!hasLastActive) {
+        try {
+            db.exec("UPDATE sessions SET last_active = CURRENT_TIMESTAMP WHERE last_active IS NULL");
+        } catch (err) {
+            console.warn("[DB] Backfill last_active warning:", err.message);
         }
     }
 }
@@ -613,7 +622,7 @@ async function runAuthMigrationsTurso(client) {
             { name: "device_id", type: "TEXT" },
             { name: "user_agent", type: "TEXT" },
             { name: "ip_address", type: "TEXT" },
-            { name: "last_active", type: "DATETIME DEFAULT CURRENT_TIMESTAMP" },
+            { name: "last_active", type: "DATETIME" },
             { name: "remember_device", type: "INTEGER DEFAULT 1" },
         ];
 
@@ -624,6 +633,13 @@ async function runAuthMigrationsTurso(client) {
                     console.log(`[DB] Added missing column ${col.name} to sessions table (Turso)`);
                 } catch {}
             }
+        }
+
+        const hasLastActive = sessionColumns.some((c) => c.name === "last_active");
+        if (!hasLastActive) {
+            try {
+                await client.execute("UPDATE sessions SET last_active = CURRENT_TIMESTAMP WHERE last_active IS NULL");
+            } catch {}
         }
     } catch (err) {
         console.warn("[DB] sessions migration warning (Turso):", err.message);
