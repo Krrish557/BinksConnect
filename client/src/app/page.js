@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { usePlayerStore } from "@/store/playerStore";
 import useAuthStore from "@/store/authStore";
 import { albumService } from "@/services/albumService";
@@ -86,6 +87,20 @@ export default function HomePage() {
 
     return (
         <main className="px-6 pt-8 pb-10">
+            {/* BRAND HEADER */}
+            <header className="flex items-center gap-3 mb-6">
+                <Image
+                    src="/logo.png"
+                    alt="BinksConnect logo"
+                    width={1024}
+                    height={1024}
+                    className="w-10 h-10 rounded-xl object-cover shrink-0"
+                />
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                    BinksConnect
+                </h1>
+            </header>
+
             {/* SHUFFLE RECOMMENDATION HERO */}
             <section className="mb-10 bg-gradient-to-r from-emerald-950/70 via-stone-900/90 to-indigo-950/70 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-md relative overflow-hidden shadow-2xl">
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-[#1db954]/10 rounded-full blur-3xl pointer-events-none" />
