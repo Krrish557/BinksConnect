@@ -85,12 +85,12 @@ export default function SearchPage() {
             {/* HEADER & SEARCH INPUT */}
             <div className="flex flex-col gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Search</h1>
-                    <p className="text-xs text-[#B3B3B3] mt-0.5">Find songs, artists, albums, and genres in your library</p>
+                    <h1 className="v-heading text-2xl sm:text-3xl font-black tracking-tight">Search</h1>
+                    <p className="text-xs text-[#94866B] mt-0.5">Find songs, artists, albums, and genres in your library</p>
                 </div>
 
                 <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-[#B3B3B3]">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-[#94866B]">
                         🔍
                     </span>
                     <input
@@ -99,12 +99,12 @@ export default function SearchPage() {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="What do you want to listen to?"
-                        className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-[#202020] text-white placeholder-[#7a7a7a] text-sm font-medium outline-none focus:ring-2 focus:ring-[#1db954] transition border border-white/10 shadow-lg"
+                        className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-[#1D2223] text-white placeholder-[#6E6350] text-sm font-medium outline-none focus:ring-2 focus:ring-[#A08C55] transition border border-[#D8C8A0]/18 shadow-lg"
                     />
                     {query && (
                         <button
                             onClick={() => setQuery("")}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#B3B3B3] hover:text-white"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#94866B] hover:text-white"
                         >
                             ✕
                         </button>
@@ -114,15 +114,15 @@ export default function SearchPage() {
 
             {/* RECENT SEARCH HISTORY SECTION */}
             {!query && searchHistory.length > 0 && (
-                <div className="mb-8 bg-[#181818]/80 border border-white/5 rounded-2xl p-4 shadow-lg animate-fade-in">
+                <div className="mb-8 bg-[#1C2123]/80 border border-[#D8C8A0]/10 rounded-2xl p-4 shadow-lg animate-fade-in">
                     <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-xs font-extrabold uppercase text-[#B3B3B3] tracking-wider flex items-center gap-2">
+                        <h2 className="text-xs font-extrabold uppercase text-[#94866B] tracking-wider flex items-center gap-2">
                             <span>🕒</span>
                             <span>Recent Searches</span>
                         </h2>
                         <button
                             onClick={handleClearHistory}
-                            className="text-xs text-[#B3B3B3] hover:text-red-400 font-semibold transition cursor-pointer"
+                            className="text-xs text-[#94866B] hover:text-[#E7B59C] font-semibold transition cursor-pointer"
                         >
                             Clear all
                         </button>
@@ -133,13 +133,13 @@ export default function SearchPage() {
                             <div
                                 key={item}
                                 onClick={() => handleSelectHistory(item)}
-                                className="group flex items-center gap-2 px-3.5 py-1.5 bg-[#282828] hover:bg-[#333] text-white rounded-full border border-white/10 text-xs font-semibold cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm"
+                                className="group flex items-center gap-2 px-3.5 py-1.5 bg-[#262B2C] hover:bg-[#2A2F30] text-white rounded-full border border-[#D8C8A0]/18 text-xs font-semibold cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm"
                             >
-                                <span className="text-[#B3B3B3] group-hover:text-[#1db954] transition-colors">🕒</span>
+                                <span className="text-[#94866B] group-hover:text-[#A08C55] transition-colors">🕒</span>
                                 <span>{item}</span>
                                 <button
                                     onClick={(e) => handleRemoveHistoryItem(e, item)}
-                                    className="text-[#B3B3B3] hover:text-white ml-1 p-0.5 rounded-full hover:bg-white/10"
+                                    className="text-[#94866B] hover:text-white ml-1 p-0.5 rounded-full hover:bg-[#D8C8A0]/12"
                                     title="Remove from history"
                                 >
                                     ✕
@@ -172,7 +172,7 @@ export default function SearchPage() {
                 <div className="space-y-10 animate-fade-in">
                     {results.songs.length > 0 && (
                         <section>
-                            <h2 className="text-xl font-bold text-white mb-3">
+                            <h2 className="v-heading text-xl font-bold mb-3">
                                 Songs
                             </h2>
                             <div className="space-y-1">
@@ -191,7 +191,7 @@ export default function SearchPage() {
 
                     {results.albums.length > 0 && (
                         <section>
-                            <h2 className="text-xl font-bold text-white mb-3">
+                            <h2 className="v-heading text-xl font-bold mb-3">
                                 Albums
                             </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
@@ -210,7 +210,7 @@ export default function SearchPage() {
 
                     {results.artists.length > 0 && (
                         <section>
-                            <h2 className="text-xl font-bold text-white mb-3">
+                            <h2 className="v-heading text-xl font-bold mb-3">
                                 Artists
                             </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">

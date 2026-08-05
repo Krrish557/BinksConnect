@@ -36,10 +36,10 @@ export default function FavouriteArtistsPage() {
             <div className="flex items-center gap-4 mb-8">
                 <div className="text-4xl">⭐</div>
                 <div>
-                    <h1 className="text-3xl font-bold text-white">
+                    <h1 className="v-heading text-3xl font-bold">
                         Favourite Artists
                     </h1>
-                    <p className="text-sm text-[#B3B3B3] mt-0.5">
+                    <p className="text-sm text-[#94866B] mt-0.5">
                         {artists.length} artists
                     </p>
                 </div>

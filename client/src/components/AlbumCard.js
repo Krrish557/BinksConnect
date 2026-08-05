@@ -30,12 +30,12 @@ export default function AlbumCard({ album, onClick }) {
     return (
         <div
             onClick={handleClick}
-            className="bg-[#181818] hover:bg-[#282828] transition-colors rounded-xl p-4 cursor-pointer group shrink-0 w-44 relative"
+            className="bg-[#1C2123] hover:bg-[#262B2C] transition-colors rounded-xl p-4 cursor-pointer group shrink-0 w-44 relative"
         >
             <button
                 onClick={handleToggleFavorite}
                 className={`absolute top-5 right-5 z-10 text-lg transition-all opacity-0 group-hover:opacity-100 ${
-                    isFavorited ? "text-[#1db954] opacity-100" : "text-[#B3B3B3] hover:text-white"
+                    isFavorited ? "text-[#A08C55] opacity-100" : "text-[#94866B] hover:text-white"
                 }`}
             >
                 {isFavorited ? "♥" : "♡"}
@@ -51,7 +51,7 @@ export default function AlbumCard({ album, onClick }) {
                         e.stopPropagation();
                         handleClick();
                     }}
-                    className="absolute bottom-5 right-2 bg-[#1db954] text-black w-10 h-10 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200"
+                    className="absolute bottom-5 right-2 bg-[#A08C55] text-[#171B1C] w-10 h-10 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200"
                 >
                     ▶
                 </button>
@@ -60,7 +60,7 @@ export default function AlbumCard({ album, onClick }) {
             <p className="font-semibold truncate text-sm text-white">
                 {album.name}
             </p>
-            <p className="text-xs text-[#B3B3B3] truncate mt-0.5">
+            <p className="text-xs text-[#94866B] truncate mt-0.5">
                 {album.artist}
             </p>
         </div>

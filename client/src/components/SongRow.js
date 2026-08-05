@@ -97,13 +97,13 @@ export default function SongRow({
         <div
             onClick={handleClick}
             className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors relative
-                ${isActive ? "bg-[#1a3a27]" : "hover:bg-[#282828]"}`}
+                ${isActive ? "v-row-active" : "hover:bg-[#262B2C]"}`}
         >
             <div className="w-8 flex justify-center shrink-0">
                 {isActive ? (
                     <NowPlayingBar isPlaying={isPlaying} />
                 ) : showIndex ? (
-                    <span className="text-sm text-[#B3B3B3] group-hover:hidden">
+                    <span className="text-sm text-[#94866B] group-hover:hidden">
                         {index + 1}
                     </span>
                 ) : null}
@@ -117,28 +117,28 @@ export default function SongRow({
             <img
                 src={apiClient.resolveUrl(song.cover)}
                 alt={song.title}
-                className="w-10 h-10 rounded-md object-cover bg-[#282828] shrink-0"
+                className="w-10 h-10 rounded-md object-cover bg-[#262B2C] shrink-0"
             />
 
             <div className="flex flex-col flex-1 overflow-hidden min-w-0">
                 <p
                     className={`font-medium truncate text-sm ${
-                        isActive ? "text-[#1db954]" : "text-white"
+                        isActive ? "text-[#A08C55]" : "text-white"
                     }`}
                 >
                     {song.title}
                 </p>
-                <p className="text-xs text-[#B3B3B3] truncate">{song.artist}</p>
+                <p className="text-xs text-[#94866B] truncate">{song.artist}</p>
             </div>
 
             {showAlbum && (
-                <p className="hidden md:block text-xs text-[#B3B3B3] truncate w-40 shrink-0">
+                <p className="hidden md:block text-xs text-[#94866B] truncate w-40 shrink-0">
                     {song.album}
                 </p>
             )}
 
             <div className="flex items-center gap-3 shrink-0 ml-2">
-                <span className="text-xs text-[#B3B3B3]">
+                <span className="text-xs text-[#94866B]">
                     {formatTime(song.duration)}
                 </span>
 
@@ -149,18 +149,18 @@ export default function SongRow({
                                 e.stopPropagation();
                                 setMenuOpen((v) => !v);
                             }}
-                            className="opacity-0 group-hover:opacity-100 text-[#B3B3B3] hover:text-white text-lg leading-none px-1"
+                            className="opacity-0 group-hover:opacity-100 text-[#94866B] hover:text-white text-lg leading-none px-1"
                         >
                             ⋯
                         </button>
 
                         {menuOpen && (
-                            <div className="absolute right-0 bottom-full mb-1 w-48 bg-[#282828] rounded-lg shadow-xl z-50 py-1">
+                            <div className="absolute right-0 bottom-full mb-1 w-48 bg-[#262B2C] rounded-lg shadow-xl z-50 py-1">
                                 <button
                                     onClick={handleToggleFavorite}
-                                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition flex items-center gap-2"
+                                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2E3435] transition flex items-center gap-2"
                                 >
-                                    <span className={isFavorited ? "text-[#1db954]" : ""}>
+                                    <span className={isFavorited ? "text-[#A08C55]" : ""}>
                                         {isFavorited ? "♥" : "♡"}
                                     </span>
                                     {isFavorited ? "Remove from favorites" : "Add to favorites"}
@@ -168,24 +168,24 @@ export default function SongRow({
 
                                 <button
                                     onClick={handlePlayNext}
-                                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2E3435] transition"
                                 >
                                     Play Next
                                 </button>
 
                                 <button
                                     onClick={handleAddToQueue}
-                                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2E3435] transition"
                                 >
                                     Add to Queue
                                 </button>
 
-                                <div className="border-t border-white/10 my-1" />
+                                <div className="border-t border-[#D8C8A0]/18 my-1" />
 
                                 {song.albumId && (
                                     <button
                                         onClick={handleGoToAlbum}
-                                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2E3435] transition"
                                     >
                                         Go to Album
                                     </button>
@@ -194,7 +194,7 @@ export default function SongRow({
                                 {song.artistId && (
                                     <button
                                         onClick={handleGoToArtist}
-                                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2E3435] transition"
                                     >
                                         Go to Artist
                                     </button>
@@ -202,8 +202,8 @@ export default function SongRow({
 
                                 {playlists.length > 0 && (
                                     <>
-                                        <div className="border-t border-white/10 my-1" />
-                                        <p className="text-xs text-[#B3B3B3] px-3 py-1">
+                                        <div className="border-t border-[#D8C8A0]/18 my-1" />
+                                        <p className="text-xs text-[#94866B] px-3 py-1">
                                             Add to playlist
                                         </p>
                                         {playlists.map((p) => (
@@ -212,7 +212,7 @@ export default function SongRow({
                                                 onClick={(e) =>
                                                     handleAddToPlaylist(e, p.id)
                                                 }
-                                                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2E3435] transition"
                                             >
                                                 {p.name}
                                             </button>

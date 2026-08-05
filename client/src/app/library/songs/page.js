@@ -65,11 +65,11 @@ export default function SongsPage() {
         <main className="px-4 sm:px-6 pt-6 sm:pt-8 pb-24 sm:pb-10">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">All Songs</h1>
-                    <p className="text-xs text-[#B3B3B3] mt-0.5">Your complete track library</p>
+                    <h1 className="v-heading text-2xl sm:text-3xl font-black tracking-tight">All Songs</h1>
+                    <p className="text-xs text-[#94866B] mt-0.5">Your complete track library</p>
                 </div>
                 {songs.length > 0 && (
-                    <span className="text-xs font-semibold bg-[#282828] text-[#B3B3B3] px-3 py-1 rounded-full border border-white/5">
+                    <span className="text-xs font-semibold bg-[#262B2C] text-[#94866B] px-3 py-1 rounded-full border border-[#D8C8A0]/10">
                         {songs.length} songs
                     </span>
                 )}
@@ -99,7 +99,7 @@ export default function SongsPage() {
             <div ref={loaderRef} className="h-16 flex items-center justify-center mt-2">
                 {loading && songs.length > 0 && <LoadingState message="Loading more songs..." />}
                 {!hasMore && songs.length > 0 && (
-                    <p className="text-xs text-[#B3B3B3]">
+                    <p className="text-xs text-[#94866B]">
                         All {songs.length} songs loaded
                     </p>
                 )}

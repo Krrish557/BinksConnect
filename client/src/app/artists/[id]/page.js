@@ -60,11 +60,11 @@ export default function ArtistPage() {
             <div
                 className="px-6 pt-10 pb-6"
                 style={{
-                    background: "linear-gradient(180deg, #1a2a4a 0%, #121212 100%)",
+                    background: "linear-gradient(180deg, #1E3558 0%, #1A1F22 100%)",
                 }}
             >
                 <div className="flex flex-col md:flex-row gap-6 items-end">
-                    <div className="w-40 h-40 rounded-full bg-[#282828] flex items-center justify-center text-6xl shrink-0 overflow-hidden shadow-2xl">
+                    <div className="w-40 h-40 rounded-full bg-[#262B2C] flex items-center justify-center text-6xl shrink-0 overflow-hidden shadow-2xl">
                         {artist.coverArt ? (
                             <img
                                 src={apiClient.resolveUrl(artist.coverArt)}
@@ -76,13 +76,13 @@ export default function ArtistPage() {
                         )}
                     </div>
                     <div>
-                        <p className="text-xs font-bold uppercase text-[#B3B3B3] mb-1">
+                        <p className="text-xs font-bold uppercase text-[#94866B] mb-1">
                             Artist
                         </p>
-                        <h1 className="text-4xl md:text-5xl font-black text-white leading-tight">
+                        <h1 className="v-heading text-4xl md:text-5xl font-black leading-tight">
                             {artist.name}
                         </h1>
-                        <p className="text-[#B3B3B3] text-sm mt-2">
+                        <p className="text-[#94866B] text-sm mt-2">
                             {artist.albumCount} albums
                             {hasFeaturedTracks && ` · ${artist.featuredTracks.length} featured tracks`}
                         </p>
@@ -94,7 +94,7 @@ export default function ArtistPage() {
                 <div className="px-6 py-4">
                     <button
                         onClick={() => setQueue(topSongs, 0)}
-                        className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-8 py-3 rounded-full transition-colors"
+                        className="bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] font-bold px-8 py-3 rounded-full transition-colors"
                     >
                         ▶ Play
                     </button>
@@ -103,7 +103,7 @@ export default function ArtistPage() {
 
             {topSongs.length > 0 && (
                 <section className="px-3 mb-8">
-                    <h2 className="text-xl font-bold text-white px-3 mb-3">
+                    <h2 className="v-heading text-xl font-bold px-3 mb-3">
                         Popular
                     </h2>
                     <div className="space-y-1">
@@ -135,7 +135,7 @@ export default function ArtistPage() {
 
             {hasFeaturedTracks && (
                 <section className="px-3 mt-8">
-                    <h2 className="text-xl font-bold text-white px-3 mb-3">
+                    <h2 className="v-heading text-xl font-bold px-3 mb-3">
                         Appears On
                     </h2>
                     <div className="space-y-1">

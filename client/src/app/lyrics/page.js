@@ -53,7 +53,7 @@ export default function LyricsPage() {
                     style={{ backgroundImage: `url(${coverUrl})` }}
                 />
             ) : (
-                <div className="absolute inset-0 bg-gradient-to-b from-[#1a3a27] to-[#0a0a0a] opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#1E3558] to-[#101416] opacity-60" />
             )}
             <div className="absolute inset-0 bg-black/60" />
 
@@ -63,12 +63,12 @@ export default function LyricsPage() {
                 <div className="flex items-center justify-between mb-8 shrink-0">
                     <button
                         onClick={() => router.back()}
-                        className="text-[#B3B3B3] hover:text-white transition-colors text-sm flex items-center gap-2"
+                        className="text-[#94866B] hover:text-white transition-colors text-sm flex items-center gap-2"
                     >
                         <span className="text-lg">←</span>
                         <span className="hidden sm:inline">Back</span>
                     </button>
-                    <h1 className="text-[#B3B3B3] text-sm font-medium uppercase tracking-wider">
+                    <h1 className="text-[#94866B] text-sm font-medium uppercase tracking-wider">
                         Lyrics
                     </h1>
                     <div className="w-16" />
@@ -85,10 +85,10 @@ export default function LyricsPage() {
                             />
                         )}
                         <div className="overflow-hidden">
-                            <h2 className="text-white text-xl md:text-2xl font-bold truncate">
+                            <h2 className="v-heading text-xl md:text-2xl font-bold truncate">
                                 {currentTrack.title}
                             </h2>
-                            <p className="text-[#B3B3B3] text-sm md:text-base truncate">
+                            <p className="text-[#94866B] text-sm md:text-base truncate">
                                 {currentTrack.artist}
                             </p>
                         </div>
@@ -100,7 +100,7 @@ export default function LyricsPage() {
                     {!currentTrack ? (
                         <div className="flex items-center justify-center h-full">
                             <div className="text-center">
-                                <p className="text-[#B3B3B3] text-lg mb-2">
+                                <p className="text-[#94866B] text-lg mb-2">
                                     No track playing
                                 </p>
                                 <p className="text-[#737373] text-sm">

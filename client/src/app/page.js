@@ -96,24 +96,24 @@ export default function HomePage() {
                     height={1024}
                     className="w-10 h-10 rounded-xl object-cover shrink-0"
                 />
-                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                <h1 className="v-heading text-xl sm:text-2xl font-extrabold tracking-tight">
                     BinksConnect
                 </h1>
             </header>
 
             {/* SHUFFLE RECOMMENDATION HERO */}
-            <section className="mb-10 bg-gradient-to-r from-emerald-950/70 via-stone-900/90 to-indigo-950/70 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-md relative overflow-hidden shadow-2xl">
-                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-[#1db954]/10 rounded-full blur-3xl pointer-events-none" />
+            <section className="mb-10 bg-gradient-to-r from-[#1E3558]/80 via-[#232829]/95 to-[#3A3220]/80 border border-[#D8C8A0]/18 rounded-2xl p-6 sm:p-8 backdrop-blur-md relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-[#A08C55]/10 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <div className="space-y-2 max-w-xl">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1db954]/15 border border-[#1db954]/30 text-[#1db954] text-xs font-semibold uppercase tracking-wider">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#A08C55]/15 border border-[#A08C55]/30 text-[#A08C55] text-xs font-semibold uppercase tracking-wider">
                             <span>🔀 Quick Mix</span>
                         </div>
-                        <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                        <h2 className="v-heading text-2xl sm:text-3xl font-extrabold tracking-tight">
                             Shuffle Recommendations
                         </h2>
-                        <p className="text-sm text-[#B3B3B3]">
+                        <p className="text-sm text-[#94866B]">
                             Discover an instant, randomized mix of tracks recommended directly from your library.
                         </p>
                     </div>
@@ -122,7 +122,7 @@ export default function HomePage() {
                         <button
                             onClick={handleShuffleRecommendation}
                             disabled={randomSongs.length === 0}
-                            className="bg-[#1db954] hover:bg-[#1ed760] disabled:opacity-50 text-black font-bold px-6 py-3 rounded-full flex items-center gap-2.5 shadow-lg hover:scale-105 transition-all cursor-pointer"
+                            className="bg-[#A08C55] hover:bg-[#C0A871] disabled:opacity-50 text-[#171B1C] font-bold px-6 py-3 rounded-full flex items-center gap-2.5 shadow-lg hover:scale-105 transition-all cursor-pointer"
                         >
                             <span className="text-lg">🔀</span>
                             <span>Shuffle & Play</span>
@@ -130,7 +130,7 @@ export default function HomePage() {
                         <button
                             onClick={handleRefreshRecommendations}
                             disabled={refreshingRecs}
-                            className="bg-white/10 hover:bg-white/20 text-white font-semibold px-4 py-3 rounded-full flex items-center gap-2 border border-white/10 transition-all cursor-pointer"
+                            className="bg-[#D8C8A0]/12 hover:bg-[#D8C8A0]/20 text-white font-semibold px-4 py-3 rounded-full flex items-center gap-2 border border-[#D8C8A0]/18 transition-all cursor-pointer"
                             title="Get new recommendations"
                         >
                             <span className={`text-sm ${refreshingRecs ? "animate-spin" : ""}`}>🔄</span>
@@ -140,8 +140,8 @@ export default function HomePage() {
                 </div>
 
                 {randomSongs.length > 0 && (
-                    <div className="mt-6 pt-6 border-t border-white/10 flex items-center gap-3 overflow-x-auto scrollbar-hide">
-                        <span className="text-xs font-semibold text-[#B3B3B3] uppercase tracking-wider shrink-0 mr-2">
+                    <div className="mt-6 pt-6 border-t border-[#D8C8A0]/18 flex items-center gap-3 overflow-x-auto scrollbar-hide">
+                        <span className="text-xs font-semibold text-[#94866B] uppercase tracking-wider shrink-0 mr-2">
                             Includes:
                         </span>
                         {randomSongs.slice(0, 6).map((song, i) => (
@@ -152,7 +152,7 @@ export default function HomePage() {
                                     setShuffle(true);
                                     setQueue(shuffled, 0);
                                 }}
-                                className="flex items-center gap-2 bg-black/40 hover:bg-black/70 border border-white/5 hover:border-white/20 rounded-lg px-2.5 py-1.5 shrink-0 transition cursor-pointer group"
+                                className="flex items-center gap-2 bg-black/40 hover:bg-black/70 border border-[#D8C8A0]/10 hover:border-[#D8C8A0]/30 rounded-lg px-2.5 py-1.5 shrink-0 transition cursor-pointer group"
                             >
                                 <img
                                     src={apiClient.resolveUrl(song.cover)}
@@ -170,7 +170,7 @@ export default function HomePage() {
 
             {recentlyPlayed.length > 0 && (
                 <section className="mb-10">
-                    <h2 className="text-xl font-bold text-white mb-4">
+                    <h2 className="v-heading text-xl font-bold mb-4">
                         Recently Played
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -180,7 +180,7 @@ export default function HomePage() {
                                 onClick={() => {
                                     setQueue(recentlyPlayed, i);
                                 }}
-                                className="flex items-center gap-3 bg-[#282828] hover:bg-[#383838] rounded-lg overflow-hidden transition-colors group"
+                                className="flex items-center gap-3 bg-[#262B2C] hover:bg-[#2E3435] rounded-lg overflow-hidden transition-colors group"
                             >
                                 <img
                                     src={apiClient.resolveUrl(track.cover)}
@@ -199,20 +199,20 @@ export default function HomePage() {
             {randomSongs.length > 0 && (
                 <section className="mb-10">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold text-white">
+                        <h2 className="v-heading text-xl font-bold">
                             Recommended For You
                         </h2>
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={handleShuffleRecommendation}
-                                className="text-xs bg-[#282828] hover:bg-[#383838] text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 transition font-semibold"
+                                className="text-xs bg-[#262B2C] hover:bg-[#2E3435] text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 transition font-semibold"
                             >
                                 <span>🔀</span> Shuffle Play
                             </button>
                             <button
                                 onClick={handleRefreshRecommendations}
                                 disabled={refreshingRecs}
-                                className="text-xs bg-[#282828] hover:bg-[#383838] text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 transition font-semibold"
+                                className="text-xs bg-[#262B2C] hover:bg-[#2E3435] text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 transition font-semibold"
                             >
                                 <span className={refreshingRecs ? "animate-spin" : ""}>🔄</span> Refresh
                             </button>

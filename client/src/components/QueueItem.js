@@ -76,14 +76,14 @@ export default function QueueItem({ track, isActive, index, onClick }) {
             style={style}
             onClick={onClick}
             className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors group ${
-                isActive ? "bg-[#1a3a27]" : "hover:bg-[#1f1f1f]"
+                isActive ? "v-row-active" : "hover:bg-[#202527]"
             }`}
         >
             {/* DRAG HANDLE */}
             <div
                 {...attributes}
                 {...listeners}
-                className="shrink-0 text-[#B3B3B3] hover:text-white cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity text-xs select-none px-1"
+                className="shrink-0 text-[#94866B] hover:text-white cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity text-xs select-none px-1"
                 onClick={(e) => e.stopPropagation()}
             >
                 ⠿
@@ -100,12 +100,12 @@ export default function QueueItem({ track, isActive, index, onClick }) {
             <div className="flex flex-col flex-1 overflow-hidden">
                 <p
                     className={`truncate text-sm ${
-                        isActive ? "text-[#1db954]" : "text-white"
+                        isActive ? "text-[#A08C55]" : "text-white"
                     }`}
                 >
                     {track.title}
                 </p>
-                <p className="text-xs text-[#B3B3B3] truncate">{track.artist}</p>
+                <p className="text-xs text-[#94866B] truncate">{track.artist}</p>
             </div>
 
             {/* CONTEXT MENU */}
@@ -115,30 +115,30 @@ export default function QueueItem({ track, isActive, index, onClick }) {
                         e.stopPropagation();
                         setMenuOpen((v) => !v);
                     }}
-                    className="opacity-0 group-hover:opacity-100 text-[#B3B3B3] hover:text-white text-lg leading-none px-1"
+                    className="opacity-0 group-hover:opacity-100 text-[#94866B] hover:text-white text-lg leading-none px-1"
                 >
                     ⋯
                 </button>
 
                 {menuOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-44 bg-[#282828] rounded-lg shadow-xl z-50 py-1">
+                    <div className="absolute right-0 top-full mt-1 w-44 bg-[#262B2C] rounded-lg shadow-xl z-50 py-1">
                         <button
                             onClick={handlePlayNext}
-                            className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                            className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2E3435] transition"
                         >
                             Play Next
                         </button>
                         <button
                             onClick={handleRemove}
-                            className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                            className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2E3435] transition"
                         >
                             Remove from Queue
                         </button>
-                        <div className="border-t border-white/10 my-1" />
+                        <div className="border-t border-[#D8C8A0]/18 my-1" />
                         {track.albumId && (
                             <button
                                 onClick={handleGoToAlbum}
-                                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2E3435] transition"
                             >
                                 Go to Album
                             </button>
@@ -146,7 +146,7 @@ export default function QueueItem({ track, isActive, index, onClick }) {
                         {track.artistId && (
                             <button
                                 onClick={handleGoToArtist}
-                                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#383838] transition"
+                                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2E3435] transition"
                             >
                                 Go to Artist
                             </button>
@@ -160,7 +160,7 @@ export default function QueueItem({ track, isActive, index, onClick }) {
                 {isActive ? (
                     <NowPlayingBar isPlaying={isPlaying} />
                 ) : (
-                    <span className="text-xs text-[#B3B3B3]">{index + 1}</span>
+                    <span className="text-xs text-[#94866B]">{index + 1}</span>
                 )}
             </div>
         </div>

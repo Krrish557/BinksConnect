@@ -29,17 +29,17 @@ export default function ArtistCard({ artist }) {
     return (
         <div
             onClick={() => router.push(`/artists/${artist.id}`)}
-            className="flex flex-col items-center cursor-pointer group shrink-0 w-36 p-3 rounded-xl hover:bg-[#282828] transition-colors relative"
+            className="flex flex-col items-center cursor-pointer group shrink-0 w-36 p-3 rounded-xl hover:bg-[#262B2C] transition-colors relative"
         >
             <button
                 onClick={handleToggleFavorite}
                 className={`absolute top-2 right-2 z-10 text-lg transition-all opacity-0 group-hover:opacity-100 ${
-                    isFavorited ? "text-[#1db954] opacity-100" : "text-[#B3B3B3] hover:text-white"
+                    isFavorited ? "text-[#A08C55] opacity-100" : "text-[#94866B] hover:text-white"
                 }`}
             >
                 {isFavorited ? "♥" : "♡"}
             </button>
-            <div className="w-28 h-28 rounded-full overflow-hidden bg-[#282828] mb-3 shadow-lg">
+            <div className="w-28 h-28 rounded-full overflow-hidden bg-[#262B2C] mb-3 shadow-lg">
                 {coverUrl ? (
                     <img
                         src={coverUrl}
@@ -55,7 +55,7 @@ export default function ArtistCard({ artist }) {
             <p className="font-semibold text-sm text-white text-center truncate w-full">
                 {artist.name}
             </p>
-            <p className="text-xs text-[#B3B3B3] mt-0.5">Artist</p>
+            <p className="text-xs text-[#94866B] mt-0.5">Artist</p>
         </div>
     );
 }

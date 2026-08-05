@@ -47,7 +47,7 @@ export default function SyncedLyrics({ lyrics, currentTime }) {
 
     if (lyrics?.instrumental) {
         return (
-            <div className="flex items-center justify-center h-full text-[#B3B3B3] text-lg italic">
+            <div className="flex items-center justify-center h-full text-[#94866B] text-lg italic">
                 This track is instrumental
             </div>
         );
@@ -55,7 +55,7 @@ export default function SyncedLyrics({ lyrics, currentTime }) {
 
     if (!lyrics || lines.length === 0) {
         return (
-            <div className="flex items-center justify-center h-full text-[#B3B3B3] text-lg">
+            <div className="flex items-center justify-center h-full text-[#94866B] text-lg">
                 No lyrics available for this track
             </div>
         );

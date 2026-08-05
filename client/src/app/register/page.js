@@ -139,7 +139,7 @@ export default function RegisterPage() {
                     </div>
 
                     {error && (
-                        <p className="text-sm text-red-300 bg-red-950/50 border border-red-500/30 rounded-lg px-4 py-3">
+                        <p className="text-sm text-[#E7B59C] bg-[#3a2220]/70 border border-red-500/30 rounded-lg px-4 py-3">
                             {error}
                         </p>
                     )}
@@ -175,7 +175,7 @@ export default function RegisterPage() {
                     </div>
 
                     {error && (
-                        <p className="text-sm text-red-300 bg-red-950/50 border border-red-500/30 rounded-lg px-4 py-3">
+                        <p className="text-sm text-[#E7B59C] bg-[#3a2220]/70 border border-red-500/30 rounded-lg px-4 py-3">
                             {error}
                         </p>
                     )}

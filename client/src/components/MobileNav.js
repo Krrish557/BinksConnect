@@ -18,7 +18,7 @@ export default function MobileNav() {
     const navItems = NAV;
 
     return (
-        <nav className="md:hidden shrink-0 bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-white/10 sticky bottom-0 z-40 safe-area-pb">
+        <nav className="md:hidden shrink-0 bg-[#101416]/95 backdrop-blur-xl border-t border-[#D8C8A0]/18 sticky bottom-0 z-40 safe-area-pb">
             <div className="flex justify-around items-center h-16 px-1">
                 {navItems.map((item) => {
                     const isActive =
@@ -32,8 +32,8 @@ export default function MobileNav() {
                             onClick={() => router.push(item.path)}
                             className={`flex flex-col items-center justify-center gap-1 text-[11px] px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer active:scale-95 ${
                                 isActive
-                                    ? "text-[#1db954] font-bold bg-[#1db954]/10 border border-[#1db954]/20"
-                                    : "text-[#B3B3B3] hover:text-white"
+                                    ? "text-[#A08C55] font-bold bg-[#A08C55]/10 border border-[#A08C55]/20"
+                                    : "text-[#94866B] hover:text-white"
                             }`}
                         >
                             <span className="text-lg leading-none">{item.icon}</span>

@@ -38,8 +38,8 @@ export default function AppLayout({ children }) {
 
     if (isInitializing) {
         return (
-            <div className="h-screen w-full bg-[#121212] text-white flex items-center justify-center">
-                <p className="text-sm text-[#B3B3B3]">Loading...</p>
+            <div className="h-screen w-full bg-[#1A1F22] text-white flex items-center justify-center">
+                <p className="text-sm text-[#94866B]">Loading...</p>
             </div>
         );
     }
@@ -49,23 +49,30 @@ export default function AppLayout({ children }) {
     }
 
     return (
-        <div className="h-screen w-full bg-[#0a0a0a] text-white flex flex-col overflow-hidden">
+        <div className="h-screen w-full text-white flex flex-col overflow-hidden relative premium-bg-paper">
+
+            {/* Vintage backdrop layers (pure CSS, no layout impact) */}
+            <div className="absolute inset-0 pointer-events-none z-0">
+                <div className="noise-layer absolute inset-0 opacity-[0.045] mix-blend-overlay" />
+                <div className="light-sweep absolute inset-0" />
+                <div className="vignette absolute inset-0" />
+            </div>
 
             {/* MAIN AREA — flex row fills remaining vertical space */}
-            <div className="flex flex-1 min-h-0 gap-0">
+            <div className="relative z-10 flex flex-1 min-h-0 gap-0">
 
                 {/* DESKTOP SIDEBAR */}
                 <Sidebar />
 
                 {/* CONTENT — fills remaining width, scrolls independently with floating rounded container */}
-                <main className="flex-1 overflow-y-auto min-w-0 m-0 md:m-2 md:ml-0 bg-[#121212] md:rounded-2xl border-0 md:border md:border-white/5 shadow-2xl">
+                <main className="flex-1 overflow-y-auto min-w-0 m-0 md:m-2 md:ml-0 bg-[#1A1F22]/80 md:rounded-2xl border-0 md:border md:border-[#D8C8A0]/15 shadow-2xl">
                     {children}
                 </main>
             </div>
 
             {/* BOTTOM PLAYER — participates in flex layout, occupies real height */}
             <div
-                className={`shrink-0 bg-[#181818]/95 backdrop-blur-2xl border-t border-white/10 transition-all z-30
+                className={`relative z-10 shrink-0 bg-[#1C2123]/95 backdrop-blur-2xl border-t border-[#D8C8A0]/18 transition-all
                     ${currentTrack ? "h-20 md:h-24" : "h-12 md:h-14"}`}
             >
                 <BottomPlayer />

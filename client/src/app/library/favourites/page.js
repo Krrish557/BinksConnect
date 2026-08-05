@@ -38,8 +38,8 @@ export default function FavouriteSongsPage() {
             <div className="flex items-center gap-4 mb-6">
                 <div className="text-4xl">❤️</div>
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Liked Songs</h1>
-                    <p className="text-sm text-[#B3B3B3] mt-0.5">
+                    <h1 className="v-heading text-3xl font-bold">Liked Songs</h1>
+                    <p className="text-sm text-[#94866B] mt-0.5">
                         {songs.length} songs
                     </p>
                 </div>
@@ -48,7 +48,7 @@ export default function FavouriteSongsPage() {
             {songs.length > 0 && (
                 <button
                     onClick={() => setQueue(songs, 0)}
-                    className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-8 py-3 rounded-full transition-colors mb-6 flex items-center gap-2"
+                    className="bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] font-bold px-8 py-3 rounded-full transition-colors mb-6 flex items-center gap-2"
                 >
                     ▶ Play All
                 </button>

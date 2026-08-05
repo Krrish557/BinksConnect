@@ -139,25 +139,25 @@ export default function FullPlayer() {
     return (
         <div
             ref={containerRef}
-            className="fixed inset-0 z-[200] flex flex-col"
+            className="fixed inset-0 z-[200] flex flex-col premium-bg-paper"
             style={{
-                background: "linear-gradient(180deg, #1a1a2e 0%, #111 60%)",
+                background: "linear-gradient(180deg, #1E3558 0%, #1A1F22 60%, #101416 100%)",
             }}
         >
             {/* DRAG HANDLE (mobile) */}
             <div className="flex justify-center pt-3 pb-1 md:hidden">
-                <div className="w-10 h-1 bg-white/20 rounded-full" />
+                <div className="w-10 h-1 bg-[#D8C8A0]/18 rounded-full" />
             </div>
 
             {/* HEADER */}
             <div className="flex items-center justify-between px-6 py-4">
                 <button
                     onClick={closePlayer}
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition text-white text-lg"
+                    className="w-9 h-9 flex items-center justify-center rounded-full bg-[#D8C8A0]/12 hover:bg-[#D8C8A0]/20 transition text-white text-lg"
                 >
                     ↓
                 </button>
-                <p className="text-xs font-semibold uppercase tracking-widest text-[#B3B3B3]">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#94866B]">
                     Now Playing
                 </p>
                 <div className="w-9" />
@@ -185,14 +185,14 @@ export default function FullPlayer() {
                         <h2 className="text-2xl font-bold text-white truncate">
                             {currentTrack.title}
                         </h2>
-                        <p className="text-[#B3B3B3] mt-1 truncate">
+                        <p className="text-[#94866B] mt-1 truncate">
                             {currentTrack.artist}
                         </p>
                     </div>
                     <button
                         onClick={handleToggleFavorite}
                         className={`ml-4 text-2xl transition-colors ${
-                            isFavorited ? "text-[#1db954]" : "text-[#B3B3B3] hover:text-white"
+                            isFavorited ? "text-[#A08C55]" : "text-[#94866B] hover:text-white"
                         }`}
                     >
                         {isFavorited ? "♥" : "♡"}
@@ -202,13 +202,13 @@ export default function FullPlayer() {
                 {/* SEEK BAR */}
                 <div className="mb-5">
                     <div className="relative h-1.5 group/seek cursor-pointer">
-                        <div className="w-full h-1.5 bg-white/10 rounded-full">
+                        <div className="w-full h-1.5 bg-[#D8C8A0]/12 rounded-full">
                             <div
-                                className="absolute top-0 left-0 h-1.5 bg-white/20 rounded-full pointer-events-none"
+                                className="absolute top-0 left-0 h-1.5 bg-[#D8C8A0]/18 rounded-full pointer-events-none"
                                 style={{ width: `${bufferProgress}%` }}
                             />
                             <div
-                                className="h-1.5 bg-[#1db954] rounded-full relative"
+                                className="h-1.5 bg-[#A08C55] rounded-full relative"
                                 style={{ width: `${progress}%` }}
                             >
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow opacity-0 group-hover/seek:opacity-100 transition-opacity" />
@@ -223,11 +223,11 @@ export default function FullPlayer() {
                             className="absolute inset-0 w-full opacity-0 cursor-pointer"
                         />
                     </div>
-                    <div className="flex justify-between mt-1.5 text-xs text-[#B3B3B3]">
+                    <div className="flex justify-between mt-1.5 text-xs text-[#94866B]">
                         <span>{formatTime(currentTime)}</span>
                         <div className="flex items-center gap-2">
                             {nextTrackId && nextTrackProgress < 100 && (
-                                <span className="text-[10px] text-[#B3B3B3]/50">
+                                <span className="text-[10px] text-[#94866B]/50">
                                     Next: {Math.round(nextTrackProgress)}%
                                 </span>
                             )}
@@ -241,7 +241,7 @@ export default function FullPlayer() {
                     <button
                         onClick={toggleShuffle}
                         className={`text-xl transition-colors ${
-                            isShuffle ? "text-[#1db954]" : "text-[#B3B3B3] hover:text-white"
+                            isShuffle ? "text-[#A08C55]" : "text-[#94866B] hover:text-white"
                         }`}
                     >
                         ⇄
@@ -249,21 +249,21 @@ export default function FullPlayer() {
 
                     <button
                         onClick={previous}
-                        className="text-[#B3B3B3] hover:text-white transition-colors text-3xl"
+                        className="text-[#94866B] hover:text-white transition-colors text-3xl"
                     >
                         ⏮
                     </button>
 
                     <button
                         onClick={togglePlay}
-                        className="bg-white text-black rounded-full w-16 h-16 flex items-center justify-center text-2xl hover:scale-105 transition-transform shadow-lg"
+                        className="bg-white text-[#171B1C] rounded-full w-16 h-16 flex items-center justify-center text-2xl hover:scale-105 transition-transform shadow-lg"
                     >
                         {isPlaying ? "⏸" : "▶"}
                     </button>
 
                     <button
                         onClick={next}
-                        className="text-[#B3B3B3] hover:text-white transition-colors text-3xl"
+                        className="text-[#94866B] hover:text-white transition-colors text-3xl"
                     >
                         ⏭
                     </button>
@@ -271,7 +271,7 @@ export default function FullPlayer() {
                     <button
                         onClick={toggleRepeat}
                         className={`text-xl transition-colors ${
-                            isRepeat ? "text-[#1db954]" : "text-[#B3B3B3] hover:text-white"
+                            isRepeat ? "text-[#A08C55]" : "text-[#94866B] hover:text-white"
                         }`}
                     >
                         ↺
@@ -280,11 +280,11 @@ export default function FullPlayer() {
 
                 {/* VOLUME */}
                 <div className="flex items-center gap-3 mb-8">
-                    <span className="text-sm text-[#B3B3B3]">🔉</span>
+                    <span className="text-sm text-[#94866B]">🔉</span>
                     <div className="relative flex-1 h-1 group/vol">
-                        <div className="w-full h-1 bg-white/10 rounded-full">
+                        <div className="w-full h-1 bg-[#D8C8A0]/12 rounded-full">
                             <div
-                                className="h-1 bg-[#B3B3B3] rounded-full"
+                                className="h-1 bg-[#94866B] rounded-full"
                                 style={{ width: `${volume * 100}%` }}
                             />
                         </div>
@@ -298,19 +298,19 @@ export default function FullPlayer() {
                             className="absolute inset-0 w-full opacity-0 cursor-pointer"
                         />
                     </div>
-                    <span className="text-sm text-[#B3B3B3]">🔊</span>
+                    <span className="text-sm text-[#94866B]">🔊</span>
                 </div>
 
                 {/* TABS */}
-                <div className="flex gap-4 border-b border-white/10 mb-4">
+                <div className="flex gap-4 border-b border-[#D8C8A0]/18 mb-4">
                     {["queue", "lyrics"].map((t) => (
                         <button
                             key={t}
                             onClick={() => setTab(t)}
                             className={`pb-2 text-sm font-semibold capitalize transition-colors border-b-2 ${
                                 tab === t
-                                    ? "text-white border-[#1db954]"
-                                    : "text-[#B3B3B3] border-transparent hover:text-white"
+                                    ? "text-white border-[#A08C55]"
+                                    : "text-[#94866B] border-transparent hover:text-white"
                             }`}
                         >
                             {t === "queue" ? "Up Next" : "Lyrics"}

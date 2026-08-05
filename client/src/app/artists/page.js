@@ -38,15 +38,15 @@ export default function ArtistsPage() {
         <main className="px-4 sm:px-6 pt-6 sm:pt-8 pb-24 sm:pb-10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Artists</h1>
-                    <p className="text-xs text-[#B3B3B3] mt-0.5">Discover your favorite artists</p>
+                    <h1 className="v-heading text-2xl sm:text-3xl font-black tracking-tight">Artists</h1>
+                    <p className="text-xs text-[#94866B] mt-0.5">Discover your favorite artists</p>
                 </div>
                 <input
                     type="text"
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
                     placeholder="Search artists..."
-                    className="bg-[#242424] text-white px-4 py-2.5 rounded-full text-xs sm:text-sm outline-none focus:ring-2 focus:ring-[#1db954] transition w-full sm:w-64 border border-white/5"
+                    className="bg-[#232829] text-white px-4 py-2.5 rounded-full text-xs sm:text-sm outline-none focus:ring-2 focus:ring-[#A08C55] transition w-full sm:w-64 border border-[#D8C8A0]/10"
                 />
             </div>
 

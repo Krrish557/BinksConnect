@@ -46,7 +46,7 @@ function SortableTrackRow({ song, index, onPlay, onRemove }) {
                 <div
                     {...attributes}
                     {...listeners}
-                    className="shrink-0 text-[#B3B3B3] hover:text-white cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity text-xs select-none px-2"
+                    className="shrink-0 text-[#94866B] hover:text-white cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity text-xs select-none px-2"
                 >
                     ⠿
                 </div>
@@ -61,7 +61,7 @@ function SortableTrackRow({ song, index, onPlay, onRemove }) {
                 </div>
                 <button
                     onClick={() => onRemove(song.id)}
-                    className="shrink-0 opacity-0 group-hover:opacity-100 text-[#B3B3B3] hover:text-red-400 text-xs px-2 py-1 rounded transition mr-3"
+                    className="shrink-0 opacity-0 group-hover:opacity-100 text-[#94866B] hover:text-[#E7B59C] text-xs px-2 py-1 rounded transition mr-3"
                 >
                     Remove
                 </button>
@@ -180,20 +180,20 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
     const unaddedSimilarCount = similarTracks.filter((s) => !isInPlaylist(s.id)).length;
 
     return (
-        <div className="mt-6 bg-[#181818]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl animate-fade-in">
+        <div className="mt-6 bg-[#1C2123]/90 backdrop-blur-xl border border-[#D8C8A0]/18 rounded-2xl p-6 shadow-2xl animate-fade-in">
             {/* BUILDER HEADER */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#D8C8A0]/10">
                 <div>
                     <div className="flex items-center gap-3">
-                        <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                        <h2 className="v-heading text-2xl font-black flex items-center gap-2">
                             <span>✨ Playlist Builder</span>
                         </h2>
-                        <span className="text-xs bg-[#1db954]/20 text-[#1db954] border border-[#1db954]/30 px-3 py-1 rounded-full font-bold">
+                        <span className="text-xs bg-[#A08C55]/20 text-[#A08C55] border border-[#A08C55]/30 px-3 py-1 rounded-full font-bold">
                             {playlist.tracks.length} {playlist.tracks.length === 1 ? "song" : "songs"} in playlist
                         </span>
                     </div>
-                    <p className="text-xs text-[#B3B3B3] mt-1">
-                        Build your playlist seamlessly. Search or filter below, click <span className="text-[#1db954] font-bold">➕ Add</span>, and recommended similar songs & vibes will pop up instantly!
+                    <p className="text-xs text-[#94866B] mt-1">
+                        Build your playlist seamlessly. Search or filter below, click <span className="text-[#A08C55] font-bold">➕ Add</span>, and recommended similar songs & vibes will pop up instantly!
                     </p>
                 </div>
             </div>
@@ -202,18 +202,18 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
             <div className="space-y-4 mb-6">
                 {/* SEARCH INPUT */}
                 <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-[#B3B3B3]">🔍</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-[#94866B]">🔍</span>
                     <input
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search tracks by title, artist, album or genre..."
-                        className="w-full pl-12 pr-10 py-3.5 bg-[#242424] text-white rounded-xl outline-none focus:ring-2 focus:ring-[#1db954] transition text-sm placeholder-[#7a7a7a]"
+                        className="w-full pl-12 pr-10 py-3.5 bg-[#232829] text-white rounded-xl outline-none focus:ring-2 focus:ring-[#A08C55] transition text-sm placeholder-[#6E6350]"
                     />
                     {query && (
                         <button
                             onClick={() => setQuery("")}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#B3B3B3] hover:text-white"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#94866B] hover:text-white"
                         >
                             ✕
                         </button>
@@ -227,8 +227,8 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                             onClick={() => setActiveTab("all")}
                             className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
                                 activeTab === "all"
-                                    ? "bg-white text-black shadow-md"
-                                    : "bg-[#282828] hover:bg-[#383838] text-[#B3B3B3] hover:text-white"
+                                    ? "bg-white text-[#171B1C] shadow-md"
+                                    : "bg-[#262B2C] hover:bg-[#2E3435] text-[#94866B] hover:text-white"
                             }`}
                         >
                             🔥 All Library ({songs.length})
@@ -237,8 +237,8 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                             onClick={() => setActiveTab("starred")}
                             className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
                                 activeTab === "starred"
-                                    ? "bg-white text-black shadow-md"
-                                    : "bg-[#282828] hover:bg-[#383838] text-[#B3B3B3] hover:text-white"
+                                    ? "bg-white text-[#171B1C] shadow-md"
+                                    : "bg-[#262B2C] hover:bg-[#2E3435] text-[#94866B] hover:text-white"
                             }`}
                         >
                             ⭐ Favorites ({starredSongs.length})
@@ -247,8 +247,8 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                             onClick={() => setActiveTab("random")}
                             className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
                                 activeTab === "random"
-                                    ? "bg-white text-black shadow-md"
-                                    : "bg-[#282828] hover:bg-[#383838] text-[#B3B3B3] hover:text-white"
+                                    ? "bg-white text-[#171B1C] shadow-md"
+                                    : "bg-[#262B2C] hover:bg-[#2E3435] text-[#94866B] hover:text-white"
                             }`}
                         >
                             🔀 Recommended Mix ({randomSongs.length})
@@ -259,17 +259,17 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
 
             {/* SIMILAR SONGS RECOMMENDATION POPUP DOCK */}
             {lastAddedTrack && (
-                <div className="mb-8 bg-gradient-to-r from-emerald-950/70 via-stone-900/95 to-purple-950/70 border border-[#1db954]/50 rounded-2xl p-5 shadow-2xl animate-fade-in relative overflow-hidden">
-                    <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 bg-[#1db954]/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="mb-8 bg-gradient-to-r from-[#1E3558]/80 via-[#232829]/95 to-[#3A3220]/80 border border-[#A08C55]/50 rounded-2xl p-5 shadow-2xl animate-fade-in relative overflow-hidden">
+                    <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 bg-[#A08C55]/10 rounded-full blur-2xl pointer-events-none" />
 
                     <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <div className="flex items-center gap-2.5">
                             <span className="text-lg">⚡</span>
                             <div>
                                 <h3 className="text-sm font-extrabold text-white">
-                                    Recommended Additions (Similar to <span className="text-[#1db954]">&quot;{lastAddedTrack.title}&quot;</span>)
+                                    Recommended Additions (Similar to <span className="text-[#A08C55]">&quot;{lastAddedTrack.title}&quot;</span>)
                                 </h3>
-                                <p className="text-[11px] text-[#B3B3B3]">
+                                <p className="text-[11px] text-[#94866B]">
                                     Handpicked tracks from the same album, same artist, and matching vibes.
                                 </p>
                             </div>
@@ -280,14 +280,14 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                                 <button
                                     onClick={handleAddAllSimilar}
                                     disabled={addingAll}
-                                    className="bg-[#1db954] hover:bg-[#1ed760] text-black text-xs font-extrabold px-3.5 py-1.5 rounded-full shadow-lg transition hover:scale-105 cursor-pointer disabled:opacity-50"
+                                    className="bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] text-xs font-extrabold px-3.5 py-1.5 rounded-full shadow-lg transition hover:scale-105 cursor-pointer disabled:opacity-50"
                                 >
                                     {addingAll ? "Adding..." : `➕ Add All (${unaddedSimilarCount})`}
                                 </button>
                             )}
                             <button
                                 onClick={() => { setLastAddedTrack(null); setSimilarTracks([]); }}
-                                className="text-xs text-[#B3B3B3] hover:text-white px-2 py-1 cursor-pointer"
+                                className="text-xs text-[#94866B] hover:text-white px-2 py-1 cursor-pointer"
                             >
                                 Dismiss
                             </button>
@@ -295,9 +295,9 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                     </div>
 
                     {loadingSimilar ? (
-                        <p className="text-xs text-[#B3B3B3] py-2">Finding similar songs, artists & vibes...</p>
+                        <p className="text-xs text-[#94866B] py-2">Finding similar songs, artists & vibes...</p>
                     ) : similarTracks.length === 0 ? (
-                        <p className="text-xs text-[#B3B3B3] py-2">No additional recommendations found for this track.</p>
+                        <p className="text-xs text-[#94866B] py-2">No additional recommendations found for this track.</p>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 relative z-10">
                             {similarTracks.map((simSong) => {
@@ -307,8 +307,8 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                                         key={`sim-${simSong.id}`}
                                         className={`flex items-center justify-between p-2.5 rounded-xl border transition group ${
                                             added
-                                                ? "bg-[#1a3a27]/60 border-[#1db954]/40"
-                                                : "bg-black/60 hover:bg-black/90 border-white/10"
+                                                ? "bg-[#383120]/60 border-[#A08C55]/40"
+                                                : "bg-black/60 hover:bg-black/90 border-[#D8C8A0]/18"
                                         }`}
                                     >
                                         <div className="flex items-center gap-3 min-w-0 pr-2">
@@ -332,11 +332,11 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                                                     {simSong.title}
                                                 </p>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <p className="text-[11px] text-[#B3B3B3] truncate">
+                                                    <p className="text-[11px] text-[#94866B] truncate">
                                                         {simSong.artist}
                                                     </p>
                                                     {simSong.similarityReason && (
-                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#1db954]/20 text-[#1db954] border border-[#1db954]/30 font-semibold shrink-0">
+                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#A08C55]/20 text-[#A08C55] border border-[#A08C55]/30 font-semibold shrink-0">
                                                             {simSong.similarityReason}
                                                         </span>
                                                     )}
@@ -348,8 +348,8 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                                             onClick={() => handleToggleTrack(simSong)}
                                             className={`shrink-0 px-3 py-1 rounded-full text-xs font-extrabold transition cursor-pointer flex items-center gap-1 ${
                                                 added
-                                                    ? "bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30"
-                                                    : "bg-[#1db954] hover:bg-[#1ed760] text-black shadow-md hover:scale-105"
+                                                    ? "bg-red-500/20 hover:bg-red-500/40 text-[#E0A489] border border-red-500/30"
+                                                    : "bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] shadow-md hover:scale-105"
                                             }`}
                                             title={added ? "Remove from playlist" : "Add to playlist"}
                                         >
@@ -367,18 +367,18 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
             {/* SONG LIST */}
             <div className="space-y-2">
                 <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-extrabold uppercase text-[#B3B3B3] tracking-wider">
+                    <h3 className="text-xs font-extrabold uppercase text-[#94866B] tracking-wider">
                         {query ? `Search Results for "${query}"` : activeTab === "starred" ? "Favorite Songs" : activeTab === "random" ? "Recommended Discovery Mix" : "All Library Songs"}
                     </h3>
-                    <span className="text-xs text-[#B3B3B3]">Showing {displayedSongs.length} tracks</span>
+                    <span className="text-xs text-[#94866B]">Showing {displayedSongs.length} tracks</span>
                 </div>
 
                 {loading ? (
-                    <div className="py-8 text-center text-sm text-[#B3B3B3]">
+                    <div className="py-8 text-center text-sm text-[#94866B]">
                         <p className="animate-pulse">Loading tracks...</p>
                     </div>
                 ) : displayedSongs.length === 0 ? (
-                    <div className="py-8 text-center text-sm text-[#B3B3B3] bg-[#202020] rounded-xl border border-white/5">
+                    <div className="py-8 text-center text-sm text-[#94866B] bg-[#1D2223] rounded-xl border border-[#D8C8A0]/10">
                         <p>No songs found for this selection.</p>
                     </div>
                 ) : (
@@ -389,8 +389,8 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                                 key={song.id}
                                 className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition group ${
                                     added
-                                        ? "bg-[#1a3a27]/50 border-[#1db954]/40 shadow-sm"
-                                        : "bg-[#202020] hover:bg-[#282828] border-white/5"
+                                        ? "bg-[#383120]/50 border-[#A08C55]/40 shadow-sm"
+                                        : "bg-[#1D2223] hover:bg-[#262B2C] border-[#D8C8A0]/10"
                                 }`}
                             >
                                 <div className="flex items-center gap-3.5 min-w-0 pr-4">
@@ -414,12 +414,12 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                                                 {song.title}
                                             </p>
                                             {added && (
-                                                <span className="text-[10px] bg-[#1db954]/20 text-[#1db954] px-1.5 py-0.5 rounded font-bold">
+                                                <span className="text-[10px] bg-[#A08C55]/20 text-[#A08C55] px-1.5 py-0.5 rounded font-bold">
                                                     In Playlist
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-xs text-[#B3B3B3] truncate mt-0.5">
+                                        <p className="text-xs text-[#94866B] truncate mt-0.5">
                                             {song.artist} &bull; {song.album || "Single"}
                                         </p>
                                     </div>
@@ -429,8 +429,8 @@ function PlaylistBuilderPanel({ playlist, onAddTrack, onRemoveTrack }) {
                                     onClick={() => handleToggleTrack(song)}
                                     className={`shrink-0 px-4 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold transition cursor-pointer ${
                                         added
-                                            ? "bg-red-500/15 hover:bg-red-500/30 text-red-400 border border-red-500/30"
-                                            : "bg-[#1db954] hover:bg-[#1ed760] text-black shadow-md hover:scale-105"
+                                            ? "bg-red-500/15 hover:bg-red-500/30 text-[#E0A489] border border-red-500/30"
+                                            : "bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] shadow-md hover:scale-105"
                                     }`}
                                     title={added ? "Remove from playlist" : "Add to playlist"}
                                 >
@@ -513,12 +513,12 @@ export default function PlaylistDetailPage() {
             <div
                 className="pt-10 pb-6 rounded-2xl mb-4 px-6"
                 style={{
-                    background: "linear-gradient(180deg, #2a1a4a 0%, #121212 100%)",
+                    background: "linear-gradient(180deg, #2a1a4a 0%, #1A1F22 100%)",
                 }}
             >
                 <div className="flex flex-col md:flex-row gap-6 items-end">
                     {/* COVER */}
-                    <div className="w-48 h-48 rounded-xl bg-[#282828] flex items-center justify-center shrink-0 overflow-hidden shadow-2xl">
+                    <div className="w-48 h-48 rounded-xl bg-[#262B2C] flex items-center justify-center shrink-0 overflow-hidden shadow-2xl">
                         {playlist.tracks.length > 0 ? (
                             <div className="grid grid-cols-2 w-full h-full">
                                 {playlist.tracks.slice(0, 4).map((t, i) => (
@@ -536,7 +536,7 @@ export default function PlaylistDetailPage() {
                     </div>
 
                     <div>
-                        <p className="text-xs font-bold uppercase text-[#B3B3B3] mb-1">
+                        <p className="text-xs font-bold uppercase text-[#94866B] mb-1">
                             Playlist
                         </p>
 
@@ -550,11 +550,11 @@ export default function PlaylistDetailPage() {
                                         if (e.key === "Enter") handleRename();
                                         if (e.key === "Escape") setEditing(false);
                                     }}
-                                    className="bg-[#383838] text-white px-3 py-1.5 rounded-lg text-2xl font-bold outline-none focus:ring-2 focus:ring-[#1db954]"
+                                    className="bg-[#2E3435] text-white px-3 py-1.5 rounded-lg text-2xl font-bold outline-none focus:ring-2 focus:ring-[#A08C55]"
                                 />
                                 <button
                                     onClick={handleRename}
-                                    className="bg-[#1db954] text-black font-bold px-4 py-1.5 rounded-lg text-sm cursor-pointer"
+                                    className="bg-[#A08C55] text-[#171B1C] font-bold px-4 py-1.5 rounded-lg text-sm cursor-pointer"
                                 >
                                     Save
                                 </button>
@@ -565,14 +565,14 @@ export default function PlaylistDetailPage() {
                                     setNameInput(playlist.name);
                                     setEditing(true);
                                 }}
-                                className="text-4xl md:text-5xl font-black text-white leading-tight mb-2 cursor-pointer hover:opacity-80 transition-opacity"
+                                className="v-heading text-4xl md:text-5xl font-black leading-tight mb-2 cursor-pointer hover:opacity-80 transition-opacity"
                                 title="Click to rename"
                             >
                                 {playlist.name}
                             </h1>
                         )}
 
-                        <p className="text-[#B3B3B3] text-sm">
+                        <p className="text-[#94866B] text-sm">
                             {playlist.tracks.length}{" "}
                             {playlist.tracks.length === 1 ? "song" : "songs"}
                             {totalDuration > 0 && (
@@ -592,7 +592,7 @@ export default function PlaylistDetailPage() {
                 {playlist.tracks.length > 0 && (
                     <button
                         onClick={() => setQueue(playlist.tracks, 0)}
-                        className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-8 py-3 rounded-full transition-colors flex items-center gap-2 cursor-pointer"
+                        className="bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] font-bold px-8 py-3 rounded-full transition-colors flex items-center gap-2 cursor-pointer"
                     >
                         ▶ Play
                     </button>
@@ -601,8 +601,8 @@ export default function PlaylistDetailPage() {
                     onClick={() => setIsBuilding(!isBuilding)}
                     className={`px-5 py-3 rounded-full font-bold text-sm transition-all flex items-center gap-2 cursor-pointer ${
                         isBuilding
-                            ? "bg-[#1db954] text-black shadow-lg"
-                            : "bg-[#282828] hover:bg-[#383838] text-white border border-white/10"
+                            ? "bg-[#A08C55] text-[#171B1C] shadow-lg"
+                            : "bg-[#262B2C] hover:bg-[#2E3435] text-white border border-[#D8C8A0]/18"
                     }`}
                 >
                     <span>✨</span>
@@ -610,7 +610,7 @@ export default function PlaylistDetailPage() {
                 </button>
                 <button
                     onClick={handleDelete}
-                    className="text-[#B3B3B3] hover:text-red-400 font-medium text-sm transition-colors ml-auto cursor-pointer"
+                    className="text-[#94866B] hover:text-[#E7B59C] font-medium text-sm transition-colors ml-auto cursor-pointer"
                 >
                     🗑 Delete playlist
                 </button>
@@ -627,7 +627,7 @@ export default function PlaylistDetailPage() {
 
             {/* SONG LIST */}
             <div className="mt-6">
-                <h2 className="text-xl font-bold text-white mb-4">Playlist Tracks</h2>
+                <h2 className="v-heading text-xl font-bold mb-4">Playlist Tracks</h2>
                 {playlist.tracks.length === 0 ? (
                     <EmptyState
                         icon="🎵"

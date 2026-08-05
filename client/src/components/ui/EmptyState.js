@@ -10,7 +10,7 @@ export default function EmptyState({ icon = "🎵", title, subtitle }) {
                 </h3>
             )}
             {subtitle && (
-                <p className="text-[#B3B3B3] text-sm max-w-xs">{subtitle}</p>
+                <p className="text-[#94866B] text-sm max-w-xs">{subtitle}</p>
             )}
         </div>
     );

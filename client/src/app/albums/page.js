@@ -76,11 +76,11 @@ export default function AlbumsPage() {
         <main className="px-4 sm:px-6 pt-6 sm:pt-8 pb-24 sm:pb-10">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Albums</h1>
-                    <p className="text-xs text-[#B3B3B3] mt-0.5">Explore your music collection by album</p>
+                    <h1 className="v-heading text-2xl sm:text-3xl font-black tracking-tight">Albums</h1>
+                    <p className="text-xs text-[#94866B] mt-0.5">Explore your music collection by album</p>
                 </div>
                 {albums.length > 0 && (
-                    <span className="text-xs font-semibold bg-[#282828] text-[#B3B3B3] px-3 py-1 rounded-full border border-white/5">
+                    <span className="text-xs font-semibold bg-[#262B2C] text-[#94866B] px-3 py-1 rounded-full border border-[#D8C8A0]/10">
                         {albums.length} albums
                     </span>
                 )}

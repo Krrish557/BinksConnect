@@ -97,14 +97,14 @@ export default function KeyboardShortcuts() {
             onClick={() => setShowHelp(false)}
         >
             <div
-                className="bg-[#282828] rounded-2xl p-6 w-80 shadow-2xl"
+                className="bg-[#262B2C] rounded-2xl p-6 w-80 shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-white">Keyboard Shortcuts</h3>
                     <button
                         onClick={() => setShowHelp(false)}
-                        className="text-[#B3B3B3] hover:text-white text-xl"
+                        className="text-[#94866B] hover:text-white text-xl"
                     >
                         ✕
                     </button>
@@ -112,8 +112,8 @@ export default function KeyboardShortcuts() {
                 <div className="space-y-2">
                     {SHORTCUTS.map(({ key, action }) => (
                         <div key={key} className="flex items-center justify-between">
-                            <span className="text-sm text-[#B3B3B3]">{action}</span>
-                            <kbd className="px-2 py-0.5 text-xs font-mono bg-[#1a1a1a] text-white rounded border border-white/10">
+                            <span className="text-sm text-[#94866B]">{action}</span>
+                            <kbd className="px-2 py-0.5 text-xs font-mono bg-[#1a1a1a] text-white rounded border border-[#D8C8A0]/18">
                                 {key}
                             </kbd>
                         </div>

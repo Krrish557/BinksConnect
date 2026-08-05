@@ -52,7 +52,7 @@ export default function BottomPlayer() {
 
     if (!currentTrack) {
         return (
-            <div className="h-full flex items-center justify-center text-[#B3B3B3] text-sm">
+            <div className="h-full flex items-center justify-center text-[#94866B] text-sm">
                 No track selected
             </div>
         );
@@ -70,14 +70,14 @@ export default function BottomPlayer() {
                     className="w-12 h-12 rounded-md object-cover shrink-0 shadow"
                 />
                 <div className="min-w-0 hidden md:block">
-                    <p className="font-semibold text-sm text-white truncate group-hover:text-[#1db954] transition-colors">
+                    <p className="font-semibold text-sm text-white truncate group-hover:text-[#A08C55] transition-colors">
                         {currentTrack.title}
                     </p>
-                    <p className="text-xs text-[#B3B3B3] truncate">
+                    <p className="text-xs text-[#94866B] truncate">
                         {currentTrack.artist}
                     </p>
                     {nextTrackId && nextTrackProgress < 100 && (
-                        <p className="text-[10px] text-[#B3B3B3]/60 truncate mt-0.5">
+                        <p className="text-[10px] text-[#94866B]/60 truncate mt-0.5">
                             Next ready: {Math.round(nextTrackProgress)}%
                         </p>
                     )}
@@ -92,7 +92,7 @@ export default function BottomPlayer() {
                     <button
                         onClick={toggleShuffle}
                         className={`text-base transition-colors hidden md:block cursor-pointer ${
-                            isShuffle ? "text-[#1db954]" : "text-[#B3B3B3] hover:text-white"
+                            isShuffle ? "text-[#A08C55]" : "text-[#94866B] hover:text-white"
                         }`}
                         title="Shuffle"
                     >
@@ -101,21 +101,21 @@ export default function BottomPlayer() {
 
                     <button
                         onClick={previous}
-                        className="text-[#B3B3B3] hover:text-white transition-colors text-base cursor-pointer"
+                        className="text-[#94866B] hover:text-white transition-colors text-base cursor-pointer"
                     >
                         ⏮
                     </button>
 
                     <button
                         onClick={togglePlay}
-                        className="bg-[#1db954] hover:bg-[#1ed760] text-black rounded-full w-10 h-10 flex items-center justify-center hover:scale-105 transition-transform shadow-lg shadow-[#1db954]/20 cursor-pointer font-bold"
+                        className="bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] rounded-full w-10 h-10 flex items-center justify-center hover:scale-105 transition-transform shadow-lg shadow-[#A08C55]/20 cursor-pointer font-bold"
                     >
                         {isPlaying ? "⏸" : "▶"}
                     </button>
 
                     <button
                         onClick={next}
-                        className="text-[#B3B3B3] hover:text-white transition-colors text-base cursor-pointer"
+                        className="text-[#94866B] hover:text-white transition-colors text-base cursor-pointer"
                     >
                         ⏭
                     </button>
@@ -123,7 +123,7 @@ export default function BottomPlayer() {
                     <button
                         onClick={toggleRepeat}
                         className={`text-base transition-colors hidden md:block cursor-pointer ${
-                            isRepeat ? "text-[#1db954]" : "text-[#B3B3B3] hover:text-white"
+                            isRepeat ? "text-[#A08C55]" : "text-[#94866B] hover:text-white"
                         }`}
                         title="Repeat"
                     >
@@ -132,21 +132,21 @@ export default function BottomPlayer() {
                 </div>
 
                 <div className="flex items-center gap-2 w-full max-w-md">
-                    <span className="text-xs text-[#B3B3B3] w-8 text-right shrink-0">
+                    <span className="text-xs text-[#94866B] w-8 text-right shrink-0">
                         {formatTime(currentTime)}
                     </span>
 
                     <div className="relative flex-1 h-1 group/seek">
-                        <div className="w-full h-1 bg-[#383838] rounded-full">
+                        <div className="w-full h-1 bg-[#2E3435] rounded-full">
                             <div
-                                className="h-1 bg-[#1db954] rounded-full relative"
+                                className="h-1 bg-[#A08C55] rounded-full relative"
                                 style={{ width: `${progress}%` }}
                             >
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover/seek:opacity-100 transition-opacity" />
                             </div>
                         </div>
                         <div
-                            className="absolute top-0 left-0 h-1 bg-white/15 rounded-full pointer-events-none"
+                            className="absolute top-0 left-0 h-1 bg-[#D8C8A0]/25 rounded-full pointer-events-none"
                             style={{ width: `${bufferProgress}%` }}
                         />
                         <input
@@ -159,7 +159,7 @@ export default function BottomPlayer() {
                         />
                     </div>
 
-                    <span className="text-xs text-[#B3B3B3] w-8 shrink-0">
+                    <span className="text-xs text-[#94866B] w-8 shrink-0">
                         {formatTime(duration)}
                     </span>
                 </div>
@@ -172,19 +172,19 @@ export default function BottomPlayer() {
                 <button
                     onClick={handleToggleFavorite}
                     className={`text-lg transition-colors ${
-                        isFavorited ? "text-[#1db954]" : "text-[#B3B3B3] hover:text-white"
+                        isFavorited ? "text-[#A08C55]" : "text-[#94866B] hover:text-white"
                     }`}
                     title={isFavorited ? "Remove from favorites" : "Add to favorites"}
                 >
                     {isFavorited ? "♥" : "♡"}
                 </button>
-                <span className="text-sm text-[#B3B3B3]">
+                <span className="text-sm text-[#94866B]">
                     {volume === 0 ? "🔇" : volume < 0.5 ? "🔉" : "🔊"}
                 </span>
                 <div className="relative w-24 h-1 group/vol">
-                    <div className="w-full h-1 bg-[#383838] rounded-full">
+                    <div className="w-full h-1 bg-[#2E3435] rounded-full">
                         <div
-                            className="h-1 bg-[#B3B3B3] group-hover/vol:bg-[#1db954] rounded-full transition-colors"
+                            className="h-1 bg-[#94866B] group-hover/vol:bg-[#A08C55] rounded-full transition-colors"
                             style={{ width: `${volume * 100}%` }}
                         />
                     </div>

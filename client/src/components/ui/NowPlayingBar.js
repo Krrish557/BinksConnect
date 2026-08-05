@@ -10,7 +10,7 @@ export default function NowPlayingBar({ isPlaying = true, className = "" }) {
             {[1, 2, 3].map((i) => (
                 <span
                     key={i}
-                    className="w-[3px] rounded-sm bg-[#1db954]"
+                    className="w-[3px] rounded-sm bg-[#A08C55]"
                     style={{
                         height: isPlaying ? undefined : "4px",
                         animation: isPlaying

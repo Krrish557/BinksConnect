@@ -2,13 +2,13 @@
 
 /* ── CSS Variables ───────────────────────────── */
 :root {
-    --background:      #121212;
-    --card:            #181818;
-    --hover:           #282828;
-    --accent:          #1db954;
-    --accent-hover:    #1ed760;
-    --text-primary:    #ffffff;
-    --text-secondary:  #b3b3b3;
+    --background:      #101416;
+    --card:            #1C2123;
+    --hover:           #262B2C;
+    --accent:          #A08C55;   /* muted brass */
+    --accent-hover:    #C0A871;
+    --text-primary:    #F0E9D8;
+    --text-secondary:  #94866B;
 
     /* ── Vintage Hi-Fi Palette ── */
     --v-ink:            #242A2B;   /* matte charcoal */
@@ -23,6 +23,13 @@
     --v-gold-glow:      rgba(184, 154, 91, 0.35);
     --v-input-bg:       rgba(22, 25, 26, 0.92);
     --v-input-focus:    rgba(26, 30, 31, 0.97);
+
+    /* ── App-wide vintage surfaces ── */
+    --v-panel-bg:        linear-gradient(148deg, #232829 0%, #1D2223 60%, #181C1E 100%);
+    --v-panel-border:    rgba(200, 176, 120, 0.22);
+    --v-panel-highlight: rgba(216, 200, 160, 0.08);
+    --v-row-active:      rgba(160, 140, 85, 0.14);
+    --v-heading-grad:    linear-gradient(135deg, #f7e6bc 0%, #d8b26e 50%, #aa8343 100%);
 }
 
 /* ── Reset ───────────────────────────────────── */
@@ -51,8 +58,8 @@ body {
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #555; }
+::-webkit-scrollbar-thumb { background: #4a4436; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #6a6248; }
 
 /* ── Range inputs ────────────────────────────── */
 input[type="range"] {
@@ -199,6 +206,36 @@ input:-webkit-autofill:active {
 /* ── Safe area insets for Android & iOS ───────────────── */
 .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ═══════════════════════════════════════════════════════
+   APP-WIDE VINTAGE SURFACES
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Warm dark panel with gold hairline border ───────── */
+.v-panel {
+    background: var(--v-panel-bg);
+    border: 1px solid var(--v-panel-border);
+    box-shadow:
+        inset 0 0 0 1px var(--v-panel-highlight),
+        inset 0 1px 18px rgba(0, 0, 0, 0.35),
+        0 12px 34px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Serif gold-gradient heading (page titles/sections) ─ */
+.v-heading {
+    font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+    letter-spacing: 0.01em;
+    background: var(--v-heading-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ── Now-playing / active row tint ────────────────────── */
+.v-row-active {
+    background: var(--v-row-active);
+    box-shadow: inset 3px 0 0 var(--v-gold-soft), 0 0 18px rgba(160, 140, 85, 0.12);
 }
 
 /* ═══════════════════════════════════════════════════════

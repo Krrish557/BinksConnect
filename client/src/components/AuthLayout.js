@@ -7,7 +7,7 @@ import FramedMediaStack from "./theme/FramedMediaStack";
 
 export default function AuthLayout({ children }) {
     return (
-        <main className="min-h-screen h-screen w-full bg-vintage-slate text-[#eae2d0] relative flex flex-col justify-between items-center selection:bg-[#c5a059] selection:text-black overflow-y-auto lg:overflow-hidden">
+        <main className="min-h-screen h-screen w-full bg-vintage-slate text-[#eae2d0] relative flex flex-col justify-between items-center selection:bg-[#c5a059] selection:text-[#171B1C] overflow-y-auto lg:overflow-hidden">
             {/* Background Watermark Pattern (Vinyl & Cassette Line Art) */}
             <div className="absolute inset-0 opacity-[0.07] pointer-events-none mix-blend-overlay">
                 <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">

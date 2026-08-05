@@ -99,19 +99,19 @@ export default function PlaylistsPage() {
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Your Playlists</h1>
-                    <p className="text-xs text-[#B3B3B3] mt-0.5">Manage and build custom music mixes</p>
+                    <h1 className="v-heading text-2xl sm:text-3xl font-black tracking-tight">Your Playlists</h1>
+                    <p className="text-xs text-[#94866B] mt-0.5">Manage and build custom music mixes</p>
                 </div>
                 <div className="flex gap-2">
                     <button
                         onClick={() => { setCreatingSmart(true); setCreating(false); }}
-                        className="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2 rounded-full text-xs sm:text-sm transition-colors cursor-pointer border border-white/10"
+                        className="bg-[#D8C8A0]/12 hover:bg-[#D8C8A0]/20 text-white font-bold px-4 py-2 rounded-full text-xs sm:text-sm transition-colors cursor-pointer border border-[#D8C8A0]/18"
                     >
                         + Smart Playlist
                     </button>
                     <button
                         onClick={() => { setCreating(true); setCreatingSmart(false); }}
-                        className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-4 py-2 rounded-full text-xs sm:text-sm transition-colors cursor-pointer shadow-md"
+                        className="bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] font-bold px-4 py-2 rounded-full text-xs sm:text-sm transition-colors cursor-pointer shadow-md"
                     >
                         + New Playlist
                     </button>
@@ -120,7 +120,7 @@ export default function PlaylistsPage() {
 
             {/* CREATE FORM */}
             {creating && (
-                <div className="bg-[#242424] border border-white/10 rounded-2xl p-5 mb-6 flex gap-3 items-center shadow-xl animate-fade-in">
+                <div className="bg-[#232829] border border-[#D8C8A0]/18 rounded-2xl p-5 mb-6 flex gap-3 items-center shadow-xl animate-fade-in">
                     <input
                         type="text"
                         autoFocus
@@ -131,17 +131,17 @@ export default function PlaylistsPage() {
                             if (e.key === "Escape") setCreating(false);
                         }}
                         placeholder="Playlist name..."
-                        className="flex-1 bg-[#333] text-white px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1db954] transition"
+                        className="flex-1 bg-[#2A2F30] text-white px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#A08C55] transition"
                     />
                     <button
                         onClick={handleCreate}
-                        className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-5 py-2.5 rounded-xl text-sm transition cursor-pointer"
+                        className="bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] font-bold px-5 py-2.5 rounded-xl text-sm transition cursor-pointer"
                     >
                         Create
                     </button>
                     <button
                         onClick={() => setCreating(false)}
-                        className="text-[#B3B3B3] hover:text-white px-3 py-2.5 text-sm transition cursor-pointer"
+                        className="text-[#94866B] hover:text-white px-3 py-2.5 text-sm transition cursor-pointer"
                     >
                         Cancel
                     </button>
@@ -150,7 +150,7 @@ export default function PlaylistsPage() {
 
             {/* SMART PLAYLIST CREATE FORM */}
             {creatingSmart && (
-                <div className="bg-[#242424] border border-white/10 rounded-2xl p-5 mb-6 space-y-3 shadow-xl animate-fade-in">
+                <div className="bg-[#232829] border border-[#D8C8A0]/18 rounded-2xl p-5 mb-6 space-y-3 shadow-xl animate-fade-in">
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                         <input
                             type="text"
@@ -162,12 +162,12 @@ export default function PlaylistsPage() {
                                 if (e.key === "Escape") setCreatingSmart(false);
                             }}
                             placeholder="Smart playlist name..."
-                            className="flex-1 bg-[#333] text-white px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1db954] transition"
+                            className="flex-1 bg-[#2A2F30] text-white px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#A08C55] transition"
                         />
                         <select
                             value={smartType}
                             onChange={(e) => setSmartType(e.target.value)}
-                            className="bg-[#333] text-white px-4 py-2.5 rounded-xl text-sm outline-none border border-white/5"
+                            className="bg-[#2A2F30] text-white px-4 py-2.5 rounded-xl text-sm outline-none border border-[#D8C8A0]/10"
                         >
                             {SMART_PLAYLIST_TYPES.map((t) => (
                                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -176,13 +176,13 @@ export default function PlaylistsPage() {
                         <div className="flex gap-2">
                             <button
                                 onClick={handleCreateSmart}
-                                className="flex-1 sm:flex-none bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-5 py-2.5 rounded-xl text-sm transition cursor-pointer"
+                                className="flex-1 sm:flex-none bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] font-bold px-5 py-2.5 rounded-xl text-sm transition cursor-pointer"
                             >
                                 Create
                             </button>
                             <button
                                 onClick={() => setCreatingSmart(false)}
-                                className="text-[#B3B3B3] hover:text-white px-3 py-2.5 text-sm transition cursor-pointer"
+                                className="text-[#94866B] hover:text-white px-3 py-2.5 text-sm transition cursor-pointer"
                             >
                                 Cancel
                             </button>
@@ -194,32 +194,32 @@ export default function PlaylistsPage() {
             {/* SMART PLAYLISTS */}
             {smartPlaylists.length > 0 && (
                 <section className="mb-8">
-                    <h2 className="text-xl font-bold text-white mb-3">Smart Playlists</h2>
+                    <h2 className="v-heading text-xl font-bold mb-3">Smart Playlists</h2>
                     <div className="space-y-2">
                         {smartPlaylists.map((sp) => (
                             <div key={sp.id}>
                                 <div
                                     onClick={() => handleExpandSmart(sp)}
-                                    className="flex items-center gap-4 p-4 bg-[#181818] hover:bg-[#282828] rounded-xl cursor-pointer transition-colors group border border-white/5"
+                                    className="flex items-center gap-4 p-4 bg-[#1C2123] hover:bg-[#262B2C] rounded-xl cursor-pointer transition-colors group border border-[#D8C8A0]/10"
                                 >
-                                    <div className="w-14 h-14 rounded-lg bg-[#282828] flex items-center justify-center text-2xl shrink-0">
+                                    <div className="w-14 h-14 rounded-lg bg-[#262B2C] flex items-center justify-center text-2xl shrink-0">
                                         ⚡
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="font-semibold text-white truncate">{sp.name}</p>
-                                        <p className="text-xs text-[#B3B3B3] mt-0.5">
+                                        <p className="text-xs text-[#94866B] mt-0.5">
                                             {SMART_PLAYLIST_TYPES.find((t) => t.value === sp.ruleType)?.label || sp.ruleType}
                                         </p>
                                     </div>
                                     <button
                                         onClick={(e) => handleDeleteSmart(e, sp)}
-                                        className="opacity-0 group-hover:opacity-100 text-[#B3B3B3] hover:text-red-400 text-sm px-2 py-1 rounded transition"
+                                        className="opacity-0 group-hover:opacity-100 text-[#94866B] hover:text-[#E7B59C] text-sm px-2 py-1 rounded transition"
                                     >
                                         🗑
                                     </button>
                                 </div>
                                 {expandedSmart === sp.id && smartTracks.length > 0 && (
-                                    <div className="ml-4 mt-1 space-y-1 border-l-2 border-white/10 pl-2">
+                                    <div className="ml-4 mt-1 space-y-1 border-l-2 border-[#D8C8A0]/18 pl-2">
                                         {smartTracks.slice(0, 10).map((track, i) => (
                                             <SongRow
                                                 key={track.id}
@@ -230,14 +230,14 @@ export default function PlaylistsPage() {
                                             />
                                         ))}
                                         {smartTracks.length > 10 && (
-                                            <p className="text-xs text-[#B3B3B3] pl-3 py-1">
+                                            <p className="text-xs text-[#94866B] pl-3 py-1">
                                                 + {smartTracks.length - 10} more songs
                                             </p>
                                         )}
                                     </div>
                                 )}
                                 {expandedSmart === sp.id && smartTracks.length === 0 && (
-                                    <p className="text-sm text-[#B3B3B3] pl-6 py-2">
+                                    <p className="text-sm text-[#94866B] pl-6 py-2">
                                         No tracks match this rule yet
                                     </p>
                                 )}
@@ -259,16 +259,16 @@ export default function PlaylistsPage() {
             {/* LIST */}
             {playlists.length > 0 && (
                 <section>
-                    <h2 className="text-xl font-bold text-white mb-3">Your Playlists</h2>
+                    <h2 className="v-heading text-xl font-bold mb-3">Your Playlists</h2>
                     <div className="space-y-2">
                         {playlists.map((playlist) => (
                             <div
                                 key={playlist.id}
                                 onClick={() => router.push(`/playlists/${playlist.id}`)}
-                                className="flex items-center gap-4 p-4 bg-[#181818] hover:bg-[#282828] rounded-xl cursor-pointer transition-colors group border border-white/5"
+                                className="flex items-center gap-4 p-4 bg-[#1C2123] hover:bg-[#262B2C] rounded-xl cursor-pointer transition-colors group border border-[#D8C8A0]/10"
                                 >
                                 {/* PLACEHOLDER COVER */}
-                                <div className="w-14 h-14 rounded-lg bg-[#282828] flex items-center justify-center text-2xl shrink-0">
+                                <div className="w-14 h-14 rounded-lg bg-[#262B2C] flex items-center justify-center text-2xl shrink-0">
                                     {playlist.tracks && playlist.tracks[0] ? (
                                         <img
                                             src={playlist.tracks[0].cover}
@@ -284,7 +284,7 @@ export default function PlaylistsPage() {
                                     <p className="font-semibold text-white truncate">
                                         {playlist.name}
                                     </p>
-                                    <p className="text-xs text-[#B3B3B3] mt-0.5">
+                                    <p className="text-xs text-[#94866B] mt-0.5">
                                         {playlist.tracks ? playlist.tracks.length : playlist.trackCount || 0}{" "}
                                         {(playlist.tracks ? playlist.tracks.length : playlist.trackCount || 0) === 1 ? "song" : "songs"}
                                     </p>
@@ -297,7 +297,7 @@ export default function PlaylistsPage() {
                                             deletePlaylist(playlist.id);
                                         }
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 text-[#B3B3B3] hover:text-red-400 text-sm px-2 py-1 rounded transition"
+                                    className="opacity-0 group-hover:opacity-100 text-[#94866B] hover:text-[#E7B59C] text-sm px-2 py-1 rounded transition"
                                 >
                                     🗑
                                 </button>

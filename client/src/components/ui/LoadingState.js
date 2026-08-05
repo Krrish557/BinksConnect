@@ -7,14 +7,14 @@ export default function LoadingState({ message = "Loading..." }) {
                 {[0, 1, 2].map((i) => (
                     <span
                         key={i}
-                        className="w-2 h-2 rounded-full bg-[#1db954]"
+                        className="w-2 h-2 rounded-full bg-[#A08C55]"
                         style={{
                             animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
                         }}
                     />
                 ))}
             </div>
-            <p className="text-[#B3B3B3] text-sm">{message}</p>
+            <p className="text-[#94866B] text-sm">{message}</p>
             <style jsx>{`
                 @keyframes bounce {
                     0%, 100% { transform: translateY(0); }

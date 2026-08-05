@@ -51,7 +51,7 @@ export default function AlbumDetailPage() {
             <div
                 className="relative px-6 pt-10 pb-6"
                 style={{
-                    background: "linear-gradient(180deg, #1a3a27 0%, #121212 100%)",
+                    background: "linear-gradient(180deg, #1E3558 0%, #1A1F22 100%)",
                 }}
             >
                 <div className="flex flex-col md:flex-row gap-6 items-end">
@@ -61,13 +61,13 @@ export default function AlbumDetailPage() {
                         className="w-48 h-48 rounded-xl object-cover shadow-2xl shrink-0"
                     />
                     <div className="flex flex-col">
-                        <p className="text-xs font-bold uppercase text-[#B3B3B3] mb-1">
+                        <p className="text-xs font-bold uppercase text-[#94866B] mb-1">
                             Album
                         </p>
-                        <h1 className="text-4xl md:text-5xl font-black text-white leading-tight mb-2">
+                        <h1 className="v-heading text-4xl md:text-5xl font-black leading-tight mb-2">
                             {album.name}
                         </h1>
-                        <p className="text-[#B3B3B3] text-sm">
+                        <p className="text-[#94866B] text-sm">
                             {album.artist} &bull; {album.year} &bull;{" "}
                             {songs.length} songs,{" "}
                             {formatDuration(totalDuration)}
@@ -79,7 +79,7 @@ export default function AlbumDetailPage() {
             <div className="flex items-center gap-4 px-6 py-5">
                 <button
                     onClick={() => setQueue(songs, 0)}
-                    className="bg-[#1db954] hover:bg-[#1ed760] text-black font-bold px-8 py-3 rounded-full transition-colors flex items-center gap-2"
+                    className="bg-[#A08C55] hover:bg-[#C0A871] text-[#171B1C] font-bold px-8 py-3 rounded-full transition-colors flex items-center gap-2"
                 >
                     ▶ Play
                 </button>
@@ -88,14 +88,14 @@ export default function AlbumDetailPage() {
                         const shuffled = [...songs].sort(() => Math.random() - 0.5);
                         setQueue(shuffled, 0);
                     }}
-                    className="border border-[#B3B3B3] hover:border-white text-[#B3B3B3] hover:text-white font-bold px-6 py-3 rounded-full transition-colors text-sm"
+                    className="border border-[#94866B] hover:border-white text-[#94866B] hover:text-white font-bold px-6 py-3 rounded-full transition-colors text-sm"
                 >
                     ⇄ Shuffle
                 </button>
             </div>
 
             <div className="px-3">
-                <div className="flex items-center gap-3 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[#B3B3B3] border-b border-white/5 mb-2">
+                <div className="flex items-center gap-3 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[#94866B] border-b border-[#D8C8A0]/10 mb-2">
                     <div className="w-8 text-center">#</div>
                     <div className="w-10 shrink-0" />
                     <div className="flex-1">Title</div>
