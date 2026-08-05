@@ -7,10 +7,9 @@ import { authService } from "@/services/authService";
 import AuthLayout from "@/components/AuthLayout";
 
 const inputClass =
-    "w-full px-4 py-3 bg-[#282828] text-white rounded-lg outline-none focus:ring-2 focus:ring-[#1db954] transition text-sm placeholder-[#7a7a7a]";
+    "w-full px-4 py-3 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-md outline-none focus:border-[#dfb872] focus:ring-1 focus:ring-[#dfb872] transition text-sm placeholder-[#8b7a5c]";
 
 function ResetPasswordForm() {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const token = searchParams.get("token") || "";
 
@@ -48,16 +47,16 @@ function ResetPasswordForm() {
 
     if (done) {
         return (
-            <div className="text-center space-y-4">
-                <div className="text-4xl">✅</div>
-                <p className="text-sm text-[#B3B3B3]">
+            <div className="text-center space-y-4 py-3">
+                <div className="text-3xl">✅</div>
+                <p className="text-xs text-[#a39478]">
                     Your password has been reset. You can log in now.
                 </p>
                 <Link
                     href="/login"
-                    className="inline-block py-3 px-6 rounded-full bg-[#1db954] text-black font-bold text-sm hover:bg-[#1ed760] transition"
+                    className="inline-block py-2.5 px-6 rounded-md bg-[#233034] text-[#dfb872] font-semibold text-xs border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] transition shadow-lg"
                 >
-                    Go to login
+                    Go to Login
                 </Link>
             </div>
         );
@@ -65,36 +64,34 @@ function ResetPasswordForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
+            <h3 className="text-[#dfb872] font-serif text-lg font-bold mb-2 text-center">
+                New Password
+            </h3>
+
             <div>
-                <label className="block text-xs font-medium text-[#B3B3B3] mb-1.5">
-                    New password
-                </label>
                 <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 8 characters"
+                    placeholder="New password (min 8 chars)"
                     autoComplete="new-password"
                     className={inputClass}
                 />
             </div>
 
             <div>
-                <label className="block text-xs font-medium text-[#B3B3B3] mb-1.5">
-                    Confirm new password
-                </label>
                 <input
                     type="password"
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
-                    placeholder="Repeat your new password"
+                    placeholder="Confirm new password"
                     autoComplete="new-password"
                     className={inputClass}
                 />
             </div>
 
             {error && (
-                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                <p className="text-xs text-red-300 bg-red-950/40 border border-red-500/30 rounded-md px-3 py-2">
                     {error}
                 </p>
             )}
@@ -102,9 +99,9 @@ function ResetPasswordForm() {
             <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-full bg-[#1db954] text-black font-bold text-sm hover:bg-[#1ed760] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 rounded-md bg-[#233034] text-[#dfb872] font-semibold text-sm border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                {loading ? "Resetting..." : "Reset password"}
+                {loading ? "Resetting..." : "Reset Password"}
             </button>
         </form>
     );
@@ -112,11 +109,8 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
     return (
-        <AuthLayout
-            title="Choose a new password"
-            subtitle="Enter a new password for your account"
-        >
-            <Suspense fallback={<p className="text-sm text-[#B3B3B3]">Loading...</p>}>
+        <AuthLayout>
+            <Suspense fallback={<p className="text-xs text-[#a39478] text-center">Loading...</p>}>
                 <ResetPasswordForm />
             </Suspense>
         </AuthLayout>

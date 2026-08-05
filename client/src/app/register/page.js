@@ -20,7 +20,7 @@ export default function RegisterPage() {
     const [resendCooldown, setResendCooldown] = useState(0);
 
     const inputClass =
-        "w-full px-4 py-3 bg-[#282828] text-white rounded-lg outline-none focus:ring-2 focus:ring-[#1db954] transition text-sm placeholder-[#7a7a7a]";
+        "w-full px-4 py-3 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-md outline-none focus:border-[#dfb872] focus:ring-1 focus:ring-[#dfb872] transition text-sm placeholder-[#8b7a5c]";
 
     const handleSignup = async (e) => {
         e.preventDefault();
@@ -81,74 +81,59 @@ export default function RegisterPage() {
     };
 
     return (
-        <AuthLayout
-            title={step === 1 ? "Create your account" : "Verify your email"}
-            subtitle={
-                step === 1
-                    ? "Pick a unique username and password"
-                    : `We sent a 6-digit code to ${email.trim()}`
-            }
-        >
+        <AuthLayout>
             {step === 1 ? (
                 <form onSubmit={handleSignup} className="space-y-4">
+                    <h3 className="text-[#dfb872] font-serif text-lg font-bold mb-2 text-center">
+                        Create Your Account
+                    </h3>
+
                     <div>
-                        <label className="block text-xs font-medium text-[#B3B3B3] mb-1.5">
-                            Username
-                        </label>
                         <input
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            placeholder="3-30 characters (letters, numbers, _ . -)"
+                            placeholder="Username (letters, numbers)"
                             autoComplete="username"
                             className={inputClass}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-[#B3B3B3] mb-1.5">
-                            Email
-                        </label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com"
+                            placeholder="Email address"
                             autoComplete="email"
                             className={inputClass}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-[#B3B3B3] mb-1.5">
-                            Password
-                        </label>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="At least 8 characters"
+                            placeholder="Password (min 8 chars)"
                             autoComplete="new-password"
                             className={inputClass}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-[#B3B3B3] mb-1.5">
-                            Confirm password
-                        </label>
                         <input
                             type="password"
                             value={confirm}
                             onChange={(e) => setConfirm(e.target.value)}
-                            placeholder="Repeat your password"
+                            placeholder="Confirm Password"
                             autoComplete="new-password"
                             className={inputClass}
                         />
                     </div>
 
                     {error && (
-                        <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                        <p className="text-xs text-red-300 bg-red-950/40 border border-red-500/30 rounded-md px-3 py-2">
                             {error}
                         </p>
                     )}
@@ -156,17 +141,21 @@ export default function RegisterPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 rounded-full bg-[#1db954] text-black font-bold text-sm hover:bg-[#1ed760] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-3 rounded-md bg-[#233034] text-[#dfb872] font-semibold text-sm border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
-                        {loading ? "Creating account..." : "Create account"}
+                        {loading ? "Creating Account..." : "Create Account"}
                     </button>
                 </form>
             ) : (
                 <form onSubmit={handleVerify} className="space-y-4">
+                    <h3 className="text-[#dfb872] font-serif text-lg font-bold mb-1 text-center">
+                        Verify Email
+                    </h3>
+                    <p className="text-xs text-[#a39478] text-center mb-4">
+                        Code sent to <span className="text-[#eae2d0]">{email.trim()}</span>
+                    </p>
+
                     <div>
-                        <label className="block text-xs font-medium text-[#B3B3B3] mb-1.5">
-                            Verification code
-                        </label>
                         <input
                             type="text"
                             value={otp}
@@ -174,13 +163,13 @@ export default function RegisterPage() {
                             placeholder="000000"
                             inputMode="numeric"
                             maxLength={6}
-                            className={`${inputClass} text-center tracking-[0.5em] text-lg`}
+                            className={`${inputClass} text-center tracking-[0.5em] text-lg font-mono`}
                             autoFocus
                         />
                     </div>
 
                     {error && (
-                        <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                        <p className="text-xs text-red-300 bg-red-950/40 border border-red-500/30 rounded-md px-3 py-2">
                             {error}
                         </p>
                     )}
@@ -188,16 +177,16 @@ export default function RegisterPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 rounded-full bg-[#1db954] text-black font-bold text-sm hover:bg-[#1ed760] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-3 rounded-md bg-[#233034] text-[#dfb872] font-semibold text-sm border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? "Verifying..." : "Verify email"}
+                        {loading ? "Verifying..." : "Verify Code"}
                     </button>
 
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-xs pt-2">
                         <button
                             type="button"
                             onClick={() => setStep(1)}
-                            className="text-[#B3B3B3] hover:text-white transition"
+                            className="text-[#a39478] hover:text-[#eae2d0] transition"
                         >
                             ← Change email
                         </button>
@@ -205,7 +194,7 @@ export default function RegisterPage() {
                             type="button"
                             onClick={handleResend}
                             disabled={loading || resendCooldown > 0}
-                            className="text-[#1db954] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="text-[#dfb872] hover:underline disabled:opacity-50"
                         >
                             {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend code"}
                         </button>
@@ -213,9 +202,9 @@ export default function RegisterPage() {
                 </form>
             )}
 
-            <p className="text-sm text-[#B3B3B3] mt-6 text-center">
+            <p className="text-xs text-[#a39478] mt-6 text-center">
                 Already have an account?{" "}
-                <Link href="/login" className="text-[#1db954] hover:underline font-medium">
+                <Link href="/login" className="text-[#dfb872] hover:text-[#fff0cf] hover:underline font-medium">
                     Log in
                 </Link>
             </p>

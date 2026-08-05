@@ -12,7 +12,7 @@ export default function ForgotPasswordPage() {
     const [loading, setLoading] = useState(false);
 
     const inputClass =
-        "w-full px-4 py-3 bg-[#282828] text-white rounded-lg outline-none focus:ring-2 focus:ring-[#1db954] transition text-sm placeholder-[#7a7a7a]";
+        "w-full px-4 py-3 bg-[#1b272b] text-[#eae2d0] border border-[#5a482c] rounded-md outline-none focus:border-[#dfb872] focus:ring-1 focus:ring-[#dfb872] transition text-sm placeholder-[#8b7a5c]";
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -33,43 +33,45 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <AuthLayout
-            title="Reset your password"
-            subtitle="We'll email you a link to set a new password"
-        >
+        <AuthLayout>
+            <h3 className="text-[#dfb872] font-serif text-lg font-bold mb-2 text-center">
+                Reset Password
+            </h3>
+
             {sent ? (
-                <div className="text-center space-y-4">
-                    <div className="text-4xl">📬</div>
-                    <p className="text-sm text-[#B3B3B3]">
+                <div className="text-center space-y-4 py-3">
+                    <div className="text-3xl">📬</div>
+                    <p className="text-xs text-[#a39478]">
                         If an account exists for{" "}
-                        <span className="text-white font-medium">{email.trim()}</span>,
+                        <span className="text-[#eae2d0] font-medium">{email.trim()}</span>,
                         you&apos;ll receive a password reset link shortly.
                     </p>
                     <Link
                         href="/login"
-                        className="inline-block py-3 px-6 rounded-full bg-[#1db954] text-black font-bold text-sm hover:bg-[#1ed760] transition"
+                        className="inline-block py-2.5 px-6 rounded-md bg-[#233034] text-[#dfb872] font-semibold text-xs border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] transition shadow-lg"
                     >
-                        Back to login
+                        Back to Login
                     </Link>
                 </div>
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    <p className="text-xs text-[#a39478] mb-3 text-center">
+                        We&apos;ll email you a link to reset your password.
+                    </p>
+
                     <div>
-                        <label className="block text-xs font-medium text-[#B3B3B3] mb-1.5">
-                            Email
-                        </label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com"
+                            placeholder="Email address"
                             autoComplete="email"
                             className={inputClass}
                         />
                     </div>
 
                     {error && (
-                        <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                        <p className="text-xs text-red-300 bg-red-950/40 border border-red-500/30 rounded-md px-3 py-2">
                             {error}
                         </p>
                     )}
@@ -77,14 +79,14 @@ export default function ForgotPasswordPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 rounded-full bg-[#1db954] text-black font-bold text-sm hover:bg-[#1ed760] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-3 rounded-md bg-[#233034] text-[#dfb872] font-semibold text-sm border border-[#7a6237] hover:bg-[#2c3b40] hover:text-[#fff0cf] hover:border-[#caa35e] transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? "Sending..." : "Send reset link"}
+                        {loading ? "Sending..." : "Send Reset Link"}
                     </button>
 
-                    <p className="text-sm text-center text-[#B3B3B3]">
+                    <p className="text-xs text-center text-[#a39478] pt-2">
                         Remembered it?{" "}
-                        <Link href="/login" className="text-[#1db954] hover:underline font-medium">
+                        <Link href="/login" className="text-[#dfb872] hover:text-[#fff0cf] hover:underline font-medium">
                             Log in
                         </Link>
                     </p>
