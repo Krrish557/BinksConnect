@@ -6,7 +6,7 @@ import FramedMediaStack from "./theme/FramedMediaStack";
 
 export default function AuthLayout({ children }) {
     return (
-        <main className="min-h-screen w-full bg-vintage-slate text-[#eae2d0] relative overflow-hidden flex flex-col justify-between selection:bg-[#c5a059] selection:text-black">
+        <main className="min-h-screen w-full bg-vintage-slate text-[#eae2d0] relative overflow-hidden flex flex-col justify-between items-center selection:bg-[#c5a059] selection:text-black py-4 lg:py-6">
             {/* Background Watermark Pattern (Vinyl & Cassette Line Art) */}
             <div className="absolute inset-0 opacity-[0.07] pointer-events-none mix-blend-overlay">
                 <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -22,22 +22,22 @@ export default function AuthLayout({ children }) {
                 </svg>
             </div>
 
-            {/* Top Tagline Banner (Desktop) */}
-            <div className="hidden lg:block w-full pt-8 pb-2 text-center z-10">
+            {/* Desktop Top Tagline Banner */}
+            <div className="hidden lg:block w-full pt-4 pb-2 text-center z-10">
                 <h2 className="text-3xl font-serif tracking-wider gold-text-gradient drop-shadow-md">
                     Drop the needle and dive back in.
                 </h2>
             </div>
 
-            {/* Main Center Area */}
-            <div className="relative z-10 flex-1 w-full max-w-7xl mx-auto px-4 py-6 md:py-8 flex flex-col lg:flex-row items-center justify-between gap-8">
+            {/* Main Center Container */}
+            <div className="relative z-10 flex-1 w-full max-w-7xl mx-auto px-4 my-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-16">
 
-                {/* LEFT / MAIN CARD CONTAINER */}
-                <div className="relative w-full max-w-md lg:w-[35vw] lg:max-w-[440px] mx-auto lg:mx-0 flex flex-col items-center lg:items-start">
+                {/* LEFT / CENTER: Login Card & Overlapping Rotating Blue Vinyl */}
+                <div className="relative w-full max-w-[380px] lg:max-w-[420px] mx-auto lg:mx-0 flex flex-col items-center lg:items-start my-auto">
                     
                     {/* Mobile Top Header (Android View: Name & Tagline above card) */}
-                    <div className="block lg:hidden text-center mb-5">
-                        <div className="flex items-center justify-center gap-2 mb-1.5">
+                    <div className="block lg:hidden text-center mb-4">
+                        <div className="flex items-center justify-center gap-2 mb-1">
                             <div className="flex gap-1 items-end h-7">
                                 <div className="w-1.5 h-6 bg-[#dfb872] rounded-full animate-pulse" />
                                 <div className="w-1.5 h-4 bg-[#dfb872] rounded-full animate-pulse" style={{ animationDelay: "0.2s" }} />
@@ -53,9 +53,8 @@ export default function AuthLayout({ children }) {
                         </p>
                     </div>
 
-                    {/* Main Login Card Box */}
-                    {/* Desktop: takes ~30-35% width, tall box. Mobile: covers ~70% screen area */}
-                    <div className="relative z-10 w-full min-h-[68vh] lg:min-h-[82vh] bg-[#141f22]/95 backdrop-blur-md rounded-xl p-6 sm:p-8 xl:p-10 gold-double-border shadow-2xl flex flex-col justify-between">
+                    {/* Main Form Card Box */}
+                    <div className="relative z-10 w-full bg-[#141f22]/95 backdrop-blur-md rounded-xl p-6 sm:p-8 gold-double-border shadow-2xl overflow-visible">
 
                         {/* Card Header (Desktop Logo inside card) */}
                         <div className="hidden lg:flex items-center gap-3 mb-6">
@@ -70,51 +69,48 @@ export default function AuthLayout({ children }) {
                             </h1>
                         </div>
 
-                        {/* Child Form Content */}
-                        <div className="w-full flex-1 flex flex-col justify-center">
-                            {children}
-                        </div>
+                        {/* Form Content */}
+                        {children}
 
-                        {/* MOBILE OVERLAY AESTHETIC ELEMENTS (Z-Index > Card z-30) */}
-                        {/* Rendered at bottom of card on phone screens as requested */}
-                        <div className="lg:hidden relative w-full h-32 mt-4 overflow-visible pointer-events-none z-30">
-                            {/* Blue Vinyl overlapping bottom left */}
-                            <div className="absolute -left-8 -bottom-6 pointer-events-auto">
+                        {/* MOBILE OVERLAPPING ELEMENTS (Z-Index > Card z-30) */}
+                        <div className="lg:hidden relative w-full h-24 mt-4 overflow-visible pointer-events-none z-30">
+                            {/* Blue Vinyl overlapping bottom left corner */}
+                            <div className="absolute -left-12 -bottom-10 pointer-events-auto">
                                 <VinylRecord color="blue" size={170} spinSpeed={18} />
                             </div>
 
-                            {/* Soundwave bars behind bottom vinyl */}
-                            <div className="absolute left-10 bottom-4 w-32 h-12 opacity-60 pointer-events-none">
+                            {/* Soundwave bars radiating behind bottom vinyl */}
+                            <div className="absolute left-14 bottom-2 w-32 h-10 opacity-70 pointer-events-none">
                                 <SoundWaves mode="bars" />
                             </div>
 
-                            {/* Stacked Cassettes & Vinyls overlapping bottom right */}
-                            <div className="absolute -right-4 -bottom-6 pointer-events-auto">
+                            {/* Stacked Cassettes & Vinyls overlapping bottom right corner */}
+                            <div className="absolute -right-6 -bottom-10 pointer-events-auto">
                                 <FramedMediaStack compact={true} />
                             </div>
                         </div>
                     </div>
 
                     {/* DESKTOP OVERLAPPING BLUE VINYL RECORD */}
-                    {/* Positioned right behind the right side of the desktop card */}
-                    <div className="absolute -z-10 -right-28 lg:-right-36 top-1/2 -translate-y-1/2 opacity-90 hidden lg:block pointer-events-auto">
+                    {/* Positioned centered on the right edge of the card */}
+                    <div className="absolute -z-10 -right-28 lg:-right-36 top-1/2 -translate-y-1/2 opacity-95 hidden lg:block pointer-events-auto">
                         <VinylRecord color="blue" size={340} spinSpeed={20} />
                     </div>
                 </div>
 
-                {/* DESKTOP CENTER BACKGROUND SOUND WAVES */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 w-full max-w-3xl opacity-60 pointer-events-none hidden lg:block">
+                {/* DESKTOP CENTER SOUND WAVES */}
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 w-full max-w-3xl opacity-65 pointer-events-none hidden lg:block">
                     <SoundWaves mode="full" />
                 </div>
 
                 {/* DESKTOP RIGHT SIDE FRAMED MEDIA DISPLAY */}
-                <div className="hidden lg:flex z-10 w-auto justify-end">
+                <div className="hidden lg:flex z-10 w-auto justify-end my-auto">
                     <FramedMediaStack compact={false} />
                 </div>
             </div>
 
             {/* Bottom Ambient Soundwave Equalizer Strip */}
-            <div className="w-full pb-3 opacity-40 pointer-events-none">
+            <div className="w-full pb-2 opacity-40 pointer-events-none">
                 <SoundWaves mode="bars" />
             </div>
         </main>

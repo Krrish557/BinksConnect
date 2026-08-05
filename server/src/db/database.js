@@ -355,40 +355,46 @@ function initFTS5Sqlite(db) {
 }
 
 function runAuthMigrationsSqlite(db) {
-    const hasUserMigration = db.prepare("SELECT 1 FROM schema_migrations WHERE name = ?").get("user_auth_fields");
-    if (!hasUserMigration) {
-        const userColumns = db.prepare("PRAGMA table_info(users)").all();
-        if (!userColumns.some((c) => c.name === "email")) {
-            db.exec("ALTER TABLE users ADD COLUMN email TEXT");
+    try {
+        const hasUserMigration = db.prepare("SELECT 1 FROM schema_migrations WHERE name = ?").get("user_auth_fields");
+        if (!hasUserMigration) {
+            const userColumns = db.prepare("PRAGMA table_info(users)").all();
+            if (!userColumns.some((c) => c.name === "email")) {
+                db.exec("ALTER TABLE users ADD COLUMN email TEXT");
+            }
+            if (!userColumns.some((c) => c.name === "email_verified")) {
+                db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0");
+            }
+            db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)");
+            db.prepare("INSERT INTO schema_migrations (name) VALUES (?)").run("user_auth_fields");
+            console.log("[DB] user_auth_fields migration complete");
         }
-        if (!userColumns.some((c) => c.name === "email_verified")) {
-            db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0");
-        }
-        db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)");
-        db.prepare("INSERT INTO schema_migrations (name) VALUES (?)").run("user_auth_fields");
-        console.log("[DB] user_auth_fields migration complete");
+    } catch (err) {
+        console.warn("[DB] user_auth_fields migration check warning:", err.message);
     }
 
     const sessionColumns = db.prepare("PRAGMA table_info(sessions)").all();
-    if (!sessionColumns.some((c) => c.name === "device_name")) {
-        db.exec("ALTER TABLE sessions ADD COLUMN device_name TEXT");
-    }
-    if (!sessionColumns.some((c) => c.name === "device_id")) {
-        db.exec("ALTER TABLE sessions ADD COLUMN device_id TEXT");
-    }
-    if (!sessionColumns.some((c) => c.name === "user_agent")) {
-        db.exec("ALTER TABLE sessions ADD COLUMN user_agent TEXT");
-    }
-    if (!sessionColumns.some((c) => c.name === "ip_address")) {
-        db.exec("ALTER TABLE sessions ADD COLUMN ip_address TEXT");
-    }
-    if (!sessionColumns.some((c) => c.name === "last_active")) {
-        db.exec("ALTER TABLE sessions ADD COLUMN last_active DATETIME");
-    }
-    if (!sessionColumns.some((c) => c.name === "remember_device")) {
-        db.exec("ALTER TABLE sessions ADD COLUMN remember_device INTEGER DEFAULT 1");
+    const colsToAdd = [
+        { name: "device_name", type: "TEXT" },
+        { name: "device_id", type: "TEXT" },
+        { name: "user_agent", type: "TEXT" },
+        { name: "ip_address", type: "TEXT" },
+        { name: "last_active", type: "DATETIME DEFAULT CURRENT_TIMESTAMP" },
+        { name: "remember_device", type: "INTEGER DEFAULT 1" },
+    ];
+
+    for (const col of colsToAdd) {
+        if (!sessionColumns.some((c) => c.name === col.name)) {
+            try {
+                db.exec(`ALTER TABLE sessions ADD COLUMN ${col.name} ${col.type}`);
+                console.log(`[DB] Added missing column ${col.name} to sessions table`);
+            } catch (err) {
+                console.warn(`[DB] Note adding ${col.name} to sessions:`, err.message);
+            }
+        }
     }
 }
+
 
 function runMigrationsSqlite(db) {
     runAuthMigrationsSqlite(db);
@@ -573,28 +579,57 @@ function runMigrationsSqlite(db) {
 }
 
 async function runAuthMigrationsTurso(client) {
-    const hasMigration = await client.execute({
-        sql: "SELECT 1 FROM schema_migrations WHERE name = ?",
-        args: ["user_auth_fields"],
-    });
-    if (hasMigration.rows.length > 0) return;
+    try {
+        const hasMigration = await client.execute({
+            sql: "SELECT 1 FROM schema_migrations WHERE name = ?",
+            args: ["user_auth_fields"],
+        });
+        if (hasMigration.rows.length === 0) {
+            const userColumnsResult = await client.execute("PRAGMA table_info(users)");
+            const userColumns = userColumnsResult.rows;
+            if (!userColumns.some((c) => c.name === "email")) {
+                await client.execute("ALTER TABLE users ADD COLUMN email TEXT");
+            }
+            if (!userColumns.some((c) => c.name === "email_verified")) {
+                await client.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0");
+            }
+            await client.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)");
 
-    const userColumnsResult = await client.execute("PRAGMA table_info(users)");
-    const userColumns = userColumnsResult.rows;
-    if (!userColumns.some((c) => c.name === "email")) {
-        await client.execute("ALTER TABLE users ADD COLUMN email TEXT");
+            await client.execute({
+                sql: "INSERT INTO schema_migrations (name) VALUES (?)",
+                args: ["user_auth_fields"],
+            });
+            console.log("[DB] user_auth_fields migration complete (Turso)");
+        }
+    } catch (err) {
+        console.warn("[DB] user_auth_fields migration warning (Turso):", err.message);
     }
-    if (!userColumns.some((c) => c.name === "email_verified")) {
-        await client.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0");
-    }
-    await client.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)");
 
-    await client.execute({
-        sql: "INSERT INTO schema_migrations (name) VALUES (?)",
-        args: ["user_auth_fields"],
-    });
-    console.log("[DB] user_auth_fields migration complete (Turso)");
+    try {
+        const sessionColsResult = await client.execute("PRAGMA table_info(sessions)");
+        const sessionColumns = sessionColsResult.rows;
+        const colsToAdd = [
+            { name: "device_name", type: "TEXT" },
+            { name: "device_id", type: "TEXT" },
+            { name: "user_agent", type: "TEXT" },
+            { name: "ip_address", type: "TEXT" },
+            { name: "last_active", type: "DATETIME DEFAULT CURRENT_TIMESTAMP" },
+            { name: "remember_device", type: "INTEGER DEFAULT 1" },
+        ];
+
+        for (const col of colsToAdd) {
+            if (!sessionColumns.some((c) => c.name === col.name)) {
+                try {
+                    await client.execute(`ALTER TABLE sessions ADD COLUMN ${col.name} ${col.type}`);
+                    console.log(`[DB] Added missing column ${col.name} to sessions table (Turso)`);
+                } catch {}
+            }
+        }
+    } catch (err) {
+        console.warn("[DB] sessions migration warning (Turso):", err.message);
+    }
 }
+
 
 async function initSchemaTurso(client) {
     await client.executeMultiple(SCHEMA_SQL);
